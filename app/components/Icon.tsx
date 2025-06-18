@@ -1,3 +1,4 @@
+import { ComponentType } from "react"
 import {
   Image,
   ImageStyle,
@@ -12,7 +13,7 @@ import { useAppTheme } from "@/utils/useAppTheme"
 
 export type IconTypes = keyof typeof iconRegistry
 
-type BaseIconProps = {
+interface IconProps extends TouchableOpacityProps {
   /**
    * The name of the icon
    */
@@ -37,47 +38,16 @@ type BaseIconProps = {
    * Style overrides for the icon container
    */
   containerStyle?: StyleProp<ViewStyle>
-}
 
-type PressableIconProps = Omit<TouchableOpacityProps, "style"> & BaseIconProps
-type IconProps = Omit<ViewProps, "style"> & BaseIconProps
-
-/**
- * A component to render a registered icon.
- * It is wrapped in a <TouchableOpacity />
- * @see [Documentation and Examples]{@link https://docs.infinite.red/ignite-cli/boilerplate/app/components/Icon/}
- * @param {PressableIconProps} props - The props for the `PressableIcon` component.
- * @returns {JSX.Element} The rendered `PressableIcon` component.
- */
-export function PressableIcon(props: PressableIconProps) {
-  const {
-    icon,
-    color,
-    size,
-    style: $imageStyleOverride,
-    containerStyle: $containerStyleOverride,
-    ...pressableProps
-  } = props
-
-  const { theme } = useAppTheme()
-
-  const $imageStyle: StyleProp<ImageStyle> = [
-    $imageStyleBase,
-    { tintColor: color ?? theme.colors.text },
-    size !== undefined && { width: size, height: size },
-    $imageStyleOverride,
-  ]
-
-  return (
-    <TouchableOpacity {...pressableProps} style={$containerStyleOverride}>
-      <Image style={$imageStyle} source={iconRegistry[icon]} />
-    </TouchableOpacity>
-  )
+  /**
+   * An optional function to be called when the icon is pressed
+   */
+  onPress?: TouchableOpacityProps["onPress"]
 }
 
 /**
  * A component to render a registered icon.
- * It is wrapped in a <View />, use `PressableIcon` if you want to react to input
+ * It is wrapped in a <TouchableOpacity /> if `onPress` is provided, otherwise a <View />.
  * @see [Documentation and Examples]{@link https://docs.infinite.red/ignite-cli/boilerplate/app/components/Icon/}
  * @param {IconProps} props - The props for the `Icon` component.
  * @returns {JSX.Element} The rendered `Icon` component.
@@ -89,8 +59,13 @@ export function Icon(props: IconProps) {
     size,
     style: $imageStyleOverride,
     containerStyle: $containerStyleOverride,
-    ...viewProps
+    ...WrapperProps
   } = props
+
+  const isPressable = !!WrapperProps.onPress
+  const Wrapper = (WrapperProps?.onPress ? TouchableOpacity : View) as ComponentType<
+    TouchableOpacityProps | ViewProps
+  >
 
   const { theme } = useAppTheme()
 
@@ -102,9 +77,13 @@ export function Icon(props: IconProps) {
   ]
 
   return (
-    <View {...viewProps} style={$containerStyleOverride}>
+    <Wrapper
+      accessibilityRole={isPressable ? "imagebutton" : undefined}
+      {...WrapperProps}
+      style={$containerStyleOverride}
+    >
       <Image style={$imageStyle} source={iconRegistry[icon]} />
-    </View>
+    </Wrapper>
   )
 }
 
@@ -122,6 +101,12 @@ export const iconRegistry = {
   settings: require("../../assets/icons/settings.png"),
   view: require("../../assets/icons/view.png"),
   x: require("../../assets/icons/x.png"),
+  profile: require("../../assets/icons/profile.png"),
+  home: require("../../assets/icons/home.png"),
+  appointment: require("../../assets/icons/appt.png"),
+  sew: require("../../assets/icons/sew.png"),
+  coins: require("../../assets/icons/coin_10693573.png"),
+  money: require("../../assets/icons/donation_2800496.png"),
 }
 
 const $imageStyleBase: ImageStyle = {

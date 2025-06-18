@@ -4,14 +4,16 @@
  * Generally speaking, it will contain an auth flow (registration, login, forgot password)
  * and a "main" flow which the user will use once logged in.
  */
-import { NavigationContainer } from "@react-navigation/native"
+import { NavigationContainer, NavigatorScreenParams } from "@react-navigation/native"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
 import { observer } from "mobx-react-lite"
 import * as Screens from "@/screens"
 import Config from "../config"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { useAppTheme, useThemeProvider } from "@/utils/useAppTheme"
-import { ComponentProps } from "react"
+import { Component, ComponentProps } from "react"
+import { TabNavigator, TabParamList } from "@/navigators/ClientTabsNavigator"
+// import { TabParamListTailor } from "@/navigators/TailorTabsNavigator"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -28,7 +30,36 @@ import { ComponentProps } from "react"
  */
 export type AppStackParamList = {
   Welcome: undefined
+  // TailorTab: NavigatorScreenParams<TabParamListTailor>
+  ClientTab: NavigatorScreenParams<TabParamList>
+
   // 🔥 Your screens go here
+  SignIn: undefined
+  SignUp: undefined
+  Home: undefined
+  Orders: undefined
+  Order: undefined
+  OrderHistory: undefined
+  OrderTracking: undefined
+  Payment: undefined
+  Tailor: undefined
+  TailorOrder: undefined
+  Measurment: undefined
+  AddMeasurment: undefined
+  EditMeasurment: undefined
+  DeleteMeasurment: undefined
+  Invoices: undefined
+  FabricSearch: undefined
+  BookFitting: undefined
+  Styles: undefined
+  Catalog: undefined
+  Settings: undefined
+  Analytics: undefined
+  Onboarding: undefined
+  VerifyOtp: undefined
+  VerifyEmail: undefined
+  ClientNotifications: undefined
+  TailorNotifications: undefined
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -61,8 +92,33 @@ const AppStack = observer(function AppStack() {
         },
       }}
     >
-      <Stack.Screen name="Welcome" component={Screens.WelcomeScreen} />
+      <Stack.Screen name="ClientTab" component={TabNavigator} />
       {/** 🔥 Your screens go here */}
+      <Stack.Screen name="SignIn" component={Screens.SignInScreen} />
+      <Stack.Screen name="SignUp" component={Screens.SignUpScreen} />
+      <Stack.Screen name="Home" component={Screens.HomeScreen} />
+      <Stack.Screen name="Orders" component={Screens.OrdersScreen} />
+      <Stack.Screen name="OrderHistory" component={Screens.OrderHistoryScreen} />
+      <Stack.Screen name="OrderTracking" component={Screens.OrderTrackingScreen} />
+      <Stack.Screen name="Payment" component={Screens.PaymentScreen} />
+      <Stack.Screen name="Tailor" component={Screens.TailorScreen} />
+      <Stack.Screen name="TailorOrder" component={Screens.TailorOrderScreen} />
+      <Stack.Screen name="Measurment" component={Screens.MeasurmentScreen} />
+      <Stack.Screen name="AddMeasurment" component={Screens.AddMeasurmentScreen} />
+      <Stack.Screen name="EditMeasurment" component={Screens.EditMeasurmentScreen} />
+      <Stack.Screen name="DeleteMeasurment" component={Screens.DeleteMeasurmentScreen} />
+      <Stack.Screen name="Invoices" component={Screens.InvoicesScreen} />
+      <Stack.Screen name="FabricSearch" component={Screens.FabricSearchScreen} />
+      <Stack.Screen name="BookFitting" component={Screens.BookFittingScreen} />
+      <Stack.Screen name="Styles" component={Screens.StylesScreen} />
+      <Stack.Screen name="Catalog" component={Screens.CatalogScreen} />
+      <Stack.Screen name="Settings" component={Screens.SettingsScreen} />
+      <Stack.Screen name="Analytics" component={Screens.AnalyticsScreen} />
+      <Stack.Screen name="Onboarding" component={Screens.OnboardingScreen} />
+      <Stack.Screen name="VerifyOtp" component={Screens.VerifyOtpScreen} />
+      <Stack.Screen name="VerifyEmail" component={Screens.VerifyEmailScreen} />
+      <Stack.Screen name="ClientNotifications" component={Screens.ClientNotificationsScreen} />
+      <Stack.Screen name="TailorNotifications" component={Screens.TailorNotificationsScreen} />
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
     </Stack.Navigator>
   )
