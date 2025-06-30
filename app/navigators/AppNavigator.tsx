@@ -38,10 +38,13 @@ export type AppStackParamList = {
   SignUp: undefined
   Home: undefined
   Orders: undefined
+  OrderDetail: { orderId: string }
+  NewOrder: undefined
+  Measurement: { styleId?: string; fabricId?: string; amount?: number }
   Order: undefined
   OrderHistory: undefined
   OrderTracking: undefined
-  Payment: undefined
+  Payment: { orderId: string; amount: number; orderDetails: { measurementName: string; status: string; dueDate: string } }
   Tailor: undefined
   TailorOrder: undefined
   Measurment: undefined
@@ -84,6 +87,7 @@ const AppStack = observer(function AppStack() {
 
   return (
     <Stack.Navigator
+      initialRouteName="ClientTab"
       screenOptions={{
         headerShown: false,
         navigationBarColor: colors.background,
@@ -98,6 +102,9 @@ const AppStack = observer(function AppStack() {
       <Stack.Screen name="SignUp" component={Screens.SignUpScreen} />
       <Stack.Screen name="Home" component={Screens.HomeScreen} />
       <Stack.Screen name="Orders" component={Screens.OrdersScreen} />
+      <Stack.Screen name="OrderDetail" component={Screens.OrderDetailScreen} />
+      <Stack.Screen name="NewOrder" component={Screens.NewOrderScreen} />
+      <Stack.Screen name="Measurement" component={Screens.MeasurementScreen} />
       <Stack.Screen name="OrderHistory" component={Screens.OrderHistoryScreen} />
       <Stack.Screen name="OrderTracking" component={Screens.OrderTrackingScreen} />
       <Stack.Screen name="Payment" component={Screens.PaymentScreen} />

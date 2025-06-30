@@ -1,9 +1,9 @@
 {
-  "name": "StitchAndWearTailors",
-  "displayName": "StitchAndWearTailors",
+  "name": "stitch-and-wear-tailors",
+  "displayName": "Stitch & Wear Tailors",
   "expo": {
-    "name": "StitchAndWearTailors",
-    "slug": "StitchAndWearTailors",
+    "name": "Stitch & Wear Tailors",
+    "slug": "stitch-and-wear-tailors",
     "scheme": "stitchandweartailors",
     "version": "1.0.0",
     "orientation": "portrait",
