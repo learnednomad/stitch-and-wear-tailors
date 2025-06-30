@@ -43,6 +43,8 @@ export const serializeForApi = {
     last_login_at: user.lastLoginAt,
     created_at: user.createdAt,
     updated_at: user.updatedAt,
+    first_name: user.profile.firstName,
+    last_name: user.profile.lastName,
   }),
 
   order: (order: Order) => ({

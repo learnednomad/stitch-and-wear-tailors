@@ -306,7 +306,7 @@ export const isBusinessHours = (date: string): boolean => {
   
   // Monday = 1, Saturday = 6, Sunday = 0
   const isWeekday = day >= 1 && day <= 6
-  const isBusinessHour = hour >= 9 && hour <= 18
+  const isBusinessHour = hour >= 9 && hour < 18 // Changed <= to < for 6 PM cutoff
   
   return isWeekday && isBusinessHour
 }

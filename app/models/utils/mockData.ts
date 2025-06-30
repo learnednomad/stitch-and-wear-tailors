@@ -195,11 +195,16 @@ export const mockData = {
   fabric: (overrides?: Partial<Fabric>): Fabric => {
     const categories: FabricCategory[] = ['cotton', 'silk', 'wool', 'linen']
     const category = randomElement(categories)
-    const fabricNames = {
+    const fabricNames: Record<FabricCategory, string[]> = {
       cotton: ['Premium Cotton', 'Egyptian Cotton', 'Organic Cotton'],
       silk: ['Pure Silk', 'Mulberry Silk', 'Charmeuse Silk'],
       wool: ['Merino Wool', 'Cashmere', 'Wool Blend'],
       linen: ['Irish Linen', 'Belgian Linen', 'Linen Blend'],
+      polyester: ['Premium Polyester', 'Microfiber', 'Stretch Polyester'],
+      denim: ['Raw Denim', 'Stretch Denim', 'Organic Denim'],
+      velvet: ['Cotton Velvet', 'Silk Velvet', 'Crushed Velvet'],
+      leather: ['Genuine Leather', 'Premium Leather', 'Soft Leather'],
+      synthetic: ['Synthetic Blend', 'Performance Fabric', 'Technical Fabric'],
     }
     
     return {
@@ -440,10 +445,16 @@ export const mockData = {
     const types: NotificationType[] = ['order_update', 'appointment_reminder', 'payment_due']
     const type = randomElement(types)
     
-    const messages = {
+    const messages: Record<NotificationType, string> = {
       order_update: 'Your order status has been updated',
       appointment_reminder: 'You have an appointment tomorrow',
       payment_due: 'Payment is due for your recent order',
+      measurement_required: 'Please schedule a measurement appointment',
+      fitting_scheduled: 'Your fitting appointment has been scheduled',
+      order_completed: 'Your order has been completed',
+      promotional: 'Special offer available for you',
+      system_maintenance: 'System maintenance scheduled',
+      account_update: 'Your account information has been updated',
     }
     
     return {

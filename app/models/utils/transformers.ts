@@ -112,15 +112,15 @@ export const transformToFeedback = (data: unknown): Feedback => {
  * Transform and validate input data for creating models
  */
 export const transformCreateInputs = {
-  user: (data: unknown): CreateUserInput => validateCreateUserInput(data),
-  order: (data: unknown): CreateOrderInput => validateCreateOrderInput(data),
-  measurement: (data: unknown): CreateMeasurementInput => validateCreateMeasurementInput(data),
-  fabric: (data: unknown): CreateFabricInput => validateCreateFabricInput(data),
-  style: (data: unknown): CreateStyleInput => validateCreateStyleInput(data),
-  appointment: (data: unknown): CreateAppointmentInput => validateCreateAppointmentInput(data),
-  invoice: (data: unknown): CreateInvoiceInput => validateCreateInvoiceInput(data),
-  notification: (data: unknown): CreateNotificationInput => validateCreateNotificationInput(data),
-  feedback: (data: unknown): CreateFeedbackInput => validateCreateFeedbackInput(data),
+  user: (data: unknown) => validateCreateUserInput(data),
+  order: (data: unknown) => validateCreateOrderInput(data),
+  measurement: (data: unknown) => validateCreateMeasurementInput(data),
+  fabric: (data: unknown) => validateCreateFabricInput(data),
+  style: (data: unknown) => validateCreateStyleInput(data),
+  appointment: (data: unknown) => validateCreateAppointmentInput(data),
+  invoice: (data: unknown) => validateCreateInvoiceInput(data),
+  notification: (data: unknown) => validateCreateNotificationInput(data),
+  feedback: (data: unknown) => validateCreateFeedbackInput(data),
 }
 
 /**
