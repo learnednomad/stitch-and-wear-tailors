@@ -38,7 +38,26 @@
       "Bash(git remote remove:*)",
       "Bash(git remote add:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "mcp__github__create_issue",
+      "Bash(gh issue create:*)",
+      "Bash(for i in {2..44})",
+      "Bash(do gh project item-add 2 --owner learnednomad --url https://github.com/learnednomad/stitch-and-wear-tailors/issues/$i)",
+      "Bash(done)",
+      "Bash(gh project item-add:*)",
+      "Bash(for i in {46..48})",
+      "Bash(gh issue edit:*)",
+      "Bash(gh issue:*)",
+      "Bash(gh pr list:*)",
+      "Bash(git checkout:*)",
+      "Bash(yarn add zod)",
+      "Bash(mkdir:*)",
+      "Bash(yarn test:*)",
+      "Bash(yarn compile)",
+      "Bash(yarn tsc:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh label:*)"
     ],
     "deny": []
   }
