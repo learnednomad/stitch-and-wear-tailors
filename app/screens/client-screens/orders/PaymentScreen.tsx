@@ -1,19 +1,16 @@
 import { FC } from "react"
-import { observer } from "mobx-react-lite" 
+import { observer } from "mobx-react-lite"
 import { ViewStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
+import { TabScreenProps } from "@/navigators/ClientTabsNavigator"
 import { Screen, Text } from "@/components"
 // import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "@/models" 
+// import { useStores } from "@/models"
 
-interface PaymentScreenProps extends AppStackScreenProps<"Payment"> {}
-
+interface PaymentScreenProps extends TabScreenProps<"Pay"> {}
 
 export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentScreen() {
-  
   // Pull in one of our MST stores
   // const { someStore, anotherStore } = useStores()
-  
 
   // Pull in navigation via hook
   // const navigation = useNavigation()
@@ -22,7 +19,6 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
       <Text text="payment" />
     </Screen>
   )
-
 })
 
 const $root: ViewStyle = {

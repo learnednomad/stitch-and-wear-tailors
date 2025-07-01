@@ -17,6 +17,16 @@ import { ServiceRetryManagers, RetryUtils, RetryStrategies } from "./retry-manag
 import { globalDeduplicationManager, DeduplicationUtils } from "./deduplication-manager"
 import { globalAnalyticsManager, AnalyticsUtils } from "./analytics-manager"
 
+// Reactotron integration for development
+let ReactotronApiUtils: any = null
+if (__DEV__) {
+  try {
+    ReactotronApiUtils = require("../../devtools/ReactotronApiPlugin").ReactotronApiUtils
+  } catch (error) {
+    // Reactotron not available - continue without it
+  }
+}
+
 /**
  * Enhanced interceptor configuration
  */
@@ -134,6 +144,21 @@ export function setupEnhancedRequestInterceptors(
     request.headers = {
       ...request.headers,
       'X-Request-ID': requestId,
+    }
+
+    // Track with Reactotron in development
+    if (__DEV__ && ReactotronApiUtils) {
+      ReactotronApiUtils.trackApiCall(
+        request.method || 'GET',
+        request.url || '',
+        () => Promise.resolve({ ok: true, data: null }),
+        {
+          headers: request.headers,
+          data: request.data,
+          params: request.params,
+          userId: metadata.userId,
+        }
+      ).catch(() => {}) // Ignore tracking errors
     }
   })
 

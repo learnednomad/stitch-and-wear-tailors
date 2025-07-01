@@ -157,17 +157,10 @@ export class FabricApiService extends BaseApiService implements IFabricApiServic
 
     const searchParams = {
       ...params,
-      search: query,
-    }
-
-    return this.getFabrics(searchParams)
-
-    const searchParams = {
-      ...params,
       search: query.trim(),
     }
 
-    return this.getList<any>("/search", searchParams)
+    return this.getFabrics(searchParams)
   }
 
   /**

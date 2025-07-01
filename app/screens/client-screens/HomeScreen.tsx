@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ViewStyle,
   TextStyle,
+  ImageStyle,
 } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import { Button, Screen, Icon, AutoImage } from "app/components"
@@ -58,7 +59,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
       chest: 100,
       waist: 80,
       length: 120,
-      style: "PlainKaftan",
+      style: "plain_kaftan",
       dateCollected: "June 1, 2025",
       category: "Casual Wear",
     },
@@ -68,7 +69,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
       chest: 110,
       waist: 90,
       length: 130,
-      style: "Agbada",
+      style: "agbada",
       dateCollected: "June 5, 2025",
       category: "Formal Wear",
     },
@@ -125,12 +126,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
       <View style={$quickActionIconContainer}>
         <Icon icon={item.icon} size={24} color={colors.palette.primary600} />
       </View>
-      <Text
-        style={$quickActionTitle}
-        tx={`clientPortal.${item.title.toLowerCase().replace(" ", "")}`}
-      >
-        {item.title}
-      </Text>
+      <Text style={$quickActionTitle} text={item.title} />
       <Text style={$quickActionSubtitle}>{item.subtitle}</Text>
     </TouchableOpacity>
   )
@@ -159,25 +155,25 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
     {
       title: "Add Measurement",
       subtitle: "Submit new sizes",
-      icon: "plus",
+      icon: "check" as const,
       onPress: () => console.log("Navigate to Add Measurement"),
     },
     {
       title: "Browse Fabrics",
       subtitle: "Choose materials",
-      icon: "search",
+      icon: "view" as const,
       onPress: () => console.log("Navigate to FabricSearch"),
     },
     {
       title: "Track Orders",
       subtitle: "View progress",
-      icon: "list",
+      icon: "sew" as const,
       onPress: () => console.log("Navigate to OrderTracking"),
     },
     {
       title: "Give Feedback",
       subtitle: "Share thoughts",
-      icon: "chat",
+      icon: "bell" as const,
       onPress: () => console.log("Navigate to Feedback"),
     },
   ]
@@ -232,12 +228,8 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
 
         {/* Welcome Card */}
         <View style={$welcomeCard}>
-          <Text style={$welcomeTitle} tx="clientPortal.welcomeTitle">
-            Welcome to Your Style Hub
-          </Text>
-          <Text style={$welcomeSubtitle} tx="clientPortal.welcomeSubtitle">
-            {orders.length} active orders in progress
-          </Text>
+          <Text style={$welcomeTitle} tx="clientPortal.welcomeTitle" />
+          <Text style={$welcomeSubtitle}>{orders.length} active orders in progress</Text>
         </View>
 
         {/* Offline Indicator (Placeholder) */}
@@ -250,9 +242,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
         {/* Quick Actions */}
         <View style={$section}>
           <View style={$sectionHeader}>
-            <Text style={$sectionTitle} tx="clientPortal.quickActions">
-              Quick Actions
-            </Text>
+            <Text style={$sectionTitle} tx="clientPortal.quickActions" />
           </View>
           <FlatList
             data={quickActions}
@@ -270,17 +260,13 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
         {/* Recent Orders */}
         <View style={$section}>
           <View style={$sectionHeader}>
-            <Text style={$sectionTitle} tx="clientPortal.recentOrders">
-              Recent Orders
-            </Text>
+            <Text style={$sectionTitle} tx="clientPortal.recentOrders" />
             <TouchableOpacity
               onPress={() => console.log("Navigate to OrderTracking")}
               accessible
               accessibilityLabel="View all orders"
             >
-              <Text style={$viewAllText} tx="clientPortal.viewAll">
-                View All
-              </Text>
+              <Text style={$viewAllText} tx="clientPortal.viewAll" />
             </TouchableOpacity>
           </View>
           <FlatList
@@ -299,17 +285,13 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
         {/* Recent Measurements */}
         <View style={$section}>
           <View style={$sectionHeader}>
-            <Text style={$sectionTitle} tx="clientPortal.recentMeasurements">
-              Recent Measurements
-            </Text>
+            <Text style={$sectionTitle} tx="clientPortal.recentMeasurements" />
             <TouchableOpacity
               onPress={() => console.log("Navigate to Measurement List")}
               accessible
               accessibilityLabel="View all measurements"
             >
-              <Text style={$viewAllText} tx="clientPortal.viewAll">
-                View All
-              </Text>
+              <Text style={$viewAllText} tx="clientPortal.viewAll" />
             </TouchableOpacity>
           </View>
           {measurements.map((item) => (
@@ -400,7 +382,7 @@ const $profileImage: ViewStyle = {
   marginLeft: spacing.sm,
 }
 
-const $image: ViewStyle = {
+const $image: ImageStyle = {
   width: "100%",
   height: "100%",
 }

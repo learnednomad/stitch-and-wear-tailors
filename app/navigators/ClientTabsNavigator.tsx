@@ -15,7 +15,7 @@ import { PaymentScreen } from "@/screens/client-screens/orders/PaymentScreen"
 export type TabParamList = {
   Home: undefined
   Orders: { queryIndex?: string; itemIndex?: string }
-  Payment: undefined
+  Pay: undefined
   Settings: undefined
 }
 

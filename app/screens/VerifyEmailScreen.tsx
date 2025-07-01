@@ -1,19 +1,16 @@
 import { FC } from "react"
-import { observer } from "mobx-react-lite" 
+import { observer } from "mobx-react-lite"
 import { ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text } from "@/components"
 // import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "@/models" 
+// import { useStores } from "@/models"
 
 interface VerifyEmailScreenProps extends AppStackScreenProps<"VerifyEmail"> {}
 
-
 export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function VerifyEmailScreen() {
-  
   // Pull in one of our MST stores
   // const { someStore, anotherStore } = useStores()
-  
 
   // Pull in navigation via hook
   // const navigation = useNavigation()
@@ -22,7 +19,6 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
       <Text text="verifyEmail" />
     </Screen>
   )
-
 })
 
 const $root: ViewStyle = {
