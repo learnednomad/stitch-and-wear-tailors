@@ -4,14 +4,15 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
+  StyleSheet,
   ViewStyle,
   TextStyle,
+  ImageStyle,
 } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import { Button, Screen, Icon, AutoImage } from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "app/theme"
-import { useNavigation } from "@react-navigation/native"
 
 interface Measurement {
   id: string
@@ -48,7 +49,6 @@ const getGreeting = () => {
 
 export const HomeScreen: FC<ClientPortalScreenProps> = () => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation()
   const [greeting, setGreeting] = React.useState(getGreeting())
 
   // Dummy data
@@ -59,7 +59,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
       chest: 100,
       waist: 80,
       length: 120,
-      style: "PlainKaftan",
+      style: "plain_kaftan",
       dateCollected: "June 1, 2025",
       category: "Casual Wear",
     },
@@ -69,7 +69,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
       chest: 110,
       waist: 90,
       length: 130,
-      style: "Agbada",
+      style: "agbada",
       dateCollected: "June 5, 2025",
       category: "Formal Wear",
     },
@@ -126,9 +126,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
       <View style={$quickActionIconContainer}>
         <Icon icon={item.icon} size={24} color={colors.palette.primary600} />
       </View>
-      <Text style={$quickActionTitle}>
-        {item.title}
-      </Text>
+      <Text style={$quickActionTitle} text={item.title} />
       <Text style={$quickActionSubtitle}>{item.subtitle}</Text>
     </TouchableOpacity>
   )
@@ -136,7 +134,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
   const renderOrder = ({ item }: { item: Order }) => (
     <TouchableOpacity
       style={$orderCard}
-      onPress={() => navigation.navigate("OrderDetail" as never, { orderId: item.id } as never)}
+      onPress={() => console.log(`Navigate to Order Tracking: ${item.id}`)}
       accessible
       accessibilityLabel={`Order: ${item.id}`}
       accessibilityRole="button"
@@ -155,28 +153,28 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
 
   const quickActions = [
     {
-      title: "New Order",
-      subtitle: "Create new order",
-      icon: "check",
-      onPress: () => navigation.navigate("NewOrder" as never),
+      title: "Add Measurement",
+      subtitle: "Submit new sizes",
+      icon: "check" as const,
+      onPress: () => console.log("Navigate to Add Measurement"),
     },
     {
       title: "Browse Fabrics",
       subtitle: "Choose materials",
-      icon: "view",
-      onPress: () => navigation.navigate("FabricSearch" as never),
+      icon: "view" as const,
+      onPress: () => console.log("Navigate to FabricSearch"),
     },
     {
       title: "Track Orders",
       subtitle: "View progress",
-      icon: "menu",
-      onPress: () => navigation.navigate("Orders" as never),
+      icon: "sew" as const,
+      onPress: () => console.log("Navigate to OrderTracking"),
     },
     {
-      title: "Measurements",
-      subtitle: "View saved data",
-      icon: "settings",
-      onPress: () => navigation.navigate("Measurement" as never),
+      title: "Give Feedback",
+      subtitle: "Share thoughts",
+      icon: "bell" as const,
+      onPress: () => console.log("Navigate to Feedback"),
     },
   ]
 
@@ -193,7 +191,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
           <View style={$profileContainer}>
             <TouchableOpacity
               style={$profileImage}
-              onPress={() => navigation.navigate("Settings" as never)}
+              onPress={() => console.log("Navigate to Profile")}
               accessible
               accessibilityLabel="Profile"
             >
@@ -212,7 +210,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
             </View>
             <TouchableOpacity
               style={$notificationIcon}
-              onPress={() => navigation.navigate("ClientNotifications" as never)}
+              onPress={() => console.log("Navigate to Notifications")}
               accessible
               accessibilityLabel="Notifications"
             >
@@ -230,12 +228,8 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
 
         {/* Welcome Card */}
         <View style={$welcomeCard}>
-          <Text style={$welcomeTitle}>
-            Welcome to Your Style Hub
-          </Text>
-          <Text style={$welcomeSubtitle}>
-            {orders.length} active orders in progress
-          </Text>
+          <Text style={$welcomeTitle} tx="clientPortal.welcomeTitle" />
+          <Text style={$welcomeSubtitle}>{orders.length} active orders in progress</Text>
         </View>
 
         {/* Offline Indicator (Placeholder) */}
@@ -248,9 +242,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
         {/* Quick Actions */}
         <View style={$section}>
           <View style={$sectionHeader}>
-            <Text style={$sectionTitle}>
-              Quick Actions
-            </Text>
+            <Text style={$sectionTitle} tx="clientPortal.quickActions" />
           </View>
           <FlatList
             data={quickActions}
@@ -268,17 +260,13 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
         {/* Recent Orders */}
         <View style={$section}>
           <View style={$sectionHeader}>
-            <Text style={$sectionTitle}>
-              Recent Orders
-            </Text>
+            <Text style={$sectionTitle} tx="clientPortal.recentOrders" />
             <TouchableOpacity
-              onPress={() => navigation.navigate("Orders" as never)}
+              onPress={() => console.log("Navigate to OrderTracking")}
               accessible
               accessibilityLabel="View all orders"
             >
-              <Text style={$viewAllText}>
-                View All
-              </Text>
+              <Text style={$viewAllText} tx="clientPortal.viewAll" />
             </TouchableOpacity>
           </View>
           <FlatList
@@ -297,17 +285,13 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
         {/* Recent Measurements */}
         <View style={$section}>
           <View style={$sectionHeader}>
-            <Text style={$sectionTitle}>
-              Recent Measurements
-            </Text>
+            <Text style={$sectionTitle} tx="clientPortal.recentMeasurements" />
             <TouchableOpacity
               onPress={() => console.log("Navigate to Measurement List")}
               accessible
               accessibilityLabel="View all measurements"
             >
-              <Text style={$viewAllText}>
-                View All
-              </Text>
+              <Text style={$viewAllText} tx="clientPortal.viewAll" />
             </TouchableOpacity>
           </View>
           {measurements.map((item) => (
@@ -326,7 +310,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
                     {item.category} • {item.style}
                   </Text>
                 </View>
-                <Icon icon="caretRight" size={20} color={colors.palette.neutral500} />
+                <Icon icon="chevron-right" size={20} color={colors.palette.neutral500} />
               </View>
               <View style={$measurementDetails}>
                 <View style={$measurementItem}>
@@ -350,12 +334,12 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
         {/* CTA Button */}
         <View style={[$bottomContainer, $bottomContainerInsets]}>
           <Button
-            text="Create New Order"
+            text="Add Measurement"
             style={$primaryButton}
             textStyle={$primaryButtonText}
-            onPress={() => navigation.navigate("NewOrder" as never)}
+            onPress={() => console.log("Navigate to Add Measurement")}
             accessible
-            accessibilityLabel="Create new order"
+            accessibilityLabel="Add new measurement"
           />
         </View>
       </View>
@@ -398,7 +382,7 @@ const $profileImage: ViewStyle = {
   marginLeft: spacing.sm,
 }
 
-const $image: ViewStyle = {
+const $image: ImageStyle = {
   width: "100%",
   height: "100%",
 }

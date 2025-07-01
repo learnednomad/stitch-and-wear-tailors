@@ -10,12 +10,12 @@ import { AppStackParamList, AppStackScreenProps } from "./AppNavigator"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { HomeScreen } from "@/screens/client-screens/HomeScreen"
 import { OrdersScreen } from "@/screens/client-screens/orders/OrdersScreen"
-import { WalletScreen } from "@/screens/client-screens/WalletScreen"
+import { PaymentScreen } from "@/screens/client-screens/orders/PaymentScreen"
 
 export type TabParamList = {
   Home: undefined
   Orders: { queryIndex?: string; itemIndex?: string }
-  Wallet: undefined
+  Pay: undefined
   Settings: undefined
 }
 
@@ -80,12 +80,12 @@ export function TabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Wallet"
-        component={WalletScreen}
+        name="Pay"
+        component={PaymentScreen}
         options={{
-          tabBarLabel: "Wallet",
+          tabBarLabel: "Pay",
           tabBarIcon: ({ focused }) => (
-            <Icon icon="coins" color={focused ? colors.tint : colors.tintInactive} size={24} />
+            <Icon icon="coins" color={focused ? colors.tint : colors.tintInactive} size={35} />
           ),
         }}
       />

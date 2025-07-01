@@ -31,21 +31,11 @@ const palette = {
   angry100: "#F2D6CD",
   angry500: "#C03403",
 
-  success100: "#D1FAE5",
-  success200: "#A7F3D0", 
-  success300: "#6EE7B7",
-  success400: "#34D399",
-  success500: "#10B981",
-  success600: "#059669",
+  success100: "#D4F4DD",
+  success500: "#00A854",
 
-  warning100: "#FEF3C7",
-  warning200: "#FDE68A",
-  warning300: "#FCD34D", 
-  warning400: "#FBBF24",
-  warning500: "#F59E0B",
-  warning600: "#D97706",
-  warning700: "#B45309",
-  warning800: "#92400E",
+  warning100: "#FFF4D4",
+  warning500: "#FFB020",
 
   overlay20: "rgba(25, 16, 21, 0.2)",
   overlay50: "rgba(25, 16, 21, 0.5)",
@@ -98,20 +88,4 @@ export const colors = {
    * Error Background.
    */
   errorBackground: palette.angry100,
-  /**
-   * Success messages.
-   */
-  success: palette.success500,
-  /**
-   * Success background.
-   */
-  successBackground: palette.success100,
-  /**
-   * Warning messages.
-   */
-  warning: palette.warning500,
-  /**
-   * Warning background.
-   */
-  warningBackground: palette.warning100,
 } as const
