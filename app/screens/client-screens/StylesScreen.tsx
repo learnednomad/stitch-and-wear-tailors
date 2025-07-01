@@ -1,19 +1,16 @@
 import { FC } from "react"
-import { observer } from "mobx-react-lite" 
+import { observer } from "mobx-react-lite"
 import { ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text } from "@/components"
 // import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "@/models" 
+// import { useStores } from "@/models"
 
 interface StylesScreenProps extends AppStackScreenProps<"Styles"> {}
 
-
 export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScreen() {
-  
   // Pull in one of our MST stores
   // const { someStore, anotherStore } = useStores()
-  
 
   // Pull in navigation via hook
   // const navigation = useNavigation()
@@ -22,7 +19,6 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
       <Text text="styles" />
     </Screen>
   )
-
 })
 
 const $root: ViewStyle = {

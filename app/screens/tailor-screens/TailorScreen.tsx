@@ -47,7 +47,7 @@ interface DashboardStats {
   upcomingDeadlines: number
 }
 
-interface TailorScreenProps extends AppStackScreenProps<"Home"> {}
+interface TailorScreenProps extends AppStackScreenProps<"Tailor"> {}
 
 const getGreeting = () => {
   const currentHour = new Date().getHours()
@@ -169,19 +169,19 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
   const filteredOrders =
     activeTab === "urgent"
       ? orders.filter(
-        (order) =>
-          order.priority === "high" ||
-          new Date(order.dueDate) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      )
+          (order) =>
+            order.priority === "high" ||
+            new Date(order.dueDate) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        )
       : orders
 
   // Dashboard stats cards
   const renderStatsCard = ({
-                             title,
-                             value,
-                             icon,
-                             color,
-                           }: {
+    title,
+    value,
+    icon,
+    color,
+  }: {
     title: string
     value: number
     icon: string
@@ -202,8 +202,8 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
 
   // Enhanced quick action card
   const renderQuickAction = ({
-                               item,
-                             }: {
+    item,
+  }: {
     item: { title: string; icon: string; color: string; onPress: () => void }
   }) => (
     <TouchableOpacity

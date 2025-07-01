@@ -1,19 +1,16 @@
 import { FC } from "react"
-import { observer } from "mobx-react-lite" 
+import { observer } from "mobx-react-lite"
 import { ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text } from "@/components"
 // import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "@/models" 
+// import { useStores } from "@/models"
 
 interface InvoicesScreenProps extends AppStackScreenProps<"Invoices"> {}
 
-
 export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function InvoicesScreen() {
-  
   // Pull in one of our MST stores
   // const { someStore, anotherStore } = useStores()
-  
 
   // Pull in navigation via hook
   // const navigation = useNavigation()
@@ -22,7 +19,6 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
       <Text text="invoices" />
     </Screen>
   )
-
 })
 
 const $root: ViewStyle = {
