@@ -10,6 +10,11 @@ import {
   darkTheme,
 } from "@/theme"
 import * as SystemUI from "expo-system-ui"
+import { MMKV } from "react-native-mmkv"
+
+// Initialize MMKV storage for theme persistence
+const storage = new MMKV()
+const THEME_STORAGE_KEY = "app-theme-preference"
 
 type ThemeContextType = {
   themeScheme: ThemeContexts
@@ -33,10 +38,26 @@ const setImperativeTheming = (theme: Theme) => {
 
 export const useThemeProvider = (initialTheme: ThemeContexts = undefined) => {
   const colorScheme = useColorScheme()
-  const [overrideTheme, setTheme] = useState<ThemeContexts>(initialTheme)
+  
+  // Load saved theme preference from storage on initialization
+  const [overrideTheme, setTheme] = useState<ThemeContexts>(() => {
+    if (initialTheme) return initialTheme
+    try {
+      const savedTheme = storage.getString(THEME_STORAGE_KEY) as ThemeContexts
+      return savedTheme || undefined
+    } catch {
+      return undefined
+    }
+  })
 
   const setThemeContextOverride = useCallback((newTheme: ThemeContexts) => {
     setTheme(newTheme)
+    // Persist theme preference to storage
+    if (newTheme) {
+      storage.set(THEME_STORAGE_KEY, newTheme)
+    } else {
+      storage.delete(THEME_STORAGE_KEY)
+    }
   }, [])
 
   const themeScheme = overrideTheme || colorScheme || "light"

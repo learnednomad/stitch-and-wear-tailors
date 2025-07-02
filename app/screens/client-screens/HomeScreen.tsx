@@ -1,17 +1,10 @@
 import React, { FC } from "react"
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-  ImageStyle,
-} from "react-native"
+import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle, ImageStyle } from "react-native"
+import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon, AutoImage } from "app/components"
+import { Button, Screen, Icon, AutoImage, Text, ThemeToggle } from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
+import { useAppTheme } from "app/utils/useAppTheme"
 import { colors, spacing } from "app/theme"
 
 interface Measurement {
@@ -47,9 +40,10 @@ const getGreeting = () => {
   return currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening"
 }
 
-export const HomeScreen: FC<ClientPortalScreenProps> = () => {
+export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
+  const { theme } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const [greeting, setGreeting] = React.useState(getGreeting())
+  const [greeting] = React.useState(getGreeting())
 
   // Dummy data
   const measurements: Measurement[] = [
@@ -98,16 +92,16 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
     switch (status) {
       case "Ready":
       case "Delivered":
-        return colors.palette.success500
+        return theme.colors.palette.success500
       case "Sewing":
       case "Cutting":
       case "Finishing":
-        return colors.palette.primary500
+        return theme.colors.palette.primary500
       case "Measuring":
       case "Fabric Selection":
-        return colors.palette.warning500
+        return theme.colors.palette.warning500
       default:
-        return colors.palette.neutral600
+        return theme.colors.palette.neutral600
     }
   }
 
@@ -124,7 +118,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
       accessibilityRole="button"
     >
       <View style={$quickActionIconContainer}>
-        <Icon icon={item.icon} size={24} color={colors.palette.primary600} />
+        <Icon icon={item.icon} size={24} color={theme.colors.palette.primary600} />
       </View>
       <Text style={$quickActionTitle} text={item.title} />
       <Text style={$quickActionSubtitle}>{item.subtitle}</Text>
@@ -180,10 +174,10 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
 
   return (
     <Screen
-      backgroundColor={colors.palette.neutral100}
+      backgroundColor={theme.colors.background}
       safeAreaEdges={["top"]}
       preset="auto"
-      statusBarStyle="dark"
+      statusBarStyle={theme.isDark ? "light" : "dark"}
     >
       <View style={$container}>
         {/* Header */}
@@ -208,27 +202,30 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
                 Client Name
               </Text>
             </View>
-            <TouchableOpacity
-              style={$notificationIcon}
-              onPress={() => console.log("Navigate to Notifications")}
-              accessible
-              accessibilityLabel="Notifications"
-            >
-              <Icon icon="bell" size={25} color={colors.palette.neutral800} />
-              {unreadNotifications > 0 && (
-                <View style={$notificationBadge}>
-                  <Text style={$notificationBadgeText}>
-                    {unreadNotifications > 99 ? "99+" : unreadNotifications}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            <View style={$headerActions}>
+              <ThemeToggle size={25} style={$themeToggle} />
+              <TouchableOpacity
+                style={$notificationIcon}
+                onPress={() => console.log("Navigate to Notifications")}
+                accessible
+                accessibilityLabel="Notifications"
+              >
+                <Icon icon="bell" size={25} color={theme.colors.palette.neutral800} />
+                {unreadNotifications > 0 && (
+                  <View style={$notificationBadge}>
+                    <Text style={$notificationBadgeText}>
+                      {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
         {/* Welcome Card */}
         <View style={$welcomeCard}>
-          <Text style={$welcomeTitle} tx="clientPortal.welcomeTitle" />
+          <Text style={$welcomeTitle}>Welcome Back!</Text>
           <Text style={$welcomeSubtitle}>{orders.length} active orders in progress</Text>
         </View>
 
@@ -242,7 +239,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
         {/* Quick Actions */}
         <View style={$section}>
           <View style={$sectionHeader}>
-            <Text style={$sectionTitle} tx="clientPortal.quickActions" />
+            <Text style={$sectionTitle}>Quick Actions</Text>
           </View>
           <FlatList
             data={quickActions}
@@ -260,13 +257,13 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
         {/* Recent Orders */}
         <View style={$section}>
           <View style={$sectionHeader}>
-            <Text style={$sectionTitle} tx="clientPortal.recentOrders" />
+            <Text style={$sectionTitle}>Recent Orders</Text>
             <TouchableOpacity
               onPress={() => console.log("Navigate to OrderTracking")}
               accessible
               accessibilityLabel="View all orders"
             >
-              <Text style={$viewAllText} tx="clientPortal.viewAll" />
+              <Text style={$viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
           <FlatList
@@ -285,13 +282,13 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
         {/* Recent Measurements */}
         <View style={$section}>
           <View style={$sectionHeader}>
-            <Text style={$sectionTitle} tx="clientPortal.recentMeasurements" />
+            <Text style={$sectionTitle}>Recent Measurements</Text>
             <TouchableOpacity
               onPress={() => console.log("Navigate to Measurement List")}
               accessible
               accessibilityLabel="View all measurements"
             >
-              <Text style={$viewAllText} tx="clientPortal.viewAll" />
+              <Text style={$viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
           {measurements.map((item) => (
@@ -310,7 +307,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
                     {item.category} • {item.style}
                   </Text>
                 </View>
-                <Icon icon="chevron-right" size={20} color={colors.palette.neutral500} />
+                <Icon icon="caretRight" size={20} color={theme.colors.palette.neutral500} />
               </View>
               <View style={$measurementDetails}>
                 <View style={$measurementItem}>
@@ -345,12 +342,9 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
       </View>
     </Screen>
   )
-}
+})
 
 // Styles
-const $root: ViewStyle = {
-  flex: 1,
-}
 
 const $container: ViewStyle = {
   flex: 1,
@@ -402,6 +396,15 @@ const $nameText: TextStyle = {
   fontSize: 22,
   fontWeight: "600",
   color: colors.palette.neutral900,
+}
+
+const $headerActions: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+}
+
+const $themeToggle: ViewStyle = {
+  marginRight: spacing.xs,
 }
 
 const $notificationIcon: ViewStyle = {
@@ -464,7 +467,7 @@ const $offlineBanner: ViewStyle = {
 
 const $offlineText: TextStyle = {
   fontSize: 14,
-  color: colors.palette.warning800,
+  color: colors.palette.neutral300,
   textAlign: "center",
 }
 
