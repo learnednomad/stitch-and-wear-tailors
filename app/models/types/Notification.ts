@@ -2,20 +2,20 @@
  * Notification Model - Push notifications and user preferences
  */
 
-export type NotificationType = 
-  | 'order_update'
-  | 'appointment_reminder'
-  | 'payment_due'
-  | 'measurement_required'
-  | 'fitting_scheduled'
-  | 'order_completed'
-  | 'promotional'
-  | 'system_maintenance'
-  | 'account_update'
+export type NotificationType =
+  | "order_update"
+  | "appointment_reminder"
+  | "payment_due"
+  | "measurement_required"
+  | "fitting_scheduled"
+  | "order_completed"
+  | "promotional"
+  | "system_maintenance"
+  | "account_update"
 
-export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent'
-export type NotificationChannel = 'app' | 'email' | 'sms' | 'push'
-export type NotificationStatus = 'pending' | 'sent' | 'delivered' | 'read' | 'failed'
+export type NotificationPriority = "low" | "normal" | "high" | "urgent"
+export type NotificationChannel = "app" | "email" | "sms" | "push"
+export type NotificationStatus = "pending" | "sent" | "delivered" | "read" | "failed"
 
 export interface NotificationAction {
   id: string
@@ -72,7 +72,7 @@ export interface CreateNotificationInput {
   title: string
   message: string
   imageUrl?: string
-  actions?: Omit<NotificationAction, 'id'>[]
+  actions?: Omit<NotificationAction, "id">[]
   data?: NotificationData
   expiresAt?: string
   scheduledFor?: string
@@ -97,7 +97,7 @@ export interface NotificationPreferences {
       channels: NotificationChannel[]
       quietHours?: {
         start: string // HH:mm format
-        end: string   // HH:mm format
+        end: string // HH:mm format
         timezone: string
       }
     }

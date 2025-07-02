@@ -36,10 +36,10 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     if (result.ok) {
       return { success: true, data: result.data?.success || false }
     }
-    return { 
-      success: false, 
-      problem: { kind: result.problem || "unknown" }, 
-      message: "Appwrite connection failed" 
+    return {
+      success: false,
+      problem: { kind: result.problem || "unknown" },
+      message: "Appwrite connection failed",
     }
   }
 
@@ -68,8 +68,11 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     }
 
     // Use Appwrite authentication
-    const sessionResult = await this.appwriteAdapter.createSession(credentials.email, credentials.password)
-    
+    const sessionResult = await this.appwriteAdapter.createSession(
+      credentials.email,
+      credentials.password,
+    )
+
     if (!sessionResult.ok) {
       return {
         success: false,
@@ -80,7 +83,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
 
     // Get user profile after successful login
     const userResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!userResult.ok) {
       return {
         success: false,
@@ -124,7 +127,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     const accountResult = await this.appwriteAdapter.createAccount(
       userData.email,
       userData.password,
-      userData.profile.name
+      userData.profile.name,
     )
 
     if (!accountResult.ok) {
@@ -146,7 +149,10 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     }
 
     // Create session after registration
-    const sessionResult = await this.appwriteAdapter.createSession(userData.email, userData.password)
+    const sessionResult = await this.appwriteAdapter.createSession(
+      userData.email,
+      userData.password,
+    )
 
     if (!sessionResult.ok) {
       return {
@@ -180,7 +186,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
    */
   async logout(): Promise<ServiceResult<void>> {
     const result = await this.appwriteAdapter.deleteSession()
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -203,7 +209,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
   async refreshToken(): Promise<ServiceResult<{ accessToken: string; refreshToken: string }>> {
     // Get current session from Appwrite
     const sessionResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!sessionResult.ok) {
       return {
         success: false,
@@ -238,7 +244,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
 
     // For Appwrite, verify by checking current session
     const sessionResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     return {
       success: true,
       data: sessionResult.ok,
@@ -258,7 +264,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     }
 
     const result = await this.appwriteAdapter.createPasswordRecovery(email)
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -285,7 +291,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     // For Appwrite, we need userId and secret from the recovery URL
     // This is typically parsed from the reset link parameters
     const result = await this.appwriteAdapter.updatePasswordRecovery(token, newPassword)
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -313,7 +319,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     }
 
     const result = await this.appwriteAdapter.updatePassword(newPassword, currentPassword)
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -333,7 +339,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     if (authCheck) return authCheck
 
     const userResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!userResult.ok) {
       return {
         success: false,
@@ -364,7 +370,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     if (authCheck) return authCheck
 
     const result = await this.appwriteAdapter.deleteAllSessions()
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -389,7 +395,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     if (authCheck) return authCheck
 
     const result = await this.appwriteAdapter.createEmailVerification()
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -416,7 +422,7 @@ export class AuthApiService extends BaseApiService implements IAuthApiService {
     // For Appwrite, we need userId and secret from the verification URL
     // This is typically parsed from the verification link parameters
     const result = await this.appwriteAdapter.updateEmailVerification(token)
-    
+
     if (!result.ok) {
       return {
         success: false,

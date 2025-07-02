@@ -124,10 +124,10 @@ export const MockScenarios = {
     successRate: 0.9,
     networkDelay: { min: 100, max: 500 },
     errorDistribution: {
-      "SERVER_ERROR": 0.3,
-      "NETWORK_ERROR": 0.2,
-      "TIMEOUT_ERROR": 0.2,
-      "CLIENT_ERROR": 0.3,
+      SERVER_ERROR: 0.3,
+      NETWORK_ERROR: 0.2,
+      TIMEOUT_ERROR: 0.2,
+      CLIENT_ERROR: 0.3,
     },
   },
 
@@ -138,9 +138,9 @@ export const MockScenarios = {
     successRate: 0.8,
     networkDelay: { min: 1000, max: 3000 },
     errorDistribution: {
-      "TIMEOUT_ERROR": 0.5,
-      "NETWORK_ERROR": 0.3,
-      "SERVER_ERROR": 0.2,
+      TIMEOUT_ERROR: 0.5,
+      NETWORK_ERROR: 0.3,
+      SERVER_ERROR: 0.2,
     },
   },
 
@@ -151,9 +151,9 @@ export const MockScenarios = {
     successRate: 0.6,
     networkDelay: { min: 200, max: 2000 },
     errorDistribution: {
-      "NETWORK_ERROR": 0.4,
-      "TIMEOUT_ERROR": 0.3,
-      "SERVER_ERROR": 0.3,
+      NETWORK_ERROR: 0.4,
+      TIMEOUT_ERROR: 0.3,
+      SERVER_ERROR: 0.3,
     },
   },
 
@@ -164,8 +164,8 @@ export const MockScenarios = {
     successRate: 0.1,
     networkDelay: { min: 100, max: 300 },
     errorDistribution: {
-      "SERVER_ERROR": 0.8,
-      "FORBIDDEN": 0.2,
+      SERVER_ERROR: 0.8,
+      FORBIDDEN: 0.2,
     },
   },
 
@@ -176,9 +176,9 @@ export const MockScenarios = {
     successRate: 0.7,
     networkDelay: { min: 100, max: 500 },
     errorDistribution: {
-      "UNAUTHORIZED": 0.6,
-      "FORBIDDEN": 0.2,
-      "SERVER_ERROR": 0.2,
+      UNAUTHORIZED: 0.6,
+      FORBIDDEN: 0.2,
+      SERVER_ERROR: 0.2,
     },
   },
 }
@@ -252,14 +252,12 @@ export class MockController {
       forceSuccess?: boolean
       forceError?: GeneralApiProblem
       customDelay?: number
-    } = {}
+    } = {},
   ): Promise<ApiResponse<T>> {
     // Apply delay
-    const delay = options.customDelay ?? 
-                 this.customDelay || 
-                 this.getRandomDelay()
-    
-    await new Promise(resolve => setTimeout(resolve, delay))
+    const delay = options.customDelay ?? (this.customDelay || this.getRandomDelay())
+
+    await new Promise((resolve) => setTimeout(resolve, delay))
 
     // Force specific responses
     if (options.forceSuccess) {
@@ -271,7 +269,7 @@ export class MockController {
     }
 
     // Determine if should return error
-    const errorRate = this.customErrorRate || (1 - this.getScenario().successRate)
+    const errorRate = this.customErrorRate || 1 - this.getScenario().successRate
     const shouldError = Math.random() < errorRate
 
     if (!shouldError) {
@@ -316,7 +314,7 @@ export class MockController {
     const { errorDistribution } = this.getScenario()
     const errorTypes = Object.keys(errorDistribution) as GeneralApiProblem[]
     const weights = Object.values(errorDistribution)
-    
+
     let random = Math.random()
     for (let i = 0; i < errorTypes.length; i++) {
       random -= weights[i]
@@ -324,7 +322,7 @@ export class MockController {
         return errorTypes[i]
       }
     }
-    
+
     return errorTypes[0] // Fallback
   }
 }
@@ -342,54 +340,66 @@ export const MockHelpers = {
    * Test authentication flows
    */
   simulateAuthFlow: {
-    validLogin: () => mockController.generateResponse({
-      user: { id: "user_123", email: "test@example.com", role: "client" },
-      accessToken: "mock_token",
-      refreshToken: "mock_refresh",
-    }, { forceSuccess: true }),
+    validLogin: () =>
+      mockController.generateResponse(
+        {
+          user: { id: "user_123", email: "test@example.com", role: "client" },
+          accessToken: "mock_token",
+          refreshToken: "mock_refresh",
+        },
+        { forceSuccess: true },
+      ),
 
-    invalidCredentials: () => mockController.generateResponse(null, {
-      forceError: "UNAUTHORIZED",
-    }),
+    invalidCredentials: () =>
+      mockController.generateResponse(null, {
+        forceError: "UNAUTHORIZED",
+      }),
 
-    expiredToken: () => mockController.generateResponse(null, {
-      forceError: "UNAUTHORIZED",
-    }),
+    expiredToken: () =>
+      mockController.generateResponse(null, {
+        forceError: "UNAUTHORIZED",
+      }),
   },
 
   /**
    * Test network conditions
    */
   simulateNetwork: {
-    slow: (data: any) => mockController.generateResponse(data, {
-      customDelay: 2000,
-    }),
+    slow: (data: any) =>
+      mockController.generateResponse(data, {
+        customDelay: 2000,
+      }),
 
-    timeout: (data: any) => mockController.generateResponse(data, {
-      forceError: "TIMEOUT_ERROR",
-    }),
+    timeout: (data: any) =>
+      mockController.generateResponse(data, {
+        forceError: "TIMEOUT_ERROR",
+      }),
 
-    offline: (data: any) => mockController.generateResponse(data, {
-      forceError: "NETWORK_ERROR",
-    }),
+    offline: (data: any) =>
+      mockController.generateResponse(data, {
+        forceError: "NETWORK_ERROR",
+      }),
   },
 
   /**
    * Test error handling
    */
   simulateErrors: {
-    serverError: (data: any) => mockController.generateResponse(data, {
-      forceError: "SERVER_ERROR",
-    }),
+    serverError: (data: any) =>
+      mockController.generateResponse(data, {
+        forceError: "SERVER_ERROR",
+      }),
 
-    validationError: () => MockResponseTemplates.validationError({
-      email: ["Email is required"],
-      password: ["Password must be at least 8 characters"],
-    }),
+    validationError: () =>
+      MockResponseTemplates.validationError({
+        email: ["Email is required"],
+        password: ["Password must be at least 8 characters"],
+      }),
 
-    notFound: (data: any) => mockController.generateResponse(data, {
-      forceError: "NOT_FOUND",
-    }),
+    notFound: (data: any) =>
+      mockController.generateResponse(data, {
+        forceError: "NOT_FOUND",
+      }),
   },
 
   /**
@@ -399,14 +409,17 @@ export const MockHelpers = {
     const start = (page - 1) * limit
     const end = start + limit
     const paginatedItems = items.slice(start, end)
-    
-    return mockController.generateResponse({
-      data: paginatedItems,
-      total: items.length,
-      page,
-      limit,
-      hasMore: end < items.length,
-    }, { forceSuccess: true })
+
+    return mockController.generateResponse(
+      {
+        data: paginatedItems,
+        total: items.length,
+        page,
+        limit,
+        hasMore: end < items.length,
+      },
+      { forceSuccess: true },
+    )
   },
 }
 
@@ -434,20 +447,22 @@ export const MockDevUtils = {
     if (!__DEV__) return
 
     console.log("🧪 Testing mock error scenarios...")
-    
+
     const scenarios = Object.keys(MockScenarios) as Array<keyof typeof MockScenarios>
-    
+
     for (const scenario of scenarios) {
       mockController.setScenario(scenario)
       console.log(`Testing scenario: ${scenario}`)
-      
+
       // Test a few requests
       for (let i = 0; i < 5; i++) {
         const response = await mockController.generateResponse({ test: true })
-        console.log(`  Request ${i + 1}: ${response.ok ? "✅ Success" : "❌ Error"} (${response.problem || "OK"})`)
+        console.log(
+          `  Request ${i + 1}: ${response.ok ? "✅ Success" : "❌ Error"} (${response.problem || "OK"})`,
+        )
       }
     }
-    
+
     mockController.reset()
   },
 
@@ -458,17 +473,19 @@ export const MockDevUtils = {
     if (!__DEV__) return
 
     console.log("⚡ Benchmarking mock performance...")
-    
+
     const iterations = 100
     const start = Date.now()
-    
+
     await Promise.all(
-      Array.from({ length: iterations }, () => 
-        mockController.generateResponse({ benchmark: true }, { customDelay: 0 })
-      )
+      Array.from({ length: iterations }, () =>
+        mockController.generateResponse({ benchmark: true }, { customDelay: 0 }),
+      ),
     )
-    
+
     const duration = Date.now() - start
-    console.log(`Completed ${iterations} mock requests in ${duration}ms (${(duration / iterations).toFixed(2)}ms avg)`)
+    console.log(
+      `Completed ${iterations} mock requests in ${duration}ms (${(duration / iterations).toFixed(2)}ms avg)`,
+    )
   },
 }

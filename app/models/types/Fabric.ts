@@ -2,10 +2,26 @@
  * Fabric Model - Catalog items, inventory management, and pricing
  */
 
-export type FabricCategory = 'cotton' | 'silk' | 'wool' | 'linen' | 'polyester' | 'denim' | 'velvet' | 'leather' | 'synthetic'
-export type FabricWeight = 'lightweight' | 'medium' | 'heavyweight'
-export type FabricPattern = 'solid' | 'striped' | 'checkered' | 'floral' | 'geometric' | 'abstract' | 'paisley'
-export type FabricAvailability = 'in_stock' | 'low_stock' | 'out_of_stock' | 'pre_order'
+export type FabricCategory =
+  | "cotton"
+  | "silk"
+  | "wool"
+  | "linen"
+  | "polyester"
+  | "denim"
+  | "velvet"
+  | "leather"
+  | "synthetic"
+export type FabricWeight = "lightweight" | "medium" | "heavyweight"
+export type FabricPattern =
+  | "solid"
+  | "striped"
+  | "checkered"
+  | "floral"
+  | "geometric"
+  | "abstract"
+  | "paisley"
+export type FabricAvailability = "in_stock" | "low_stock" | "out_of_stock" | "pre_order"
 
 export interface FabricProperties {
   weight: FabricWeight
@@ -13,7 +29,7 @@ export interface FabricProperties {
   stretch: boolean
   breathable: boolean
   washable: boolean
-  ironingTemp?: 'low' | 'medium' | 'high'
+  ironingTemp?: "low" | "medium" | "high"
   dryCleanOnly: boolean
   fadeResistant: boolean
   wrinkleResistant: boolean
@@ -31,7 +47,7 @@ export interface FabricInventory {
   totalQuantity: number
   availableQuantity: number
   reservedQuantity: number
-  unit: 'yards' | 'meters'
+  unit: "yards" | "meters"
   minimumStock: number
   reorderPoint: number
 }
@@ -92,7 +108,7 @@ export interface CreateFabricInput {
   material: string
   properties: FabricProperties
   colors: FabricColors
-  inventory: Omit<FabricInventory, 'reservedQuantity'>
+  inventory: Omit<FabricInventory, "reservedQuantity">
   pricing: FabricPricing
   supplier: FabricSupplier
   images?: string[]

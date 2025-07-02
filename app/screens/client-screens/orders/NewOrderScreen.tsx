@@ -47,7 +47,7 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
   const navigation = useNavigation()
   const { orderStore, fabricStore } = useStores()
   const { user } = useAuth()
-  
+
   const [selectedStyle, setSelectedStyle] = useState<string>("")
   const [selectedFabric, setSelectedFabric] = useState<string>("")
   const [currentStep, setCurrentStep] = useState<"style" | "fabric" | "review">("style")
@@ -150,18 +150,15 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
     }
   }
 
-  const selectedStyleData = styles.find(s => s.id === selectedStyle)
-  const selectedFabricData = fabrics.find(f => f.id === selectedFabric)
+  const selectedStyleData = styles.find((s) => s.id === selectedStyle)
+  const selectedFabricData = fabrics.find((f) => f.id === selectedFabric)
 
-  const totalAmount = (selectedStyleData?.baseFee || 0) + 
-    ((selectedFabricData?.pricePerYard || 0) * 3) // Assuming 3 yards needed
+  const totalAmount =
+    (selectedStyleData?.baseFee || 0) + (selectedFabricData?.pricePerYard || 0) * 3 // Assuming 3 yards needed
 
   const renderStyleCard = ({ item }: { item: Style }) => (
     <TouchableOpacity
-      style={[
-        $styleCard,
-        selectedStyle === item.id && $selectedCard,
-      ]}
+      style={[$styleCard, selectedStyle === item.id && $selectedCard]}
       onPress={() => setSelectedStyle(item.id)}
       accessible
       accessibilityLabel={`Select ${item.name}`}
@@ -179,12 +176,7 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
                 { backgroundColor: getComplexityColor(item.complexity) + "20" },
               ]}
             >
-              <Text
-                style={[
-                  $complexityText,
-                  { color: getComplexityColor(item.complexity) },
-                ]}
-              >
+              <Text style={[$complexityText, { color: getComplexityColor(item.complexity) }]}>
                 {item.complexity}
               </Text>
             </View>
@@ -193,12 +185,7 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
         </View>
         <View style={$priceContainer}>
           <Text style={$priceText}>₦{item.baseFee.toLocaleString()}</Text>
-          <View
-            style={[
-              $radioButton,
-              selectedStyle === item.id && $radioButtonSelected,
-            ]}
-          >
+          <View style={[$radioButton, selectedStyle === item.id && $radioButtonSelected]}>
             {selectedStyle === item.id && <View style={$radioButtonInner} />}
           </View>
         </View>
@@ -208,10 +195,7 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
 
   const renderFabricCard = ({ item }: { item: Fabric }) => (
     <TouchableOpacity
-      style={[
-        $fabricCard,
-        selectedFabric === item.id && $selectedCard,
-      ]}
+      style={[$fabricCard, selectedFabric === item.id && $selectedCard]}
       onPress={() => setSelectedFabric(item.id)}
       accessible
       accessibilityLabel={`Select ${item.name}`}
@@ -229,12 +213,7 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
         </View>
         <View style={$priceContainer}>
           <Text style={$pricePerYard}>₦{item.pricePerYard.toLocaleString()}/yd</Text>
-          <View
-            style={[
-              $radioButton,
-              selectedFabric === item.id && $radioButtonSelected,
-            ]}
-          >
+          <View style={[$radioButton, selectedFabric === item.id && $radioButtonSelected]}>
             {selectedFabric === item.id && <View style={$radioButtonInner} />}
           </View>
         </View>
@@ -260,23 +239,19 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
 
   const handleCreateOrder = () => {
     // Navigate to measurement screen or create order
-    Alert.alert(
-      "Create Order",
-      "Proceed to measurement collection?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Continue",
-          onPress: () => {
-            navigation.navigate("Measurement" as never, {
-              styleId: selectedStyle,
-              fabricId: selectedFabric,
-              amount: totalAmount,
-            })
-          },
+    Alert.alert("Create Order", "Proceed to measurement collection?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Continue",
+        onPress: () => {
+          navigation.navigate("Measurement" as never, {
+            styleId: selectedStyle,
+            fabricId: selectedFabric,
+            amount: totalAmount,
+          })
         },
-      ],
-    )
+      },
+    ])
   }
 
   const renderStepContent = () => {
@@ -322,7 +297,7 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
             <Text style={$stepDescription}>
               Confirm your selections before proceeding to measurements
             </Text>
-            
+
             <View style={$reviewCard}>
               <Text style={$reviewSectionTitle}>Style</Text>
               <View style={$reviewItem}>
@@ -336,7 +311,9 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
               <Text style={$reviewSectionTitle}>Fabric</Text>
               <View style={$reviewItem}>
                 <Text style={$reviewItemName}>{selectedFabricData?.name}</Text>
-                <Text style={$reviewItemPrice}>₦{((selectedFabricData?.pricePerYard || 0) * 3).toLocaleString()}</Text>
+                <Text style={$reviewItemPrice}>
+                  ₦{((selectedFabricData?.pricePerYard || 0) * 3).toLocaleString()}
+                </Text>
               </View>
               <Text style={$reviewItemDescription}>
                 {selectedFabricData?.description} • 3 yards estimated

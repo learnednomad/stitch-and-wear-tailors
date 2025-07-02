@@ -1,11 +1,13 @@
-import { FC, useState } from "react"
+import { FC, useState, useMemo } from "react"
 import { observer } from "mobx-react-lite"
 import { ViewStyle, View, Alert, ScrollView } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
-import { Screen, Text, TextField, Button } from "@/components"
+import { Screen, Text, TextField, Button, PasswordStrengthIndicator } from "@/components"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
 import { getAppwriteAuthAdapter } from "@/services/appwrite/appwrite-auth-adapter"
+import { validateEmail } from "@/utils/emailValidation"
+import { validatePassword, validatePasswordConfirmation } from "@/utils/passwordValidation"
 import { spacing } from "@/theme"
 
 interface SignUpScreenProps extends AppStackScreenProps<"SignUp"> {}
@@ -20,21 +22,43 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
   const [confirmPassword, setConfirmPassword] = useState("")
   const [userType, setUserType] = useState<"client" | "tailor">("client")
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Validation states
+  const [showEmailValidation, setShowEmailValidation] = useState(false)
+  const [showPasswordValidation, setShowPasswordValidation] = useState(false)
+
+  // Real-time validation
+  const emailValidation = useMemo(() => validateEmail(email), [email])
+  const passwordValidation = useMemo(() => validatePassword(password), [password])
+  const confirmPasswordValidation = useMemo(() => 
+    validatePasswordConfirmation(password, confirmPassword), [password, confirmPassword]
+  )
 
   const handleSignUp = async () => {
-    // Validation
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
-      Alert.alert("Error", "Please fill in all required fields")
-      return
+    // Show validation feedback
+    setShowEmailValidation(true)
+    setShowPasswordValidation(true)
+
+    // Comprehensive validation
+    const validationErrors: string[] = []
+
+    if (!firstName.trim()) validationErrors.push("First name is required")
+    if (!lastName.trim()) validationErrors.push("Last name is required")
+    
+    if (!emailValidation.isValid) {
+      validationErrors.push(...emailValidation.errors)
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match")
-      return
+    if (!passwordValidation.isValid) {
+      validationErrors.push(...passwordValidation.errors)
     }
 
-    if (password.length < 8) {
-      Alert.alert("Error", "Password must be at least 8 characters long")
+    if (!confirmPasswordValidation.isValid) {
+      validationErrors.push(confirmPasswordValidation.error || "Password confirmation error")
+    }
+
+    if (validationErrors.length > 0) {
+      Alert.alert("Validation Error", validationErrors.join("\n"))
       return
     }
 
@@ -45,14 +69,14 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
     try {
       const authAdapter = getAppwriteAuthAdapter()
       const fullName = `${firstName.trim()} ${lastName.trim()}`
-      
+
       // Register user with Appwrite
       const result = await authAdapter.register(email.trim(), password, fullName)
-      
+
       if (result.success && result.data) {
-        // Auto-login after successful registration
+        // Auto-login after successful registration to get user session
         const loginResult = await authAdapter.login(email.trim(), password)
-        
+
         if (loginResult.success && loginResult.data) {
           // Transform Appwrite user data to our User type
           const userData = {
@@ -63,8 +87,8 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
             profile: {
               firstName: firstName.trim(),
               lastName: lastName.trim(),
-              phone: null,
-              avatar: null,
+              phone: "",
+              avatar: "",
             },
             preferences: {
               notifications: {
@@ -78,8 +102,8 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
             },
             emailVerified: loginResult.data.user.emailVerification,
             lastLoginAt: new Date().toISOString(),
-            createdAt: loginResult.data.user.registration,
-            updatedAt: loginResult.data.user.accessedAt,
+            createdAt: new Date(loginResult.data.user.registration).toISOString(),
+            updatedAt: new Date(loginResult.data.user.accessedAt).toISOString(),
           }
 
           // Set user and session in auth store
@@ -90,24 +114,32 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
             expiresAt: loginResult.data.session.expire,
           })
 
-          Alert.alert(
-            "Success", 
-            "Account created successfully!", 
-            [{
-              text: "OK",
-              onPress: () => {
-                // Navigate based on user type
-                if (userType === "tailor") {
-                  navigation.navigate("TailorTab" as any)
-                } else {
-                  navigation.navigate("ClientTab" as any)
-                }
-              }
-            }]
-          )
+          // Send verification email
+          const verificationResult = await authAdapter.sendEmailVerification()
+          
+          if (verificationResult.success) {
+            Alert.alert(
+              "Account Created!",
+              "Please check your email to verify your account before you can access the app.",
+              [
+                {
+                  text: "OK",
+                  onPress: () => navigation.navigate("VerifyEmail" as any),
+                },
+              ]
+            )
+          } else {
+            Alert.alert(
+              "Account Created",
+              "Your account was created but we couldn't send the verification email. Please try signing in.",
+              [
+                { text: "OK", onPress: () => navigation.navigate("SignIn" as any) },
+              ]
+            )
+          }
         } else {
-          Alert.alert("Success", "Account created! Please sign in.", [
-            { text: "OK", onPress: () => navigation.navigate("SignIn" as any) }
+          Alert.alert("Success", "Account created! Please sign in to verify your email.", [
+            { text: "OK", onPress: () => navigation.navigate("SignIn" as any) },
           ])
         }
       } else {
@@ -132,11 +164,9 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
       <ScrollView style={$scrollView} contentContainerStyle={$container}>
         <Text preset="heading" text="Create Account" style={$title} />
         <Text text="Join Stitch & Wear Tailors" style={$subtitle} />
-        
-        {authStore.error && (
-          <Text text={authStore.error} style={$errorText} />
-        )}
-        
+
+        {authStore.error && <Text text={authStore.error} style={$errorText} />}
+
         <TextField
           value={firstName}
           onChangeText={setFirstName}
@@ -145,7 +175,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
           autoCapitalize="words"
           style={$textField}
         />
-        
+
         <TextField
           value={lastName}
           onChangeText={setLastName}
@@ -154,36 +184,83 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
           autoCapitalize="words"
           style={$textField}
         />
-        
+
         <TextField
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text)
+            if (text.length > 0) setShowEmailValidation(true)
+          }}
           label="Email *"
           placeholder="Enter your email"
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
+          status={showEmailValidation && !emailValidation.isValid ? "error" : undefined}
+          helper={
+            showEmailValidation && !emailValidation.isValid 
+              ? emailValidation.errors.join(", ")
+              : showEmailValidation && emailValidation.suggestions.length > 0
+              ? emailValidation.suggestions[0]
+              : undefined
+          }
           style={$textField}
         />
         
+        {/* Email validation feedback */}
+        {showEmailValidation && emailValidation.warnings.length > 0 && (
+          <View style={$validationWarning}>
+            {emailValidation.warnings.map((warning, index) => (
+              <Text
+                key={index}
+                text={`⚠️ ${warning}`}
+                style={$warningText}
+              />
+            ))}
+          </View>
+        )}
+
         <TextField
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text)
+            if (text.length > 0) setShowPasswordValidation(true)
+          }}
           label="Password *"
-          placeholder="Enter your password (min 8 characters)"
+          placeholder="Enter a strong password"
           secureTextEntry
+          status={showPasswordValidation && !passwordValidation.isValid ? "error" : undefined}
           style={$textField}
         />
         
+        {/* Password strength indicator */}
+        {showPasswordValidation && (
+          <PasswordStrengthIndicator
+            password={password}
+            showCriteria={true}
+            showFeedback={false}
+            compact={false}
+            style={$passwordStrength}
+          />
+        )}
+
         <TextField
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           label="Confirm Password *"
           placeholder="Confirm your password"
           secureTextEntry
+          status={confirmPassword.length > 0 && !confirmPasswordValidation.isValid ? "error" : undefined}
+          helper={
+            confirmPassword.length > 0 && !confirmPasswordValidation.isValid
+              ? confirmPasswordValidation.error
+              : confirmPassword.length > 0 && confirmPasswordValidation.isValid
+              ? "✓ Passwords match"
+              : undefined
+          }
           style={$textField}
         />
-        
+
         <View style={$userTypeContainer}>
           <Text text="I am a:" style={$userTypeLabel} />
           <View style={$userTypeButtons}>
@@ -201,14 +278,14 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
             />
           </View>
         </View>
-        
+
         <Button
           text={isLoading ? "Creating Account..." : "Create Account"}
           onPress={handleSignUp}
           disabled={isLoading || authStore.isLoading}
           style={$signUpButton}
         />
-        
+
         <Button
           text="Already have an account? Sign In"
           preset="reversed"
@@ -277,4 +354,19 @@ const $signUpButton: ViewStyle = {
 
 const $signInButton: ViewStyle = {
   marginTop: spacing.sm,
+}
+
+const $validationWarning: ViewStyle = {
+  marginBottom: spacing.md,
+  paddingHorizontal: spacing.sm,
+}
+
+const $warningText: ViewStyle = {
+  fontSize: 13,
+  color: "#f59e0b", // amber-500
+  marginBottom: spacing.xs,
+}
+
+const $passwordStrength: ViewStyle = {
+  marginBottom: spacing.md,
 }

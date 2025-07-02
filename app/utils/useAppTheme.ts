@@ -38,7 +38,7 @@ const setImperativeTheming = (theme: Theme) => {
 
 export const useThemeProvider = (initialTheme: ThemeContexts = undefined) => {
   const colorScheme = useColorScheme()
-  
+
   // Load saved theme preference from storage on initialization
   const [overrideTheme, setTheme] = useState<ThemeContexts>(() => {
     if (initialTheme) return initialTheme

@@ -114,7 +114,14 @@ export interface Order extends Models.Document {
 
 export interface OrderStage extends Models.Document {
   orderId: string
-  stage: "received" | "measured" | "cutting" | "sewing" | "finishing" | "quality_check" | "completed"
+  stage:
+    | "received"
+    | "measured"
+    | "cutting"
+    | "sewing"
+    | "finishing"
+    | "quality_check"
+    | "completed"
   status: "pending" | "in_progress" | "completed" | "skipped"
   assignedTo?: string
   startedAt?: string
@@ -149,7 +156,15 @@ export interface OrderItem extends Models.Document {
 export interface StyleCatalog extends Models.Document {
   code: string
   name: string
-  category: "agbada" | "kaftan" | "plain_kaftan" | "senator" | "traditional" | "modern" | "western" | "custom"
+  category:
+    | "agbada"
+    | "kaftan"
+    | "plain_kaftan"
+    | "senator"
+    | "traditional"
+    | "modern"
+    | "western"
+    | "custom"
   description?: string
   basePrice: number
   estimatedHours?: number
@@ -201,7 +216,14 @@ export interface Payment extends Models.Document {
   invoiceId: string
   amount: number
   currency: string
-  method: "cash" | "credit_card" | "debit_card" | "bank_transfer" | "check" | "digital_wallet" | "other"
+  method:
+    | "cash"
+    | "credit_card"
+    | "debit_card"
+    | "bank_transfer"
+    | "check"
+    | "digital_wallet"
+    | "other"
   status: "pending" | "processing" | "completed" | "failed" | "refunded"
   transactionId?: string
   processorName?: string
@@ -220,7 +242,15 @@ export interface Payment extends Models.Document {
 
 export interface Expense extends Models.Document {
   locationId?: string
-  category: "fabric" | "labor" | "equipment" | "utilities" | "rent" | "marketing" | "supplies" | "other"
+  category:
+    | "fabric"
+    | "labor"
+    | "equipment"
+    | "utilities"
+    | "rent"
+    | "marketing"
+    | "supplies"
+    | "other"
   subcategory?: string
   description: string
   amount: number
@@ -405,7 +435,13 @@ export interface KPIMetric extends Models.Document {
 }
 
 export interface AIInsight extends Models.Document {
-  insightType: "revenue_optimization" | "operational_efficiency" | "client_satisfaction" | "inventory_management" | "growth_opportunity" | "risk_alert"
+  insightType:
+    | "revenue_optimization"
+    | "operational_efficiency"
+    | "client_satisfaction"
+    | "inventory_management"
+    | "growth_opportunity"
+    | "risk_alert"
   title: string
   summary: string
   analysis: string
@@ -434,7 +470,14 @@ export interface AuditLog extends Models.Document {
 }
 
 export interface SecurityEvent extends Models.Document {
-  eventType: "login_success" | "login_failure" | "password_reset" | "permission_change" | "suspicious_activity" | "data_export" | "api_limit_exceeded"
+  eventType:
+    | "login_success"
+    | "login_failure"
+    | "password_reset"
+    | "permission_change"
+    | "suspicious_activity"
+    | "data_export"
+    | "api_limit_exceeded"
   userId?: string
   ipAddress?: string
   userAgent?: string
@@ -473,68 +516,75 @@ export interface ReportHistory extends Models.Document {
 // HELPER TYPES
 // ==========================================
 
-export type StyleType = "agbada" | "kaftan" | "plain_kaftan" | "senator" | "traditional" | "modern" | "custom"
+export type StyleType =
+  | "agbada"
+  | "kaftan"
+  | "plain_kaftan"
+  | "senator"
+  | "traditional"
+  | "modern"
+  | "custom"
 
-export type GarmentType = 
-  | "shirt" 
-  | "pants" 
-  | "dress" 
-  | "suit" 
-  | "blazer" 
-  | "skirt" 
-  | "blouse" 
-  | "agbada" 
-  | "kaftan" 
-  | "plain_kaftan" 
-  | "senator" 
-  | "traditional" 
+export type GarmentType =
+  | "shirt"
+  | "pants"
+  | "dress"
+  | "suit"
+  | "blazer"
+  | "skirt"
+  | "blouse"
+  | "agbada"
+  | "kaftan"
+  | "plain_kaftan"
+  | "senator"
+  | "traditional"
   | "custom"
 
 export interface DatabaseCollections {
   // Core
   users: User
   sessions: Session
-  
+
   // Business
   businesses: Business
   locations: Location
-  
+
   // Orders
   orders: Order
   order_stages: OrderStage
   order_items: OrderItem
-  
+
   // Style Catalog
   styles_catalog: StyleCatalog
-  
+
   // Financial
   invoices: Invoice
   payments: Payment
   expenses: Expense
-  
+
   // Inventory
   inventory_items: InventoryItem
   inventory_locations: InventoryLocation
   inventory_transactions: InventoryTransaction
-  
+
   // CRM
   client_segments: ClientSegment
   client_segments_users: ClientSegmentUser
   loyalty_points: LoyaltyPoints
   loyalty_transactions: LoyaltyTransaction
-  
+
   // Communication
   communications: Communication
   notifications_queue: NotificationQueue
-  
+
   // Analytics
   kpi_metrics: KPIMetric
   ai_insights: AIInsight
-  
+
   // Audit
   audit_logs: AuditLog
   security_events: SecurityEvent
-  
+
   // Reporting
   scheduled_reports: ScheduledReport
   report_history: ReportHistory

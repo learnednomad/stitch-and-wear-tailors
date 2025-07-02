@@ -2,8 +2,8 @@
  * User Model - Authentication, roles, and profile data
  */
 
-export type UserRole = 'client' | 'tailor' | 'admin'
-export type UserStatus = 'active' | 'inactive' | 'suspended'
+export type UserRole = "client" | "tailor" | "admin"
+export type UserStatus = "active" | "inactive" | "suspended"
 
 export interface UserProfile {
   firstName: string
@@ -49,7 +49,7 @@ export interface User {
 export interface CreateUserInput {
   email: string
   role: UserRole
-  profile: Omit<UserProfile, 'avatar'>
+  profile: Omit<UserProfile, "avatar">
   preferences?: Partial<UserPreferences>
 }
 

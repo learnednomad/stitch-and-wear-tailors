@@ -118,7 +118,7 @@ export class AnalyticsManager {
 
   constructor(config: Partial<AnalyticsConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config }
-    
+
     if (this.config.enabled) {
       this.startAggregation()
     }
@@ -140,10 +140,11 @@ export class AnalyticsManager {
   }): void {
     if (!this.config.enabled) return
 
-    const { url, method, response, duration, userId, retryCount, cached, deduplicated, error } = request
+    const { url, method, response, duration, userId, retryCount, cached, deduplicated, error } =
+      request
 
     // Check if endpoint should be excluded
-    if (this.config.excludeEndpoints.some(pattern => url.includes(pattern))) {
+    if (this.config.excludeEndpoints.some((pattern) => url.includes(pattern))) {
       return
     }
 
@@ -191,7 +192,7 @@ export class AnalyticsManager {
    */
   getPerformanceMetrics(timeWindow?: number): PerformanceMetrics {
     const cutoff = timeWindow ? Date.now() - timeWindow : 0
-    const requests = this.requestHistory.filter(r => r.timestamp > cutoff)
+    const requests = this.requestHistory.filter((r) => r.timestamp > cutoff)
 
     if (requests.length === 0) {
       return {
@@ -209,8 +210,8 @@ export class AnalyticsManager {
       }
     }
 
-    const durations = requests.map(r => r.duration).sort((a, b) => a - b)
-    const successfulRequests = requests.filter(r => r.success).length
+    const durations = requests.map((r) => r.duration).sort((a, b) => a - b)
+    const successfulRequests = requests.filter((r) => r.success).length
     const failedRequests = requests.length - successfulRequests
 
     return {
@@ -233,11 +234,11 @@ export class AnalyticsManager {
    */
   getErrorMetrics(timeWindow?: number): ErrorMetrics[] {
     const cutoff = timeWindow ? Date.now() - timeWindow : 0
-    const requests = this.requestHistory.filter(r => r.timestamp > cutoff && !r.success)
+    const requests = this.requestHistory.filter((r) => r.timestamp > cutoff && !r.success)
 
     const errorGroups = new Map<string, RequestMetrics[]>()
-    
-    requests.forEach(request => {
+
+    requests.forEach((request) => {
       const errorKey = request.error || `HTTP_${request.status}`
       if (!errorGroups.has(errorKey)) {
         errorGroups.set(errorKey, [])
@@ -245,14 +246,15 @@ export class AnalyticsManager {
       errorGroups.get(errorKey)!.push(request)
     })
 
-    const totalRequests = this.requestHistory.filter(r => r.timestamp > cutoff).length
+    const totalRequests = this.requestHistory.filter((r) => r.timestamp > cutoff).length
 
     return Array.from(errorGroups.entries()).map(([errorType, errorRequests]) => ({
       errorType,
       count: errorRequests.length,
       percentage: totalRequests > 0 ? errorRequests.length / totalRequests : 0,
-      lastOccurrence: Math.max(...errorRequests.map(r => r.timestamp)),
-      averageResponseTime: errorRequests.reduce((sum, r) => sum + r.duration, 0) / errorRequests.length,
+      lastOccurrence: Math.max(...errorRequests.map((r) => r.timestamp)),
+      averageResponseTime:
+        errorRequests.reduce((sum, r) => sum + r.duration, 0) / errorRequests.length,
     }))
   }
 
@@ -260,16 +262,14 @@ export class AnalyticsManager {
    * Get endpoint metrics
    */
   getEndpointMetrics(): EndpointMetrics[] {
-    return Array.from(this.endpointStats.values())
-      .sort((a, b) => b.totalRequests - a.totalRequests)
+    return Array.from(this.endpointStats.values()).sort((a, b) => b.totalRequests - a.totalRequests)
   }
 
   /**
    * Get usage patterns
    */
   getUsagePatterns(): UsagePattern[] {
-    return Array.from(this.usageByHour.values())
-      .sort((a, b) => a.hour - b.hour)
+    return Array.from(this.usageByHour.values()).sort((a, b) => a.hour - b.hour)
   }
 
   /**
@@ -286,7 +286,7 @@ export class AnalyticsManager {
    */
   getErrorProneEndpoints(limit = 10): EndpointMetrics[] {
     return Array.from(this.endpointStats.values())
-      .filter(endpoint => endpoint.totalRequests > 5) // Minimum requests for statistical significance
+      .filter((endpoint) => endpoint.totalRequests > 5) // Minimum requests for statistical significance
       .sort((a, b) => b.errorRate - a.errorRate)
       .slice(0, limit)
   }
@@ -318,10 +318,10 @@ export class AnalyticsManager {
     const usagePatterns = this.getUsagePatterns()
 
     const cutoff = timeWindow ? Date.now() - timeWindow : 0
-    const relevantRequests = this.requestHistory.filter(r => r.timestamp > cutoff)
-    
-    const cachedRequests = relevantRequests.filter(r => r.cached).length
-    const deduplicatedRequests = relevantRequests.filter(r => r.deduplicated).length
+    const relevantRequests = this.requestHistory.filter((r) => r.timestamp > cutoff)
+
+    const cachedRequests = relevantRequests.filter((r) => r.cached).length
+    const deduplicatedRequests = relevantRequests.filter((r) => r.deduplicated).length
 
     return {
       performance,
@@ -332,11 +332,12 @@ export class AnalyticsManager {
       usagePatterns,
       summary: {
         totalRequests: relevantRequests.length,
-        uniqueEndpoints: new Set(relevantRequests.map(r => `${r.method} ${r.url}`)).size,
+        uniqueEndpoints: new Set(relevantRequests.map((r) => `${r.method} ${r.url}`)).size,
         averageResponseTime: performance.averageResponseTime,
         errorRate: performance.errorRate,
         cacheHitRate: relevantRequests.length > 0 ? cachedRequests / relevantRequests.length : 0,
-        deduplicationRate: relevantRequests.length > 0 ? deduplicatedRequests / relevantRequests.length : 0,
+        deduplicationRate:
+          relevantRequests.length > 0 ? deduplicatedRequests / relevantRequests.length : 0,
       },
     }
   }
@@ -348,14 +349,18 @@ export class AnalyticsManager {
     if (format === "csv") {
       return this.exportToCsv()
     }
-    
-    return JSON.stringify({
-      config: this.config,
-      requestHistory: this.requestHistory,
-      endpointStats: Array.from(this.endpointStats.entries()),
-      usagePatterns: Array.from(this.usageByHour.entries()),
-      exportTimestamp: Date.now(),
-    }, null, 2)
+
+    return JSON.stringify(
+      {
+        config: this.config,
+        requestHistory: this.requestHistory,
+        endpointStats: Array.from(this.endpointStats.entries()),
+        usagePatterns: Array.from(this.usageByHour.entries()),
+        exportTimestamp: Date.now(),
+      },
+      null,
+      2,
+    )
   }
 
   /**
@@ -373,7 +378,7 @@ export class AnalyticsManager {
    */
   private addToHistory(metrics: RequestMetrics): void {
     this.requestHistory.push(metrics)
-    
+
     // Limit history size
     if (this.requestHistory.length > this.config.maxHistorySize) {
       this.requestHistory = this.requestHistory.slice(-this.config.maxHistorySize)
@@ -390,14 +395,15 @@ export class AnalyticsManager {
     if (existing) {
       const totalRequests = existing.totalRequests + 1
       const totalDuration = existing.averageResponseTime * existing.totalRequests + metrics.duration
-      const successfulRequests = existing.successRate * existing.totalRequests + (metrics.success ? 1 : 0)
+      const successfulRequests =
+        existing.successRate * existing.totalRequests + (metrics.success ? 1 : 0)
 
       this.endpointStats.set(key, {
         ...existing,
         totalRequests,
         averageResponseTime: totalDuration / totalRequests,
         successRate: successfulRequests / totalRequests,
-        errorRate: 1 - (successfulRequests / totalRequests),
+        errorRate: 1 - successfulRequests / totalRequests,
         lastAccessed: metrics.timestamp,
       })
     } else {
@@ -458,9 +464,9 @@ export class AnalyticsManager {
     const cached = metrics.cached ? " [CACHED]" : ""
     const deduplicated = metrics.deduplicated ? " [DEDUPED]" : ""
     const retry = metrics.retryCount ? ` [RETRY:${metrics.retryCount}]` : ""
-    
+
     console.log(
-      `🌐 ${status} ${metrics.method} ${metrics.url} - ${metrics.duration}ms${cached}${deduplicated}${retry}`
+      `🌐 ${status} ${metrics.method} ${metrics.url} - ${metrics.duration}ms${cached}${deduplicated}${retry}`,
     )
 
     if (!metrics.success && metrics.error) {
@@ -475,12 +481,14 @@ export class AnalyticsManager {
     const recentMetrics = this.getPerformanceMetrics(5 * 60 * 1000) // Last 5 minutes
 
     // Check error rate threshold
-    if (this.config.onErrorThreshold && recentMetrics.errorRate > 0.1) { // 10% error rate
+    if (this.config.onErrorThreshold && recentMetrics.errorRate > 0.1) {
+      // 10% error rate
       this.config.onErrorThreshold(recentMetrics.errorRate)
     }
 
     // Check performance threshold
-    if (this.config.onPerformanceThreshold && recentMetrics.averageResponseTime > 5000) { // 5 second average
+    if (this.config.onPerformanceThreshold && recentMetrics.averageResponseTime > 5000) {
+      // 5 second average
       this.config.onPerformanceThreshold(recentMetrics.averageResponseTime)
     }
   }
@@ -500,7 +508,7 @@ export class AnalyticsManager {
    */
   private percentile(values: number[], p: number): number {
     if (values.length === 0) return 0
-    
+
     const index = Math.ceil((p / 100) * values.length) - 1
     return values[Math.max(0, Math.min(index, values.length - 1))]
   }
@@ -510,11 +518,20 @@ export class AnalyticsManager {
    */
   private exportToCsv(): string {
     const headers = [
-      "timestamp", "method", "url", "status", "duration", 
-      "success", "error", "userId", "retryCount", "cached", "deduplicated"
+      "timestamp",
+      "method",
+      "url",
+      "status",
+      "duration",
+      "success",
+      "error",
+      "userId",
+      "retryCount",
+      "cached",
+      "deduplicated",
     ]
-    
-    const rows = this.requestHistory.map(metrics => [
+
+    const rows = this.requestHistory.map((metrics) => [
       new Date(metrics.timestamp).toISOString(),
       metrics.method,
       metrics.url,
@@ -528,7 +545,7 @@ export class AnalyticsManager {
       metrics.deduplicated || false,
     ])
 
-    return [headers, ...rows].map(row => row.join(",")).join("\n")
+    return [headers, ...rows].map((row) => row.join(",")).join("\n")
   }
 
   /**
@@ -546,7 +563,7 @@ export class AnalyticsManager {
   private aggregate(): void {
     // This could be extended to perform more complex aggregations
     // or send data to external analytics services
-    
+
     if (__DEV__) {
       const metrics = this.getPerformanceMetrics(this.config.aggregationInterval)
       if (metrics.totalRequests > 0) {
@@ -566,7 +583,7 @@ export class AnalyticsManager {
     if (this.aggregationTimer) {
       clearInterval(this.aggregationTimer)
     }
-    
+
     this.clearData()
   }
 }
@@ -603,12 +620,12 @@ export const AnalyticsUtils = {
       retryCount?: number
       cached?: boolean
       deduplicated?: boolean
-    } = {}
+    } = {},
   ): Promise<ApiResponse<T>> {
     const startTime = Date.now()
-    
+
     return requestFunction()
-      .then(response => {
+      .then((response) => {
         globalAnalyticsManager.trackRequest({
           url,
           method,
@@ -616,10 +633,10 @@ export const AnalyticsUtils = {
           duration: Date.now() - startTime,
           ...options,
         })
-        
+
         return response
       })
-      .catch(error => {
+      .catch((error) => {
         globalAnalyticsManager.trackRequest({
           url,
           method,
@@ -627,7 +644,7 @@ export const AnalyticsUtils = {
           error,
           ...options,
         })
-        
+
         throw error
       })
   },
@@ -637,7 +654,7 @@ export const AnalyticsUtils = {
    */
   getDashboardData(timeWindow = 24 * 60 * 60 * 1000) {
     const report = globalAnalyticsManager.generateReport(timeWindow)
-    
+
     return {
       ...report,
       alerts: {
@@ -660,11 +677,11 @@ export const AnalyticsUtils = {
    */
   getHealthStatus() {
     const metrics = globalAnalyticsManager.getPerformanceMetrics(5 * 60 * 1000) // Last 5 minutes
-    
+
     let status = "healthy"
     if (metrics.errorRate > 0.1) status = "degraded"
     if (metrics.errorRate > 0.25 || metrics.averageResponseTime > 10000) status = "unhealthy"
-    
+
     return {
       status,
       metrics: {

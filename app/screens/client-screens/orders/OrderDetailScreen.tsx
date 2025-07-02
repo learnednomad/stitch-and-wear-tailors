@@ -1,12 +1,5 @@
 import React, { FC } from "react"
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  ViewStyle,
-  TextStyle,
-  ImageStyle,
-} from "react-native"
+import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle, ImageStyle } from "react-native"
 import { AppStackScreenProps } from "app/navigators"
 import { Button, Screen, Icon, Text, AutoImage } from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
@@ -145,9 +138,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
             $progressLine,
             {
               backgroundColor:
-                step.status === "completed"
-                  ? colors.palette.success500
-                  : colors.palette.neutral300,
+                step.status === "completed" ? colors.palette.success500 : colors.palette.neutral300,
             },
           ]}
         />

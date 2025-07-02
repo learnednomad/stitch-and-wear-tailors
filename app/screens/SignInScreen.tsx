@@ -30,7 +30,7 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
     try {
       const authAdapter = getAppwriteAuthAdapter()
       const result = await authAdapter.login(email.trim(), password)
-      
+
       if (result.success && result.data) {
         // Transform Appwrite user data to our User type
         const userData = {
@@ -97,11 +97,9 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
       <View style={$container}>
         <Text preset="heading" text="Welcome Back" style={$title} />
         <Text text="Sign in to your account" style={$subtitle} />
-        
-        {authStore.error && (
-          <Text text={authStore.error} style={$errorText} />
-        )}
-        
+
+        {authStore.error && <Text text={authStore.error} style={$errorText} />}
+
         <TextField
           value={email}
           onChangeText={setEmail}
@@ -112,7 +110,7 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
           autoCorrect={false}
           style={$textField}
         />
-        
+
         <TextField
           value={password}
           onChangeText={setPassword}
@@ -121,14 +119,14 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
           secureTextEntry
           style={$textField}
         />
-        
+
         <Button
           text={isLoading ? "Signing In..." : "Sign In"}
           onPress={handleSignIn}
           disabled={isLoading || authStore.isLoading}
           style={$signInButton}
         />
-        
+
         <Button
           text="Don't have an account? Sign Up"
           preset="reversed"

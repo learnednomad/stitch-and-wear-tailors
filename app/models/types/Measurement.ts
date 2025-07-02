@@ -2,9 +2,17 @@
  * Measurement Model - Body measurements, validation, and history tracking
  */
 
-export type MeasurementUnit = 'cm' | 'inch'
-export type MeasurementStatus = 'draft' | 'pending_validation' | 'validated' | 'rejected'
-export type GarmentType = 'shirt' | 'pants' | 'suit' | 'dress' | 'blouse' | 'skirt' | 'jacket' | 'coat'
+export type MeasurementUnit = "cm" | "inch"
+export type MeasurementStatus = "draft" | "pending_validation" | "validated" | "rejected"
+export type GarmentType =
+  | "shirt"
+  | "pants"
+  | "suit"
+  | "dress"
+  | "blouse"
+  | "skirt"
+  | "jacket"
+  | "coat"
 
 export interface MeasurementValue {
   value: number
@@ -20,7 +28,7 @@ export interface StandardMeasurements {
   shoulders?: MeasurementValue
   armLength?: MeasurementValue
   neck?: MeasurementValue
-  
+
   // Lower body
   inseam?: MeasurementValue
   outseam?: MeasurementValue
@@ -28,7 +36,7 @@ export interface StandardMeasurements {
   knee?: MeasurementValue
   calf?: MeasurementValue
   ankle?: MeasurementValue
-  
+
   // General
   height?: MeasurementValue
   weight?: MeasurementValue
@@ -43,7 +51,7 @@ export interface CustomMeasurement {
 export interface MeasurementValidation {
   validatedBy: string
   validatedAt: string
-  status: 'approved' | 'needs_revision'
+  status: "approved" | "needs_revision"
   comments?: string
   suggestedChanges?: Record<string, MeasurementValue>
 }
@@ -86,9 +94,12 @@ export interface UpdateMeasurementInput {
 export interface MeasurementComparison {
   measurementId: string
   previousMeasurementId: string
-  changes: Record<string, {
-    previous: MeasurementValue
-    current: MeasurementValue
-    difference: number
-  }>
+  changes: Record<
+    string,
+    {
+      previous: MeasurementValue
+      current: MeasurementValue
+      difference: number
+    }
+  >
 }

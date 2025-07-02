@@ -64,7 +64,11 @@
       "WebFetch(domain:www.npmjs.com)",
       "Bash(xcrun simctl openurl:*)",
       "Bash(yarn start:*)",
-      "Bash(gh issue view:*)"
+      "Bash(gh issue view:*)",
+      "Bash(ls:*)",
+      "mcp__magic__logo_search",
+      "Bash(cp:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }

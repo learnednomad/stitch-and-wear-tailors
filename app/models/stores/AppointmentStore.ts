@@ -13,7 +13,7 @@ import { validateAppointment } from "../schemas"
  */
 const TimeSlotModel = types.model("TimeSlot", {
   start: types.string, // ISO datetime
-  end: types.string,   // ISO datetime
+  end: types.string, // ISO datetime
   isAvailable: types.boolean,
   isBooked: types.boolean,
   appointmentId: types.maybeNull(types.string),
@@ -29,7 +29,7 @@ const AvailabilityScheduleModel = types.model("AvailabilitySchedule", {
   isWorkingDay: types.boolean,
   workingHours: types.model("WorkingHours", {
     start: types.string, // HH:mm format
-    end: types.string,   // HH:mm format
+    end: types.string, // HH:mm format
     breakStart: types.maybeNull(types.string),
     breakEnd: types.maybeNull(types.string),
   }),
@@ -59,20 +59,31 @@ const AppointmentModel = types.model("Appointment", {
   id: types.string,
   clientId: types.string,
   tailorId: types.string,
-  
+
   // Appointment details
   type: types.enumeration("AppointmentType", [
-    "consultation", "measurement", "fitting", "delivery", "alteration", "design_review"
+    "consultation",
+    "measurement",
+    "fitting",
+    "delivery",
+    "alteration",
+    "design_review",
   ]),
   status: types.enumeration("AppointmentStatus", [
-    "scheduled", "confirmed", "in_progress", "completed", "cancelled", "no_show", "rescheduled"
+    "scheduled",
+    "confirmed",
+    "in_progress",
+    "completed",
+    "cancelled",
+    "no_show",
+    "rescheduled",
   ]),
-  
+
   // Scheduling
   scheduledDate: types.string, // ISO datetime
   duration: types.number, // minutes
-  endDate: types.string,   // computed from scheduledDate + duration
-  
+  endDate: types.string, // computed from scheduledDate + duration
+
   // Location and setup
   location: types.model("AppointmentLocation", {
     type: types.enumeration("LocationType", ["studio", "client_home", "virtual", "other"]),
@@ -80,24 +91,24 @@ const AppointmentModel = types.model("Appointment", {
     room: types.maybeNull(types.string),
     specialInstructions: types.maybeNull(types.string),
   }),
-  
+
   // Purpose and details
   title: types.string,
   description: types.maybeNull(types.string),
   purpose: types.maybeNull(types.string),
   orderId: types.maybeNull(types.string), // linked order if applicable
-  
+
   // Preparation requirements
   requiresMeasurements: types.optional(types.boolean, false),
   requiresFabricSamples: types.optional(types.boolean, false),
   requiresGarmentBringing: types.optional(types.boolean, false),
   preparationNotes: types.maybeNull(types.string),
-  
+
   // Communication
   clientNotes: types.maybeNull(types.string),
   tailorNotes: types.maybeNull(types.string),
   internalNotes: types.maybeNull(types.string),
-  
+
   // Reminders
   reminders: types.array(ReminderModel),
   reminderSettings: types.model("ReminderSettings", {
@@ -106,30 +117,30 @@ const AppointmentModel = types.model("Appointment", {
     pushReminder: types.optional(types.boolean, true),
     reminderTimes: types.array(types.number), // hours before appointment [24, 2]
   }),
-  
+
   // Follow-up
   followUpRequired: types.optional(types.boolean, false),
   followUpDate: types.maybeNull(types.string),
   followUpNotes: types.maybeNull(types.string),
-  
+
   // Outcome
   actualStartTime: types.maybeNull(types.string),
   actualEndTime: types.maybeNull(types.string),
   actualDuration: types.maybeNull(types.number),
   outcome: types.maybeNull(types.string),
   nextSteps: types.maybeNull(types.string),
-  
+
   // Rating and feedback
   clientRating: types.maybeNull(types.number), // 1-5 stars
   clientFeedback: types.maybeNull(types.string),
   tailorRating: types.maybeNull(types.number),
   tailorFeedback: types.maybeNull(types.string),
-  
+
   // Rescheduling history
   originalDate: types.maybeNull(types.string),
   rescheduleCount: types.optional(types.number, 0),
   rescheduleReason: types.maybeNull(types.string),
-  
+
   createdAt: types.string,
   updatedAt: types.string,
 })
@@ -137,12 +148,18 @@ const AppointmentModel = types.model("Appointment", {
 /**
  * Collection model for appointments
  */
-const AppointmentsCollectionModel = createCollectionModel("AppointmentsCollection", AppointmentModel)
+const AppointmentsCollectionModel = createCollectionModel(
+  "AppointmentsCollection",
+  AppointmentModel,
+)
 
 /**
  * Collection model for availability schedules
  */
-const AvailabilityCollectionModel = createCollectionModel("AvailabilityCollection", AvailabilityScheduleModel)
+const AvailabilityCollectionModel = createCollectionModel(
+  "AvailabilityCollection",
+  AvailabilityScheduleModel,
+)
 
 /**
  * Calendar view model
@@ -162,30 +179,39 @@ export const AppointmentStoreModel = types
   .model("AppointmentStore", {
     // Appointments collection
     appointments: types.optional(AppointmentsCollectionModel, {}),
-    
+
     // Availability schedules
     availabilitySchedules: types.optional(AvailabilityCollectionModel, {}),
-    
+
     // Current appointment being viewed/edited
     currentAppointment: types.maybeNull(AppointmentModel),
-    
+
     // Calendar view state
-    calendarView: types.optional(CalendarViewModel, () => CalendarViewModel.create({
-      currentDate: new Date().toISOString().split('T')[0],
-      viewMode: "week",
-      selectedTailorId: null,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    })),
-    
+    calendarView: types.optional(CalendarViewModel, () =>
+      CalendarViewModel.create({
+        currentDate: new Date().toISOString().split("T")[0],
+        viewMode: "week",
+        selectedTailorId: null,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }),
+    ),
+
     // Booking state
     isBookingInProgress: types.optional(types.boolean, false),
     selectedTimeSlot: types.maybeNull(TimeSlotModel),
     bookingForm: types.model("BookingForm", {
       clientId: types.maybeNull(types.string),
       tailorId: types.maybeNull(types.string),
-      type: types.maybeNull(types.enumeration("AppointmentType", [
-        "consultation", "measurement", "fitting", "delivery", "alteration", "design_review"
-      ])),
+      type: types.maybeNull(
+        types.enumeration("AppointmentType", [
+          "consultation",
+          "measurement",
+          "fitting",
+          "delivery",
+          "alteration",
+          "design_review",
+        ]),
+      ),
       duration: types.optional(types.number, 60),
       title: types.maybeNull(types.string),
       description: types.maybeNull(types.string),
@@ -195,12 +221,12 @@ export const AppointmentStoreModel = types
         garmentBringing: types.optional(types.boolean, false),
       }),
     }),
-    
+
     // Loading and error states
     isLoading: types.optional(types.boolean, false),
     error: types.maybeNull(types.string),
     lastFetched: types.maybeNull(types.string),
-    
+
     // Statistics
     statistics: types.model("AppointmentStatistics", {
       totalAppointments: types.optional(types.number, 0),
@@ -212,7 +238,7 @@ export const AppointmentStoreModel = types
       lastUpdated: types.maybeNull(types.string),
     }),
   })
-  .actions(self => {
+  .actions((self) => {
     // Helper actions
     const setLoading = (loading: boolean) => {
       self.isLoading = loading
@@ -303,7 +329,7 @@ export const AppointmentStoreModel = types
         if (appointment) {
           appointment.status = status
           appointment.updatedAt = createTimestamp()
-          
+
           if (notes) {
             appointment.tailorNotes = notes
           }
@@ -313,7 +339,7 @@ export const AppointmentStoreModel = types
             appointment.actualStartTime = createTimestamp()
           } else if (status === "completed" && !appointment.actualEndTime) {
             appointment.actualEndTime = createTimestamp()
-            
+
             // Calculate actual duration
             if (appointment.actualStartTime) {
               const startTime = new Date(appointment.actualStartTime).getTime()
@@ -334,9 +360,11 @@ export const AppointmentStoreModel = types
           if (!appointment.originalDate) {
             appointment.originalDate = appointment.scheduledDate
           }
-          
+
           appointment.scheduledDate = newDate
-          appointment.endDate = new Date(new Date(newDate).getTime() + appointment.duration * 60000).toISOString()
+          appointment.endDate = new Date(
+            new Date(newDate).getTime() + appointment.duration * 60000,
+          ).toISOString()
           appointment.status = "rescheduled"
           appointment.rescheduleCount += 1
           appointment.rescheduleReason = reason || null
@@ -347,11 +375,17 @@ export const AppointmentStoreModel = types
       /**
        * Add reminder to appointment
        */
-      addReminder(appointmentId: string, type: "email" | "sms" | "push" | "call", hoursBeforeAppointment: number) {
+      addReminder(
+        appointmentId: string,
+        type: "email" | "sms" | "push" | "call",
+        hoursBeforeAppointment: number,
+      ) {
         const appointment = self.appointments.findById(appointmentId)
         if (appointment) {
-          const scheduledFor = new Date(new Date(appointment.scheduledDate).getTime() - hoursBeforeAppointment * 60 * 60 * 1000).toISOString()
-          
+          const scheduledFor = new Date(
+            new Date(appointment.scheduledDate).getTime() - hoursBeforeAppointment * 60 * 60 * 1000,
+          ).toISOString()
+
           const reminder = ReminderModel.create({
             id: generateId(),
             appointmentId,
@@ -363,7 +397,7 @@ export const AppointmentStoreModel = types
             status: "scheduled",
             createdAt: createTimestamp(),
           })
-          
+
           appointment.reminders.push(reminder)
           appointment.updatedAt = createTimestamp()
         }
@@ -384,40 +418,51 @@ export const AppointmentStoreModel = types
       /**
        * Generate availability schedule for tailor
        */
-      generateAvailabilitySchedule(tailorId: string, date: string, workingHours: {
-        start: string
-        end: string
-        breakStart?: string
-        breakEnd?: string
-      }) {
+      generateAvailabilitySchedule(
+        tailorId: string,
+        date: string,
+        workingHours: {
+          start: string
+          end: string
+          breakStart?: string
+          breakEnd?: string
+        },
+      ) {
         const timeSlots: any[] = []
         const slotDuration = 30 // 30-minute slots
-        
+
         // Parse working hours
         const startTime = new Date(`${date}T${workingHours.start}:00`)
         const endTime = new Date(`${date}T${workingHours.end}:00`)
-        const breakStart = workingHours.breakStart ? new Date(`${date}T${workingHours.breakStart}:00`) : null
-        const breakEnd = workingHours.breakEnd ? new Date(`${date}T${workingHours.breakEnd}:00`) : null
-        
+        const breakStart = workingHours.breakStart
+          ? new Date(`${date}T${workingHours.breakStart}:00`)
+          : null
+        const breakEnd = workingHours.breakEnd
+          ? new Date(`${date}T${workingHours.breakEnd}:00`)
+          : null
+
         // Generate time slots
         let currentTime = new Date(startTime)
         while (currentTime < endTime) {
           const slotEnd = new Date(currentTime.getTime() + slotDuration * 60000)
-          
+
           // Skip if in break time
-          const isInBreak = breakStart && breakEnd && 
-            currentTime >= breakStart && currentTime < breakEnd
-          
+          const isInBreak =
+            breakStart && breakEnd && currentTime >= breakStart && currentTime < breakEnd
+
           if (!isInBreak) {
             // Check if slot is already booked
             const existingAppointment = self.appointments.items.find((apt: any) => {
               const appointmentStart = new Date(apt.scheduledDate)
               const appointmentEnd = new Date(apt.endDate)
-              return apt.tailorId === tailorId &&
+              return (
+                apt.tailorId === tailorId &&
                 apt.status !== "cancelled" &&
-                currentTime < appointmentEnd && slotEnd > appointmentStart
+                currentTime < appointmentEnd &&
+                slotEnd > appointmentStart
+              )
             })
-            
+
             timeSlots.push({
               start: currentTime.toISOString(),
               end: slotEnd.toISOString(),
@@ -426,10 +471,10 @@ export const AppointmentStoreModel = types
               appointmentId: existingAppointment?.id || null,
             })
           }
-          
+
           currentTime = slotEnd
         }
-        
+
         const schedule = AvailabilityScheduleModel.create({
           tailorId,
           date,
@@ -439,12 +484,12 @@ export const AppointmentStoreModel = types
           specialNotes: null,
           lastUpdated: createTimestamp(),
         })
-        
+
         // Replace existing schedule for this date
         const existingIndex = self.availabilitySchedules.items.findIndex(
-          (s: any) => s.tailorId === tailorId && s.date === date
+          (s: any) => s.tailorId === tailorId && s.date === date,
         )
-        
+
         if (existingIndex !== -1) {
           self.availabilitySchedules.items[existingIndex] = schedule
         } else {
@@ -460,71 +505,73 @@ export const AppointmentStoreModel = types
       },
     }
   })
-  .actions(self => {
+  .actions((self) => {
     // Async actions
     const fetchAppointments = createAsyncAction(
       self,
-      async (params: {
-        clientId?: string
-        tailorId?: string
-        status?: AppointmentStatus
-        type?: AppointmentType
-        dateFrom?: string
-        dateTo?: string
-        page?: number
-      } = {}) => {
+      async (
+        params: {
+          clientId?: string
+          tailorId?: string
+          status?: AppointmentStatus
+          type?: AppointmentType
+          dateFrom?: string
+          dateTo?: string
+          page?: number
+        } = {},
+      ) => {
         const queryParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
           if (value) queryParams.set(key, value.toString())
         })
 
         const response = await fetch(`/api/appointments?${queryParams}`, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch appointments')
+          throw new Error("Failed to fetch appointments")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to load appointments" }
+      { errorPrefix: "Failed to load appointments" },
     )
 
     const createAppointment = createAsyncAction(
       self,
       async (appointmentData: Partial<Appointment>) => {
-        const response = await fetch('/api/appointments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/appointments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(appointmentData),
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to create appointment')
+          throw new Error("Failed to create appointment")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to create appointment" }
+      { errorPrefix: "Failed to create appointment" },
     )
 
     const updateAppointment = createAsyncAction(
       self,
       async (appointmentId: string, updates: Partial<Appointment>) => {
         const response = await fetch(`/api/appointments/${appointmentId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to update appointment')
+          throw new Error("Failed to update appointment")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to update appointment" }
+      { errorPrefix: "Failed to update appointment" },
     )
 
     const fetchAvailability = createAsyncAction(
@@ -532,16 +579,16 @@ export const AppointmentStoreModel = types
       async (tailorId: string, dateFrom: string, dateTo: string) => {
         const response = await fetch(
           `/api/tailors/${tailorId}/availability?from=${dateFrom}&to=${dateTo}`,
-          { headers: { 'Content-Type': 'application/json' } }
+          { headers: { "Content-Type": "application/json" } },
         )
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch availability')
+          throw new Error("Failed to fetch availability")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to load availability" }
+      { errorPrefix: "Failed to load availability" },
     )
 
     return {
@@ -551,13 +598,13 @@ export const AppointmentStoreModel = types
       loadAppointments: flow(function* (params: any = {}, reset: boolean = false) {
         try {
           const result = yield fetchAppointments(params)
-          
+
           if (reset) {
             self.appointments.setItems(result.appointments)
           } else {
             self.appointments.addItems(result.appointments)
           }
-          
+
           self.appointments.setHasMore(result.hasMore)
           return result
         } catch (error) {
@@ -642,11 +689,11 @@ export const AppointmentStoreModel = types
         try {
           const updated = yield updateAppointment(appointmentId, updates)
           self.appointments.updateItem(appointmentId, updated)
-          
+
           if (self.currentAppointment?.id === appointmentId) {
             self.setCurrentAppointment(updated)
           }
-          
+
           return updated
         } catch (error) {
           throw error
@@ -670,13 +717,13 @@ export const AppointmentStoreModel = types
        * Load today's appointments
        */
       loadTodaysAppointments: flow(function* (tailorId?: string) {
-        const today = new Date().toISOString().split('T')[0]
+        const today = new Date().toISOString().split("T")[0]
         const params = {
           dateFrom: today,
           dateTo: today,
           ...(tailorId && { tailorId }),
         }
-        
+
         try {
           return yield self.loadAppointments(params, true)
         } catch (error) {
@@ -688,9 +735,9 @@ export const AppointmentStoreModel = types
        * Load upcoming appointments
        */
       loadUpcomingAppointments: flow(function* (clientId?: string, tailorId?: string) {
-        const today = new Date().toISOString().split('T')[0]
-        const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        
+        const today = new Date().toISOString().split("T")[0]
+        const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+
         const params = {
           dateFrom: today,
           dateTo: nextWeek,
@@ -698,7 +745,7 @@ export const AppointmentStoreModel = types
           ...(clientId && { clientId }),
           ...(tailorId && { tailorId }),
         }
-        
+
         try {
           return yield self.loadAppointments(params, true)
         } catch (error) {
@@ -707,7 +754,7 @@ export const AppointmentStoreModel = types
       }),
     }
   })
-  .views(self => ({
+  .views((self) => ({
     /**
      * Get appointments by status
      */
@@ -733,9 +780,9 @@ export const AppointmentStoreModel = types
      * Get today's appointments
      */
     get todaysAppointments() {
-      const today = new Date().toISOString().split('T')[0]
-      return self.appointments.filter((apt: any) => 
-        apt.scheduledDate.startsWith(today) && apt.status !== "cancelled"
+      const today = new Date().toISOString().split("T")[0]
+      return self.appointments.filter(
+        (apt: any) => apt.scheduledDate.startsWith(today) && apt.status !== "cancelled",
       )
     },
 
@@ -745,7 +792,7 @@ export const AppointmentStoreModel = types
     get upcomingAppointments() {
       const now = new Date()
       const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-      
+
       return self.appointments.filter((apt: any) => {
         const appointmentDate = new Date(apt.scheduledDate)
         return appointmentDate >= now && appointmentDate <= nextWeek && apt.status !== "cancelled"
@@ -768,7 +815,7 @@ export const AppointmentStoreModel = types
      */
     getAvailableSlots(tailorId: string, date: string) {
       const schedule = self.availabilitySchedules.items.find(
-        (s: any) => s.tailorId === tailorId && s.date === date
+        (s: any) => s.tailorId === tailorId && s.date === date,
       )
       return schedule ? schedule.timeSlots.filter((slot: any) => slot.isAvailable) : []
     },
@@ -792,16 +839,16 @@ export const AppointmentStoreModel = types
     get calendarAppointments() {
       const { currentDate, viewMode, selectedTailorId } = self.calendarView
       let appointments = self.appointments.items
-      
+
       // Filter by tailor if selected
       if (selectedTailorId) {
         appointments = appointments.filter((apt: any) => apt.tailorId === selectedTailorId)
       }
-      
+
       // Filter by date range based on view mode
       const filterDate = new Date(currentDate)
       let startDate: Date, endDate: Date
-      
+
       switch (viewMode) {
         case "day":
           startDate = new Date(filterDate)
@@ -821,7 +868,7 @@ export const AppointmentStoreModel = types
         default:
           return appointments
       }
-      
+
       return appointments.filter((apt: any) => {
         const appointmentDate = new Date(apt.scheduledDate)
         return appointmentDate >= startDate && appointmentDate < endDate

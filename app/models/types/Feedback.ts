@@ -2,9 +2,9 @@
  * Feedback Model - Reviews, ratings, and responses
  */
 
-export type FeedbackType = 'review' | 'complaint' | 'suggestion' | 'compliment' | 'quality_issue'
-export type FeedbackStatus = 'pending' | 'in_review' | 'responded' | 'resolved' | 'escalated'
-export type FeedbackSource = 'app' | 'website' | 'email' | 'phone' | 'in_person'
+export type FeedbackType = "review" | "complaint" | "suggestion" | "compliment" | "quality_issue"
+export type FeedbackStatus = "pending" | "in_review" | "responded" | "resolved" | "escalated"
+export type FeedbackSource = "app" | "website" | "email" | "phone" | "in_person"
 
 export interface FeedbackRating {
   overall: number // 1-5
@@ -42,7 +42,7 @@ export interface FeedbackMetadata {
 
 export interface FeedbackAttachment {
   id: string
-  type: 'image' | 'video' | 'document'
+  type: "image" | "video" | "document"
   url: string
   filename: string
   size: number
@@ -87,7 +87,7 @@ export interface CreateFeedbackInput {
   title?: string
   comment: string
   tags?: string[]
-  attachments?: Omit<FeedbackAttachment, 'id'>[]
+  attachments?: Omit<FeedbackAttachment, "id">[]
   metadata: FeedbackMetadata
   anonymous?: boolean
   public?: boolean
@@ -123,7 +123,7 @@ export interface FeedbackSummary {
   topTags: {
     tag: string
     count: number
-    sentiment: 'positive' | 'negative' | 'neutral'
+    sentiment: "positive" | "negative" | "neutral"
   }[]
   responseRate: number
   averageResponseTime: number // in hours

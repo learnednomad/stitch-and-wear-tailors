@@ -2,18 +2,18 @@
  * Invoice Model - Billing, payments, and tax calculations
  */
 
-export type InvoiceStatus = 
-  | 'draft' 
-  | 'pending' 
-  | 'sent' 
-  | 'paid' 
-  | 'partially_paid' 
-  | 'overdue' 
-  | 'cancelled' 
-  | 'refunded'
+export type InvoiceStatus =
+  | "draft"
+  | "pending"
+  | "sent"
+  | "paid"
+  | "partially_paid"
+  | "overdue"
+  | "cancelled"
+  | "refunded"
 
-export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'digital_wallet' | 'check'
-export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded'
+export type PaymentMethod = "cash" | "card" | "bank_transfer" | "digital_wallet" | "check"
+export type PaymentStatus = "pending" | "processing" | "completed" | "failed" | "refunded"
 
 export interface InvoiceLineItem {
   id: string
@@ -22,11 +22,11 @@ export interface InvoiceLineItem {
   unitPrice: number
   totalPrice: number
   taxable: boolean
-  category: 'service' | 'material' | 'alteration' | 'rush_fee' | 'discount'
+  category: "service" | "material" | "alteration" | "rush_fee" | "discount"
 }
 
 export interface InvoiceDiscount {
-  type: 'percentage' | 'fixed'
+  type: "percentage" | "fixed"
   value: number
   description: string
   code?: string
@@ -111,10 +111,10 @@ export interface CreateInvoiceInput {
   orderId: string
   clientId: string
   tailorId: string
-  lineItems: Omit<InvoiceLineItem, 'id' | 'totalPrice'>[]
+  lineItems: Omit<InvoiceLineItem, "id" | "totalPrice">[]
   discounts?: InvoiceDiscount[]
-  terms: Omit<InvoiceTerms, 'notes'>
-  billingAddress: Invoice['billingAddress']
+  terms: Omit<InvoiceTerms, "notes">
+  billingAddress: Invoice["billingAddress"]
   dueDate: string
   notes?: string
 }
@@ -132,7 +132,7 @@ export interface InvoiceTemplate {
   id: string
   name: string
   description: string
-  lineItems: Omit<InvoiceLineItem, 'id' | 'quantity' | 'totalPrice'>[]
+  lineItems: Omit<InvoiceLineItem, "id" | "quantity" | "totalPrice">[]
   terms: InvoiceTerms
   active: boolean
   createdAt: string

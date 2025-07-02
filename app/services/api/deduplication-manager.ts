@@ -79,7 +79,7 @@ export class DeduplicationManager {
 
   constructor(config: Partial<DeduplicationConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config }
-    
+
     if (this.config.enabled) {
       this.startCleanupTimer()
     }
@@ -102,10 +102,10 @@ export class DeduplicationManager {
     // Add relevant headers
     if (headers) {
       const headerParts = this.config.includeHeaders
-        .filter(header => headers[header])
+        .filter((header) => headers[header])
         .sort()
-        .map(header => `${header}:${headers[header]}`)
-      
+        .map((header) => `${header}:${headers[header]}`)
+
       if (headerParts.length > 0) {
         keyParts.push(`headers:${headerParts.join(",")}`)
       }
@@ -114,14 +114,14 @@ export class DeduplicationManager {
     // Add parameters (excluding excluded ones)
     if (params && typeof params === "object") {
       const filteredParams = { ...params }
-      this.config.excludeParams.forEach(param => {
+      this.config.excludeParams.forEach((param) => {
         delete filteredParams[param]
       })
-      
+
       const paramKeys = Object.keys(filteredParams).sort()
       if (paramKeys.length > 0) {
         const paramString = paramKeys
-          .map(key => `${key}=${JSON.stringify(filteredParams[key])}`)
+          .map((key) => `${key}=${JSON.stringify(filteredParams[key])}`)
           .join("&")
         keyParts.push(`params:${paramString}`)
       }
@@ -143,11 +143,11 @@ export class DeduplicationManager {
     if (typeof data === "string") {
       return this.simpleHash(data)
     }
-    
+
     if (typeof data === "object" && data !== null) {
       return this.simpleHash(JSON.stringify(data))
     }
-    
+
     return this.simpleHash(String(data))
   }
 
@@ -158,7 +158,7 @@ export class DeduplicationManager {
     let hash = 0
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
+      hash = (hash << 5) - hash + char
       hash = hash & hash // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(36)
@@ -169,7 +169,7 @@ export class DeduplicationManager {
    */
   async execute<T>(
     keyOptions: RequestKeyOptions,
-    requestFunction: (abortSignal?: AbortSignal) => Promise<T>
+    requestFunction: (abortSignal?: AbortSignal) => Promise<T>,
   ): Promise<T> {
     this.stats.totalRequests++
 
@@ -185,18 +185,17 @@ export class DeduplicationManager {
       existing.requestCount++
       this.stats.deduplicatedRequests++
       this.updateStats()
-      
-      console.log(`🔄 Deduplicated request: ${keyOptions.method} ${keyOptions.url} (${existing.requestCount} total)`)
-      
+
+      console.log(
+        `🔄 Deduplicated request: ${keyOptions.method} ${keyOptions.url} (${existing.requestCount} total)`,
+      )
+
       return existing.promise
     }
 
     // Create new request with abort controller
     const abortController = new AbortController()
-    const requestPromise = this.executeNewRequest(
-      requestFunction,
-      abortController.signal
-    )
+    const requestPromise = this.executeNewRequest(requestFunction, abortController.signal)
 
     // Store in-flight request
     const inFlightRequest: InFlightRequest = {
@@ -223,7 +222,7 @@ export class DeduplicationManager {
    */
   private async executeNewRequest<T>(
     requestFunction: (abortSignal?: AbortSignal) => Promise<T>,
-    abortSignal: AbortSignal
+    abortSignal: AbortSignal,
   ): Promise<T> {
     try {
       return await requestFunction(abortSignal)
@@ -250,10 +249,10 @@ export class DeduplicationManager {
         request.abortController.abort()
       }
     }
-    
+
     const cancelled = this.inFlightRequests.size
     this.inFlightRequests.clear()
-    
+
     console.log(`🚫 Cancelled ${cancelled} in-flight requests`)
     this.updateStats()
   }
@@ -264,14 +263,14 @@ export class DeduplicationManager {
   cancelRequest(keyOptions: RequestKeyOptions): boolean {
     const key = this.generateKey(keyOptions)
     const request = this.inFlightRequests.get(key)
-    
+
     if (request && request.abortController) {
       request.abortController.abort()
       this.inFlightRequests.delete(key)
       this.updateStats()
       return true
     }
-    
+
     return false
   }
 
@@ -308,7 +307,7 @@ export class DeduplicationManager {
   updateConfig(newConfig: Partial<DeduplicationConfig>): void {
     const wasEnabled = this.config.enabled
     this.config = { ...this.config, ...newConfig }
-    
+
     // Handle timer when enabling/disabling
     if (!wasEnabled && this.config.enabled) {
       this.startCleanupTimer()
@@ -366,7 +365,7 @@ export class DeduplicationManager {
    */
   private updateStats(): void {
     this.stats.inFlightCount = this.inFlightRequests.size
-    
+
     if (this.stats.totalRequests > 0) {
       this.stats.deduplicationRate = this.stats.deduplicatedRequests / this.stats.totalRequests
     }
@@ -453,7 +452,7 @@ export const DeduplicationUtils = {
   withDeduplication<T>(
     keyOptions: RequestKeyOptions,
     requestFunction: (abortSignal?: AbortSignal) => Promise<T>,
-    strategy: keyof typeof DeduplicationStrategies = "standard"
+    strategy: keyof typeof DeduplicationStrategies = "standard",
   ): Promise<T> {
     const manager = DeduplicationUtils.createWithStrategy(strategy)
     return manager.execute(keyOptions, requestFunction)
@@ -478,7 +477,7 @@ export const DeduplicationUtils = {
       /\/upload/, // File uploads
     ]
 
-    return !excludePatterns.some(pattern => pattern.test(url))
+    return !excludePatterns.some((pattern) => pattern.test(url))
   },
 
   /**
@@ -525,11 +524,13 @@ export const DeduplicationUtils = {
     if (__DEV__) {
       setInterval(() => {
         const stats = globalDeduplicationManager.getStats()
-        
+
         if (stats.totalRequests > 0) {
-          console.log(`📊 Deduplication: ${stats.deduplicatedRequests}/${stats.totalRequests} requests deduplicated (${(stats.deduplicationRate * 100).toFixed(1)}%)`)
+          console.log(
+            `📊 Deduplication: ${stats.deduplicatedRequests}/${stats.totalRequests} requests deduplicated (${(stats.deduplicationRate * 100).toFixed(1)}%)`,
+          )
         }
-        
+
         if (stats.inFlightCount > 10) {
           console.warn(`⚠️  High number of in-flight requests: ${stats.inFlightCount}`)
         }

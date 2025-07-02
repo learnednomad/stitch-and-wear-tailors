@@ -1,6 +1,6 @@
 /**
  * Authentication Context
- * 
+ *
  * Provides authentication state and methods throughout the app,
  * wrapping the AuthStore with React Context for easier access.
  */
@@ -38,16 +38,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
   const checkAuthStatus = async () => {
     try {
       authStore.setStatus("checking")
-      
+
       // Try to get stored session
       const storedSession = storage.load("userSession")
       const storedUser = storage.load("currentUser")
-      
+
       if (storedSession && storedUser) {
         // Verify session is still valid with Appwrite
         const authAdapter = getAppwriteAuthAdapter()
         const result = await authAdapter.getCurrentUser()
-        
+
         if (result.success) {
           // Restore auth state
           authStore.setUser(storedUser)
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
   const signIn = async (email: string, password: string) => {
     try {
       const result = await authStore.signIn({ email, password })
-      
+
       if (authStore.isAuthenticated && authStore.user && authStore.session) {
         // Store session and user data
         storage.save("userSession", {
@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
         })
         storage.save("currentUser", authStore.user)
       }
-      
+
       return result
     } catch (error) {
       await clearStoredAuth()
@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
   const signUp = async (userData: any) => {
     try {
       const result = await authStore.signUp(userData)
-      
+
       if (authStore.isAuthenticated && authStore.user && authStore.session) {
         // Store session and user data
         storage.save("userSession", {
@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
         })
         storage.save("currentUser", authStore.user)
       }
-      
+
       return result
     } catch (error) {
       await clearStoredAuth()
@@ -137,11 +137,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
     checkAuthStatus,
   }
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 })
 
 export const useAuth = (): AuthContextType => {

@@ -1,13 +1,13 @@
 /**
  * Mobile App Integration Guide
- * 
+ *
  * This file provides examples of how to connect the mobile app screens
  * to the Appwrite database using the existing collection helpers.
  */
 
-import { getAppwriteAuthAdapter, getAppwriteServiceBridge } from './index'
-import { collections } from './collection-helpers'
-import { Query } from 'appwrite'
+import { getAppwriteAuthAdapter, getAppwriteServiceBridge } from "./index"
+import { collections } from "./collection-helpers"
+import { Query } from "appwrite"
 
 // ==========================================
 // AUTHENTICATION EXAMPLES
@@ -18,24 +18,24 @@ import { Query } from 'appwrite'
  */
 export async function loginUser(email: string, password: string) {
   const authAdapter = getAppwriteAuthAdapter()
-  
+
   try {
     const result = await authAdapter.login(email, password)
     if (result.success && result.data) {
       // Store session data
       // Navigate to appropriate screen based on role
-      const userRole = result.data.user.prefs?.role || 'client'
+      const userRole = result.data.user.prefs?.role || "client"
       return {
         success: true,
         role: userRole,
-        user: result.data.user
+        user: result.data.user,
       }
     }
     return result
   } catch (error) {
     return {
       success: false,
-      error: 'Login failed'
+      error: "Login failed",
     }
   }
 }
@@ -44,13 +44,13 @@ export async function loginUser(email: string, password: string) {
  * Register implementation for SignUpScreen
  */
 export async function registerUser(
-  email: string, 
-  password: string, 
+  email: string,
+  password: string,
   name: string,
-  role: 'client' | 'tailor'
+  role: "client" | "tailor",
 ) {
   const authAdapter = getAppwriteAuthAdapter()
-  
+
   try {
     const result = await authAdapter.register(email, password, name)
     if (result.success && result.data) {
@@ -58,7 +58,7 @@ export async function registerUser(
       await collections.users.create({
         email,
         role,
-        profile: JSON.stringify({ name })
+        profile: JSON.stringify({ name }),
       })
       return result
     }
@@ -66,7 +66,7 @@ export async function registerUser(
   } catch (error) {
     return {
       success: false,
-      error: 'Registration failed'
+      error: "Registration failed",
     }
   }
 }
@@ -82,29 +82,17 @@ export async function getHomeScreenData(userId: string) {
   try {
     // Fetch user's recent orders
     const ordersResult = await collections.orders.list({
-      queries: [
-        Query.equal('userId', userId),
-        Query.orderDesc('$createdAt'),
-        Query.limit(5)
-      ]
+      queries: [Query.equal("userId", userId), Query.orderDesc("$createdAt"), Query.limit(5)],
     })
 
     // Fetch user's measurements
     const measurementsResult = await collections.measurements.list({
-      queries: [
-        Query.equal('clientId', userId),
-        Query.orderDesc('$createdAt'),
-        Query.limit(3)
-      ]
+      queries: [Query.equal("clientId", userId), Query.orderDesc("$createdAt"), Query.limit(3)],
     })
 
     // Fetch notifications count
     const notificationsResult = await collections.notifications.list({
-      queries: [
-        Query.equal('userId', userId),
-        Query.equal('isRead', false),
-        Query.limit(10)
-      ]
+      queries: [Query.equal("userId", userId), Query.equal("isRead", false), Query.limit(10)],
     })
 
     return {
@@ -112,13 +100,13 @@ export async function getHomeScreenData(userId: string) {
       data: {
         orders: ordersResult.data?.documents || [],
         measurements: measurementsResult.data?.documents || [],
-        unreadNotifications: notificationsResult.data?.total || 0
-      }
+        unreadNotifications: notificationsResult.data?.total || 0,
+      },
     }
   } catch (error) {
     return {
       success: false,
-      error: 'Failed to fetch home screen data'
+      error: "Failed to fetch home screen data",
     }
   }
 }
@@ -132,7 +120,7 @@ export async function getHomeScreenData(userId: string) {
  */
 export async function createOrder(orderData: {
   userId: string
-  style: 'agbada' | 'kaftan' | 'plain_kaftan' | 'senator' | 'traditional' | 'modern' | 'custom'
+  style: "agbada" | "kaftan" | "plain_kaftan" | "senator" | "traditional" | "modern" | "custom"
   fabric?: string
   measurements?: any
   notes?: string
@@ -141,28 +129,28 @@ export async function createOrder(orderData: {
   try {
     // Generate order number
     const orderNumber = `ORD-${Date.now()}`
-    
+
     // Create the order
     const result = await collections.orders.create({
       orderNumber,
       userId: orderData.userId,
-      type: 'custom',
-      status: 'pending',
-      priority: 'normal',
+      type: "custom",
+      status: "pending",
+      priority: "normal",
       totalAmount: 0, // To be calculated
-      currency: 'NGN',
+      currency: "NGN",
       style: orderData.style,
       notes: orderData.notes,
-      dueDate: orderData.deliveryDate
+      dueDate: orderData.deliveryDate,
     })
 
     if (result.success && result.data) {
       // Create initial order stage
       await collections.order_stages?.create({
         orderId: result.data.$id,
-        stage: 'received',
-        status: 'completed',
-        completedAt: new Date().toISOString()
+        stage: "received",
+        status: "completed",
+        completedAt: new Date().toISOString(),
       })
     }
 
@@ -170,7 +158,7 @@ export async function createOrder(orderData: {
   } catch (error) {
     return {
       success: false,
-      error: 'Failed to create order'
+      error: "Failed to create order",
     }
   }
 }
@@ -182,26 +170,23 @@ export async function getOrderTracking(orderId: string) {
   try {
     // Get order details
     const orderResult = await collections.orders.get(orderId)
-    
+
     // Get order stages
     const stagesResult = await collections.order_stages?.list({
-      queries: [
-        Query.equal('orderId', orderId),
-        Query.orderAsc('$createdAt')
-      ]
+      queries: [Query.equal("orderId", orderId), Query.orderAsc("$createdAt")],
     })
 
     return {
       success: true,
       data: {
         order: orderResult.data,
-        stages: stagesResult?.data?.documents || []
-      }
+        stages: stagesResult?.data?.documents || [],
+      },
     }
   } catch (error) {
     return {
       success: false,
-      error: 'Failed to fetch order tracking'
+      error: "Failed to fetch order tracking",
     }
   }
 }
@@ -218,20 +203,20 @@ export async function saveMeasurements(measurementData: {
   garmentType: string
   name: string
   measurements: any
-  unit: 'cm' | 'inches'
+  unit: "cm" | "inches"
   notes?: string
 }) {
   try {
     const result = await collections.measurements.create({
       ...measurementData,
-      measurements: JSON.stringify(measurementData.measurements)
+      measurements: JSON.stringify(measurementData.measurements),
     })
-    
+
     return result
   } catch (error) {
     return {
       success: false,
-      error: 'Failed to save measurements'
+      error: "Failed to save measurements",
     }
   }
 }
@@ -250,31 +235,31 @@ export async function searchFabrics(params: {
   maxPrice?: number
 }) {
   try {
-    const queries = [Query.equal('isActive', true)]
-    
+    const queries = [Query.equal("isActive", true)]
+
     if (params.search) {
-      queries.push(Query.search('name', params.search))
+      queries.push(Query.search("name", params.search))
     }
-    
+
     if (params.category) {
-      queries.push(Query.equal('category', params.category))
+      queries.push(Query.equal("category", params.category))
     }
-    
+
     if (params.minPrice) {
-      queries.push(Query.greaterThanEqual('pricePerMeter', params.minPrice))
+      queries.push(Query.greaterThanEqual("pricePerMeter", params.minPrice))
     }
-    
+
     if (params.maxPrice) {
-      queries.push(Query.lessThanEqual('pricePerMeter', params.maxPrice))
+      queries.push(Query.lessThanEqual("pricePerMeter", params.maxPrice))
     }
-    
+
     const result = await collections.fabrics.list({ queries })
-    
+
     return result
   } catch (error) {
     return {
       success: false,
-      error: 'Failed to search fabrics'
+      error: "Failed to search fabrics",
     }
   }
 }
@@ -298,26 +283,26 @@ export async function bookAppointment(appointmentData: {
   try {
     const result = await collections.appointments.create({
       ...appointmentData,
-      status: 'scheduled'
+      status: "scheduled",
     })
-    
+
     // Create notification for the appointment
     if (result.success && result.data) {
       await collections.notifications.create({
         userId: appointmentData.clientId,
-        type: 'appointment_reminder',
-        priority: 'medium',
-        title: 'Appointment Scheduled',
+        type: "appointment_reminder",
+        priority: "medium",
+        title: "Appointment Scheduled",
         body: `Your ${appointmentData.type} appointment is scheduled for ${appointmentData.scheduledDate}`,
-        actionUrl: `/appointments/${result.data.$id}`
+        actionUrl: `/appointments/${result.data.$id}`,
       })
     }
-    
+
     return result
   } catch (error) {
     return {
       success: false,
-      error: 'Failed to book appointment'
+      error: "Failed to book appointment",
     }
   }
 }
@@ -328,17 +313,17 @@ export async function bookAppointment(appointmentData: {
 
 /**
  * Example: HomeScreen.tsx
- * 
+ *
  * import { getHomeScreenData } from '@/services/appwrite/mobile-integration-guide'
- * 
+ *
  * const HomeScreen = () => {
  *   const [data, setData] = useState(null)
  *   const [loading, setLoading] = useState(true)
- *   
+ *
  *   useEffect(() => {
  *     loadData()
  *   }, [])
- *   
+ *
  *   const loadData = async () => {
  *     setLoading(true)
  *     const result = await getHomeScreenData(currentUser.id)
@@ -347,9 +332,9 @@ export async function bookAppointment(appointmentData: {
  *     }
  *     setLoading(false)
  *   }
- *   
+ *
  *   if (loading) return <LoadingScreen />
- *   
+ *
  *   return (
  *     <Screen>
  *       {data?.orders.map(order => (
@@ -362,13 +347,13 @@ export async function bookAppointment(appointmentData: {
 
 /**
  * Example: SignInScreen.tsx
- * 
+ *
  * import { loginUser } from '@/services/appwrite/mobile-integration-guide'
- * 
+ *
  * const SignInScreen = () => {
  *   const [email, setEmail] = useState('')
  *   const [password, setPassword] = useState('')
- *   
+ *
  *   const handleLogin = async () => {
  *     const result = await loginUser(email, password)
  *     if (result.success) {

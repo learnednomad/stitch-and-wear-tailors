@@ -2,10 +2,17 @@
  * Style Model - Garment templates, complexity levels, and requirements
  */
 
-export type StyleCategory = 'formal' | 'casual' | 'business' | 'evening' | 'traditional' | 'modern' | 'vintage'
-export type StyleComplexity = 'basic' | 'intermediate' | 'advanced' | 'expert'
-export type StyleGender = 'men' | 'women' | 'unisex'
-export type StyleSeason = 'spring' | 'summer' | 'autumn' | 'winter' | 'all_season'
+export type StyleCategory =
+  | "formal"
+  | "casual"
+  | "business"
+  | "evening"
+  | "traditional"
+  | "modern"
+  | "vintage"
+export type StyleComplexity = "basic" | "intermediate" | "advanced" | "expert"
+export type StyleGender = "men" | "women" | "unisex"
+export type StyleSeason = "spring" | "summer" | "autumn" | "winter" | "all_season"
 
 export interface StyleMeasurements {
   required: string[]
@@ -17,11 +24,11 @@ export interface StyleFabricRequirements {
   recommendedTypes: string[]
   unsuitableTypes: string[]
   minimumQuantity: number
-  unit: 'yards' | 'meters'
+  unit: "yards" | "meters"
   properties: {
     stretch?: boolean
-    weight?: 'lightweight' | 'medium' | 'heavyweight'
-    drape?: 'soft' | 'structured'
+    weight?: "lightweight" | "medium" | "heavyweight"
+    drape?: "soft" | "structured"
   }
 }
 
@@ -29,7 +36,7 @@ export interface StyleCustomization {
   id: string
   name: string
   description: string
-  type: 'fit' | 'design' | 'functional'
+  type: "fit" | "design" | "functional"
   options: {
     value: string
     label: string

@@ -2,21 +2,21 @@
  * Order Model - Order lifecycle, status tracking, and progress management
  */
 
-export type OrderStatus = 
-  | 'draft'
-  | 'pending'
-  | 'confirmed'
-  | 'measuring'
-  | 'cutting'
-  | 'stitching'
-  | 'fitting'
-  | 'finishing'
-  | 'ready'
-  | 'delivered'
-  | 'cancelled'
-  | 'refunded'
+export type OrderStatus =
+  | "draft"
+  | "pending"
+  | "confirmed"
+  | "measuring"
+  | "cutting"
+  | "stitching"
+  | "fitting"
+  | "finishing"
+  | "ready"
+  | "delivered"
+  | "cancelled"
+  | "refunded"
 
-export type OrderPriority = 'low' | 'normal' | 'high' | 'urgent'
+export type OrderPriority = "low" | "normal" | "high" | "urgent"
 
 export interface OrderItem {
   id: string
@@ -49,7 +49,7 @@ export interface OrderMilestone {
   description: string
   estimatedDate: string
   actualDate?: string
-  status: 'pending' | 'in_progress' | 'completed' | 'skipped'
+  status: "pending" | "in_progress" | "completed" | "skipped"
   notes?: string
 }
 
@@ -82,7 +82,7 @@ export interface Order {
 export interface CreateOrderInput {
   clientId: string
   tailorId?: string
-  items: Omit<OrderItem, 'id' | 'totalPrice'>[]
+  items: Omit<OrderItem, "id" | "totalPrice">[]
   priority?: OrderPriority
   notes?: string
   specialInstructions?: string

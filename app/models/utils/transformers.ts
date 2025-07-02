@@ -22,7 +22,7 @@ import {
   validateCreateInvoiceInput,
   validateCreateNotificationInput,
   validateCreateFeedbackInput,
-} from '../schemas'
+} from "../schemas"
 
 import type {
   User,
@@ -43,7 +43,7 @@ import type {
   CreateInvoiceInput,
   CreateNotificationInput,
   CreateFeedbackInput,
-} from '../types'
+} from "../types"
 
 /**
  * Transform and validate raw data to User model
@@ -127,7 +127,7 @@ export const transformCreateInputs = {
  * Convert date strings to proper format
  */
 export const formatDateForModel = (date: Date | string): string => {
-  if (typeof date === 'string') {
+  if (typeof date === "string") {
     return new Date(date).toISOString()
   }
   return date.toISOString()
@@ -137,9 +137,9 @@ export const formatDateForModel = (date: Date | string): string => {
  * Generate UUID for new models
  */
 export const generateId = (): string => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0
-    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0
+    const v = c === "x" ? r : (r & 0x3) | 0x8
     return v.toString(16)
   })
 }
@@ -153,9 +153,10 @@ export const transformApiResponse = {
       ...apiData,
       createdAt: formatDateForModel(apiData.createdAt || apiData.created_at),
       updatedAt: formatDateForModel(apiData.updatedAt || apiData.updated_at),
-      lastLoginAt: apiData.lastLoginAt || apiData.last_login_at 
-        ? formatDateForModel(apiData.lastLoginAt || apiData.last_login_at) 
-        : undefined,
+      lastLoginAt:
+        apiData.lastLoginAt || apiData.last_login_at
+          ? formatDateForModel(apiData.lastLoginAt || apiData.last_login_at)
+          : undefined,
     }
     return transformToUser(transformedData)
   },
@@ -167,14 +168,24 @@ export const transformApiResponse = {
       updatedAt: formatDateForModel(apiData.updatedAt || apiData.updated_at),
       timeline: {
         ...apiData.timeline,
-        estimatedStartDate: formatDateForModel(apiData.timeline.estimatedStartDate || apiData.timeline.estimated_start_date),
-        estimatedCompletionDate: formatDateForModel(apiData.timeline.estimatedCompletionDate || apiData.timeline.estimated_completion_date),
-        actualStartDate: apiData.timeline.actualStartDate || apiData.timeline.actual_start_date
-          ? formatDateForModel(apiData.timeline.actualStartDate || apiData.timeline.actual_start_date)
-          : undefined,
-        actualCompletionDate: apiData.timeline.actualCompletionDate || apiData.timeline.actual_completion_date
-          ? formatDateForModel(apiData.timeline.actualCompletionDate || apiData.timeline.actual_completion_date)
-          : undefined,
+        estimatedStartDate: formatDateForModel(
+          apiData.timeline.estimatedStartDate || apiData.timeline.estimated_start_date,
+        ),
+        estimatedCompletionDate: formatDateForModel(
+          apiData.timeline.estimatedCompletionDate || apiData.timeline.estimated_completion_date,
+        ),
+        actualStartDate:
+          apiData.timeline.actualStartDate || apiData.timeline.actual_start_date
+            ? formatDateForModel(
+                apiData.timeline.actualStartDate || apiData.timeline.actual_start_date,
+              )
+            : undefined,
+        actualCompletionDate:
+          apiData.timeline.actualCompletionDate || apiData.timeline.actual_completion_date
+            ? formatDateForModel(
+                apiData.timeline.actualCompletionDate || apiData.timeline.actual_completion_date,
+              )
+            : undefined,
       },
     }
     return transformToOrder(transformedData)
@@ -197,12 +208,12 @@ export const transformApiResponse = {
 export const safeTransform = <T>(
   transformer: (data: unknown) => T,
   data: unknown,
-  fallback?: T
+  fallback?: T,
 ): T | null => {
   try {
     return transformer(data)
   } catch (error) {
-    console.error('Data transformation error:', error)
+    console.error("Data transformation error:", error)
     return fallback || null
   }
 }
@@ -210,11 +221,8 @@ export const safeTransform = <T>(
 /**
  * Batch transform arrays of data
  */
-export const batchTransform = <T>(
-  transformer: (data: unknown) => T,
-  dataArray: unknown[]
-): T[] => {
+export const batchTransform = <T>(transformer: (data: unknown) => T, dataArray: unknown[]): T[] => {
   return dataArray
-    .map(item => safeTransform(transformer, item))
+    .map((item) => safeTransform(transformer, item))
     .filter((item): item is T => item !== null)
 }

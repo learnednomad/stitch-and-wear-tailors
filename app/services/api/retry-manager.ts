@@ -56,12 +56,7 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
   backoffMultiplier: 2,
   jitter: true,
   jitterMax: 1000, // 1 second max jitter
-  retryableErrors: [
-    "NETWORK_ERROR",
-    "TIMEOUT_ERROR", 
-    "SERVER_ERROR",
-    "UNKNOWN_ERROR",
-  ],
+  retryableErrors: ["NETWORK_ERROR", "TIMEOUT_ERROR", "SERVER_ERROR", "UNKNOWN_ERROR"],
   retryableStatusCodes: [
     408, // Request Timeout
     429, // Too Many Requests
@@ -148,7 +143,7 @@ export class RetryManager {
    */
   async execute<T>(
     operation: () => Promise<T>,
-    customConfig?: Partial<RetryConfig>
+    customConfig?: Partial<RetryConfig>,
   ): Promise<RetryResult<T>> {
     const config = { ...this.config, ...customConfig }
     const attempts: RetryAttempt[] = []
@@ -162,7 +157,7 @@ export class RetryManager {
 
       try {
         const result = await operation()
-        
+
         if (config.onSuccess) {
           config.onSuccess(attempt)
         }
@@ -175,15 +170,15 @@ export class RetryManager {
         }
       } catch (error) {
         lastError = error
-        
+
         const shouldRetry = this.shouldRetry(error, attempt, config)
-        
+
         if (!shouldRetry || attempt >= config.maxAttempts) {
           break
         }
 
         const delay = this.calculateDelay(attempt, config)
-        
+
         attempts.push({
           attempt,
           delay,
@@ -216,16 +211,16 @@ export class RetryManager {
    */
   async executeApiRequest<T>(
     request: () => Promise<ApiResponse<T>>,
-    customConfig?: Partial<RetryConfig>
+    customConfig?: Partial<RetryConfig>,
   ): Promise<RetryResult<ApiResponse<T>>> {
     return this.execute(async () => {
       const response = await request()
-      
+
       // Check if response indicates retryable error
       if (!response.ok && this.isRetryableApiResponse(response)) {
         throw new Error(`API Error: ${response.problem} (${response.status})`)
       }
-      
+
       return response
     }, customConfig)
   }
@@ -299,22 +294,17 @@ export class RetryManager {
     ]
 
     const errorMessage = error.message?.toLowerCase() || ""
-    return networkIndicators.some(indicator => errorMessage.includes(indicator))
+    return networkIndicators.some((indicator) => errorMessage.includes(indicator))
   }
 
   /**
    * Check if error is timeout-related
    */
   private isTimeoutError(error: any): boolean {
-    const timeoutIndicators = [
-      "timeout",
-      "ETIMEDOUT",
-      "request timed out",
-      "response timeout",
-    ]
+    const timeoutIndicators = ["timeout", "ETIMEDOUT", "request timed out", "response timeout"]
 
     const errorMessage = error.message?.toLowerCase() || ""
-    return timeoutIndicators.some(indicator => errorMessage.includes(indicator))
+    return timeoutIndicators.some((indicator) => errorMessage.includes(indicator))
   }
 
   /**
@@ -323,16 +313,16 @@ export class RetryManager {
   private calculateDelay(attempt: number, config: RetryConfig): number {
     // Exponential backoff: baseDelay * (backoffMultiplier ^ (attempt - 1))
     let delay = config.baseDelay * Math.pow(config.backoffMultiplier, attempt - 1)
-    
+
     // Cap at max delay
     delay = Math.min(delay, config.maxDelay)
-    
+
     // Add jitter if enabled
     if (config.jitter) {
       const jitterAmount = Math.random() * (config.jitterMax || 1000)
       delay += jitterAmount
     }
-    
+
     return Math.floor(delay)
   }
 
@@ -340,7 +330,7 @@ export class RetryManager {
    * Sleep for specified duration
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   /**
@@ -365,11 +355,11 @@ export class CircuitBreaker {
   private failures = 0
   private lastFailTime = 0
   private state: "closed" | "open" | "half-open" = "closed"
-  
+
   constructor(
     private threshold: number = 5,
     private timeout: number = 60000, // 1 minute
-    private onStateChange?: (state: string) => void
+    private onStateChange?: (state: string) => void,
   ) {}
 
   /**
@@ -491,7 +481,7 @@ export const RetryUtils = {
    */
   withRetry<T>(
     operation: () => Promise<T>,
-    strategy: keyof typeof RetryStrategies = "standard"
+    strategy: keyof typeof RetryStrategies = "standard",
   ): Promise<RetryResult<T>> {
     const retryManager = RetryUtils.createWithStrategy(strategy)
     return retryManager.execute(operation)
@@ -502,7 +492,7 @@ export const RetryUtils = {
    */
   withApiRetry<T>(
     request: () => Promise<ApiResponse<T>>,
-    strategy: keyof typeof RetryStrategies = "standard"
+    strategy: keyof typeof RetryStrategies = "standard",
   ): Promise<RetryResult<ApiResponse<T>>> {
     const retryManager = RetryUtils.createWithStrategy(strategy)
     return retryManager.executeApiRequest(request)
