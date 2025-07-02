@@ -74,7 +74,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
       const result = await authAdapter.register(email.trim(), password, fullName)
 
       if (result.success && result.data) {
-        // Auto-login after successful registration
+        // Auto-login after successful registration to get user session
         const loginResult = await authAdapter.login(email.trim(), password)
 
         if (loginResult.success && loginResult.data) {
@@ -114,21 +114,31 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
             expiresAt: loginResult.data.session.expire,
           })
 
-          Alert.alert("Success", "Account created successfully!", [
-            {
-              text: "OK",
-              onPress: () => {
-                // Navigate based on user type
-                if (userType === "tailor") {
-                  navigation.navigate("TailorTab" as any)
-                } else {
-                  navigation.navigate("ClientTab" as any)
-                }
-              },
-            },
-          ])
+          // Send verification email
+          const verificationResult = await authAdapter.sendEmailVerification()
+          
+          if (verificationResult.success) {
+            Alert.alert(
+              "Account Created!",
+              "Please check your email to verify your account before you can access the app.",
+              [
+                {
+                  text: "OK",
+                  onPress: () => navigation.navigate("VerifyEmail" as any),
+                },
+              ]
+            )
+          } else {
+            Alert.alert(
+              "Account Created",
+              "Your account was created but we couldn't send the verification email. Please try signing in.",
+              [
+                { text: "OK", onPress: () => navigation.navigate("SignIn" as any) },
+              ]
+            )
+          }
         } else {
-          Alert.alert("Success", "Account created! Please sign in.", [
+          Alert.alert("Success", "Account created! Please sign in to verify your email.", [
             { text: "OK", onPress: () => navigation.navigate("SignIn" as any) },
           ])
         }

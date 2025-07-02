@@ -136,6 +136,7 @@ const AppStack = observer(function AppStack() {
       {/* Authentication Screens - Always available */}
       <Stack.Screen name="SignIn" component={Screens.SignInScreen} />
       <Stack.Screen name="SignUp" component={Screens.SignUpScreen} />
+      <Stack.Screen name="VerifyEmail" component={Screens.VerifyEmailScreen} />
 
       {/* Protected Screens - Only available when authenticated */}
       {isAuthenticated && (
@@ -170,7 +171,6 @@ const AppStack = observer(function AppStack() {
           <Stack.Screen name="Analytics" component={Screens.AnalyticsScreen} />
           <Stack.Screen name="Onboarding" component={Screens.OnboardingScreen} />
           <Stack.Screen name="VerifyOtp" component={Screens.VerifyOtpScreen} />
-          <Stack.Screen name="VerifyEmail" component={Screens.VerifyEmailScreen} />
           <Stack.Screen name="ClientNotifications" component={Screens.ClientNotificationsScreen} />
           <Stack.Screen name="TailorNotifications" component={Screens.TailorNotificationsScreen} />
         </>
