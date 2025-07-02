@@ -24,7 +24,7 @@ export const RootStoreModel = types
         revenue: 0,
         averageOrderValue: 0,
         lastUpdated: null,
-      }
+      },
     }),
     fabricStore: types.optional(FabricStoreModel, {
       priceRange: {
@@ -42,7 +42,7 @@ export const RootStoreModel = types
     }),
     appointmentStore: types.optional(AppointmentStoreModel, {
       calendarView: {
-        currentDate: new Date().toISOString().split('T')[0],
+        currentDate: new Date().toISOString().split("T")[0],
         viewMode: "week",
         selectedTailorId: null,
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -86,7 +86,7 @@ export const RootStoreModel = types
       },
     }),
   })
-  .actions(self => ({
+  .actions((self) => ({
     /**
      * Initialize stores after authentication
      */
@@ -109,7 +109,7 @@ export const RootStoreModel = types
       // Load user's orders if they exist
       if (self.authStore.hasAnyRole(["client", "tailor"])) {
         try {
-          const params = self.authStore.hasRole("client") 
+          const params = self.authStore.hasRole("client")
             ? { clientId: userId }
             : { tailorId: userId }
           await self.orderStore.loadOrders(params, true)
@@ -142,8 +142,8 @@ export const RootStoreModel = types
           ? { clientId: userId }
           : { tailorId: userId }
         await self.appointmentStore.loadUpcomingAppointments(
-          appointmentParams.clientId, 
-          appointmentParams.tailorId
+          appointmentParams.clientId,
+          appointmentParams.tailorId,
         )
       } catch (error) {
         console.warn("Failed to load appointments:", error)
@@ -206,7 +206,7 @@ export const RootStoreModel = types
       await Promise.allSettled(promises)
     },
   }))
-  .views(self => ({
+  .views((self) => ({
     /**
      * Get current user info from auth store
      */
@@ -247,13 +247,13 @@ export const RootStoreModel = types
      */
     get userOrders() {
       if (!self.authStore.user) return []
-      
+
       if (self.authStore.hasRole("client")) {
         return self.orderStore.getOrdersByClient(self.authStore.user.id)
       } else if (self.authStore.hasRole("tailor")) {
         return self.orderStore.getOrdersByTailor(self.authStore.user.id)
       }
-      
+
       return self.orderStore.orders.items
     },
 
@@ -304,7 +304,7 @@ export const RootStoreModel = types
      */
     get incompleteMeasurementsCount() {
       return self.measurementStore.measurements.items.filter(
-        (m: any) => !m.isComplete || !m.isValidated
+        (m: any) => !m.isComplete || !m.isValidated,
       ).length
     },
 

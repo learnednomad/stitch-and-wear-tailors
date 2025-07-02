@@ -15,11 +15,11 @@ import { goBack, resetRoot, navigate } from "@/navigators/navigationUtilities"
 import { Reactotron } from "./ReactotronClient"
 import { ReactotronReactNative } from "reactotron-react-native"
 import { ReactotronApiUtils } from "./ReactotronApiPlugin"
-import { 
-  ReactotronDevUtils, 
+import {
+  ReactotronDevUtils,
   DevEnvironmentValidator,
   getReactotronHost,
-  getReactotronPort 
+  getReactotronPort,
 } from "./ReactotronDevConfig"
 
 // Validate development environment
@@ -167,10 +167,10 @@ reactotron.onCustomCommand<[{ name: "endpoint"; type: ArgType.String }]>({
     if (endpoint) {
       Reactotron.log(`Testing API endpoint: ${endpoint}`)
       try {
-        // Import API client dynamically to avoid circular imports  
+        // Import API client dynamically to avoid circular imports
         const api = require("../services/api").api
         const response = await api.apisauce.get(endpoint)
-        
+
         Reactotron.display({
           name: "🧪 API Test Result",
           preview: `${response.status} ${endpoint}`,

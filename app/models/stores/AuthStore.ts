@@ -12,11 +12,11 @@ import { validateUser } from "../schemas"
  * Authentication status enum
  */
 const AuthStatus = types.enumeration("AuthStatus", [
-  "idle",        // Initial state
-  "checking",    // Checking existing session
+  "idle", // Initial state
+  "checking", // Checking existing session
   "authenticated", // User is logged in
   "unauthenticated", // User is not logged in
-  "expired",     // Session expired
+  "expired", // Session expired
 ])
 
 /**
@@ -68,19 +68,19 @@ export const AuthStoreModel = types
     status: types.optional(AuthStatus, "idle"),
     user: types.maybeNull(AuthUserModel),
     session: types.optional(SessionModel, {}),
-    
+
     // Loading and error states
     isLoading: types.optional(types.boolean, false),
     error: types.maybeNull(types.string),
-    
+
     // Session management
     lastActivity: types.maybeNull(types.string),
     sessionTimeout: types.optional(types.number, 30 * 60 * 1000), // 30 minutes
-    
+
     // Remember me functionality
     rememberUser: types.optional(types.boolean, false),
   })
-  .actions(self => {
+  .actions((self) => {
     // Helper actions for state management
     const setLoading = (loading: boolean) => {
       self.isLoading = loading
@@ -125,11 +125,7 @@ export const AuthStoreModel = types
       /**
        * Set session data
        */
-      setSession(sessionData: {
-        accessToken: string
-        refreshToken: string
-        expiresAt: string
-      }) {
+      setSession(sessionData: { accessToken: string; refreshToken: string; expiresAt: string }) {
         self.session = SessionModel.create({
           ...sessionData,
           issuedAt: createTimestamp(),
@@ -150,7 +146,7 @@ export const AuthStoreModel = types
       /**
        * Update user profile data
        */
-      updateUserProfile(updates: Partial<User['profile']>) {
+      updateUserProfile(updates: Partial<User["profile"]>) {
         if (self.user) {
           Object.assign(self.user.profile, updates)
           self.user.updatedAt = createTimestamp()
@@ -160,7 +156,7 @@ export const AuthStoreModel = types
       /**
        * Update user preferences
        */
-      updateUserPreferences(updates: Partial<User['preferences']>) {
+      updateUserPreferences(updates: Partial<User["preferences"]>) {
         if (self.user) {
           if (updates.notifications) {
             Object.assign(self.user.preferences.notifications, updates.notifications)
@@ -180,21 +176,21 @@ export const AuthStoreModel = types
       },
     }
   })
-  .actions(self => {
+  .actions((self) => {
     // Import Appwrite auth adapter
     const { getAppwriteAuthAdapter } = require("../../services/appwrite/appwrite-auth-adapter")
-    
+
     // Async actions using our utility
     const signIn = createAsyncAction(
       self,
       async (credentials: { email: string; password: string }) => {
         const authAdapter = getAppwriteAuthAdapter()
         const result = await authAdapter.login(credentials.email, credentials.password)
-        
+
         if (!result.success) {
-          throw new Error(result.message || 'Invalid credentials')
+          throw new Error(result.message || "Invalid credentials")
         }
-        
+
         return {
           user: {
             id: result.data.user.$id,
@@ -210,7 +206,7 @@ export const AuthStoreModel = types
             preferences: {
               notifications: { email: true, push: true, sms: false },
               language: "en",
-              timezone: "UTC", 
+              timezone: "UTC",
               currency: "USD",
             },
             emailVerified: result.data.user.emailVerification,
@@ -222,10 +218,10 @@ export const AuthStoreModel = types
             accessToken: result.data.session.$id,
             refreshToken: result.data.session.$id,
             expiresAt: result.data.session.expire,
-          }
+          },
         }
       },
-      { errorPrefix: "Sign in failed" }
+      { errorPrefix: "Sign in failed" },
     )
 
     const signUp = createAsyncAction(
@@ -238,13 +234,13 @@ export const AuthStoreModel = types
       }) => {
         const authAdapter = getAppwriteAuthAdapter()
         const fullName = `${userData.profile.firstName} ${userData.profile.lastName}`
-        
+
         const result = await authAdapter.register(userData.email, userData.password, fullName)
-        
+
         if (!result.success) {
-          throw new Error(result.message || 'Registration failed')
+          throw new Error(result.message || "Registration failed")
         }
-        
+
         return {
           user: {
             id: result.data.$id,
@@ -262,32 +258,32 @@ export const AuthStoreModel = types
             lastLoginAt: null,
             createdAt: result.data.registration,
             updatedAt: result.data.registration,
-          }
+          },
         }
       },
-      { errorPrefix: "Sign up failed" }
+      { errorPrefix: "Sign up failed" },
     )
 
     const refreshSession = createAsyncAction(
       self,
       async () => {
         if (!self.session.refreshToken) {
-          throw new Error('No refresh token available')
+          throw new Error("No refresh token available")
         }
 
-        const response = await fetch('/api/auth/refresh', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/auth/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refreshToken: self.session.refreshToken }),
         })
-        
+
         if (!response.ok) {
-          throw new Error('Token refresh failed')
+          throw new Error("Token refresh failed")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Session refresh failed", showLoading: false }
+      { errorPrefix: "Session refresh failed", showLoading: false },
     )
 
     const signOut = createAsyncAction(
@@ -295,12 +291,12 @@ export const AuthStoreModel = types
       async () => {
         const authAdapter = getAppwriteAuthAdapter()
         const result = await authAdapter.logout()
-        
+
         if (!result.success) {
-          throw new Error(result.message || 'Sign out failed')
+          throw new Error(result.message || "Sign out failed")
         }
       },
-      { errorPrefix: "Sign out failed", handleErrors: false }
+      { errorPrefix: "Sign out failed", handleErrors: false },
     )
 
     return {
@@ -371,7 +367,7 @@ export const AuthStoreModel = types
       }),
     }
   })
-  .views(self => ({
+  .views((self) => ({
     /**
      * Check if user is authenticated
      */
@@ -426,31 +422,46 @@ export const AuthStoreModel = types
      */
     get permissions() {
       if (!self.user) return []
-      
+
       const basePermissions = ["profile:read", "profile:update"]
-      
+
       switch (self.user.role) {
         case "admin":
           return [...basePermissions, "admin:*"]
         case "tailor":
           return [
             ...basePermissions,
-            "orders:read", "orders:update", "orders:create",
-            "measurements:read", "measurements:create", "measurements:update",
-            "appointments:read", "appointments:create", "appointments:update",
-            "invoices:read", "invoices:create", "invoices:update",
-            "fabrics:read", "styles:read",
-            "notifications:read", "feedback:read", "feedback:respond"
+            "orders:read",
+            "orders:update",
+            "orders:create",
+            "measurements:read",
+            "measurements:create",
+            "measurements:update",
+            "appointments:read",
+            "appointments:create",
+            "appointments:update",
+            "invoices:read",
+            "invoices:create",
+            "invoices:update",
+            "fabrics:read",
+            "styles:read",
+            "notifications:read",
+            "feedback:read",
+            "feedback:respond",
           ]
         case "client":
           return [
             ...basePermissions,
-            "orders:read", "orders:create",
+            "orders:read",
+            "orders:create",
             "measurements:read",
-            "appointments:read", "appointments:create",
+            "appointments:read",
+            "appointments:create",
             "invoices:read",
-            "fabrics:read", "styles:read",
-            "notifications:read", "feedback:create"
+            "fabrics:read",
+            "styles:read",
+            "notifications:read",
+            "feedback:create",
           ]
         default:
           return basePermissions

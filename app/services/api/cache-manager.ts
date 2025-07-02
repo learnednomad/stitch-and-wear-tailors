@@ -101,19 +101,15 @@ export class CacheManager {
    */
   private generateKey(options: CacheKeyOptions): string {
     const { url, method, params, headers, userId } = options
-    
+
     // Create a normalized key
-    const keyParts = [
-      method.toUpperCase(),
-      url,
-      userId || "anonymous",
-    ]
+    const keyParts = [method.toUpperCase(), url, userId || "anonymous"]
 
     // Add sorted params
     if (params && Object.keys(params).length > 0) {
       const sortedParams = Object.keys(params)
         .sort()
-        .map(key => `${key}=${JSON.stringify(params[key])}`)
+        .map((key) => `${key}=${JSON.stringify(params[key])}`)
         .join("&")
       keyParts.push(sortedParams)
     }
@@ -122,10 +118,10 @@ export class CacheManager {
     if (headers) {
       const relevantHeaders = ["authorization", "accept-language"]
       const headerParts = relevantHeaders
-        .filter(header => headers[header])
-        .map(header => `${header}=${headers[header]}`)
+        .filter((header) => headers[header])
+        .map((header) => `${header}=${headers[header]}`)
         .join("&")
-      
+
       if (headerParts) {
         keyParts.push(headerParts)
       }
@@ -139,7 +135,7 @@ export class CacheManager {
    */
   private isValidEntry<T>(entry: CacheEntry<T>): boolean {
     const now = Date.now()
-    return (now - entry.timestamp) < entry.ttl
+    return now - entry.timestamp < entry.ttl
   }
 
   /**
@@ -179,10 +175,10 @@ export class CacheManager {
   set<T>(
     keyOptions: CacheKeyOptions,
     response: ApiResponse<T>,
-    ttl: number = this.config.defaultTtl
+    ttl: number = this.config.defaultTtl,
   ): void {
     const key = this.generateKey(keyOptions)
-    
+
     // Extract cache headers
     const etag = response.headers?.etag
     const lastModified = response.headers?.["last-modified"]
@@ -213,12 +209,12 @@ export class CacheManager {
   delete(keyOptions: CacheKeyOptions): boolean {
     const key = this.generateKey(keyOptions)
     const deleted = this.cache.delete(key)
-    
+
     if (deleted) {
       this.stats.deletes++
       this.updateStats()
     }
-    
+
     return deleted
   }
 
@@ -237,21 +233,19 @@ export class CacheManager {
    */
   invalidate(pattern: string | RegExp): number {
     let deleted = 0
-    
+
     for (const key of this.cache.keys()) {
-      const matches = typeof pattern === "string" 
-        ? key.includes(pattern)
-        : pattern.test(key)
-      
+      const matches = typeof pattern === "string" ? key.includes(pattern) : pattern.test(key)
+
       if (matches) {
         this.cache.delete(key)
         deleted++
       }
     }
-    
+
     this.stats.deletes += deleted
     this.updateStats()
-    
+
     return deleted
   }
 
@@ -273,10 +267,10 @@ export class CacheManager {
    * Trigger invalidation by dependency
    */
   invalidateByDependency(dependency: string): void {
-    const patterns = this.invalidationPatterns.filter(p => 
-      p.trigger === "dependency" && p.dependencies?.includes(dependency)
+    const patterns = this.invalidationPatterns.filter(
+      (p) => p.trigger === "dependency" && p.dependencies?.includes(dependency),
     )
-    
+
     for (const pattern of patterns) {
       this.invalidate(pattern.pattern)
     }
@@ -311,14 +305,14 @@ export class CacheManager {
    */
   getTtlFromHeaders(response: ApiResponse<any>): number {
     const cacheControl = response.headers?.["cache-control"]
-    
+
     if (cacheControl) {
       const maxAgeMatch = cacheControl.match(/max-age=(\d+)/)
       if (maxAgeMatch) {
         return parseInt(maxAgeMatch[1]) * 1000 // Convert to milliseconds
       }
     }
-    
+
     const expires = response.headers?.expires
     if (expires) {
       const expiresDate = new Date(expires)
@@ -326,7 +320,7 @@ export class CacheManager {
       const ttl = expiresDate.getTime() - now.getTime()
       return Math.max(0, ttl)
     }
-    
+
     return this.config.defaultTtl
   }
 
@@ -360,7 +354,7 @@ export class CacheManager {
     let deleted = 0
 
     for (const [key, entry] of this.cache.entries()) {
-      if ((now - entry.timestamp) >= entry.ttl) {
+      if (now - entry.timestamp >= entry.ttl) {
         this.cache.delete(key)
         deleted++
       }
@@ -500,7 +494,7 @@ export const CacheUtils = {
         } catch (error) {
           return { key, success: false, error }
         }
-      })
+      }),
     )
 
     return results
@@ -513,7 +507,7 @@ export const CacheUtils = {
     if (!__DEV__) {
       // In production, preload commonly accessed data
       console.log("🔄 Preloading essential cache data...")
-      
+
       // This would typically include:
       // - User profile
       // - App configuration

@@ -4,7 +4,13 @@
  */
 
 import { types, flow, Instance, SnapshotOut } from "mobx-state-tree"
-import { createAsyncAction, createCollectionModel, createSearchModel, generateId, createTimestamp } from "../mst"
+import {
+  createAsyncAction,
+  createCollectionModel,
+  createSearchModel,
+  generateId,
+  createTimestamp,
+} from "../mst"
 import { Fabric, FabricCategory, FabricColor } from "../types"
 import { validateFabric } from "../schemas"
 
@@ -33,10 +39,12 @@ const FabricPricingModel = types.model("FabricPricing", {
   discountPrice: types.maybeNull(types.number),
   wholesalePrice: types.maybeNull(types.number),
   minimumOrder: types.optional(types.number, 1),
-  bulkPricing: types.array(types.model("BulkPricing", {
-    minQuantity: types.number,
-    pricePerUnit: types.number,
-  })),
+  bulkPricing: types.array(
+    types.model("BulkPricing", {
+      minQuantity: types.number,
+      pricePerUnit: types.number,
+    }),
+  ),
   lastUpdated: types.string,
 })
 
@@ -48,10 +56,18 @@ const FabricModel = types.model("Fabric", {
   name: types.string,
   description: types.string,
   category: types.enumeration("FabricCategory", [
-    "cotton", "silk", "wool", "linen", "polyester", "denim", "velvet", "leather", "synthetic"
+    "cotton",
+    "silk",
+    "wool",
+    "linen",
+    "polyester",
+    "denim",
+    "velvet",
+    "leather",
+    "synthetic",
   ]),
   subcategory: types.maybeNull(types.string),
-  
+
   // Fabric properties
   material: types.string,
   weight: types.number,
@@ -60,39 +76,45 @@ const FabricModel = types.model("Fabric", {
   pattern: types.maybeNull(types.string),
   texture: types.maybeNull(types.string),
   stretch: types.maybeNull(types.enumeration("Stretch", ["none", "slight", "moderate", "high"])),
-  opacity: types.maybeNull(types.enumeration("Opacity", ["transparent", "semi_transparent", "opaque"])),
-  
+  opacity: types.maybeNull(
+    types.enumeration("Opacity", ["transparent", "semi_transparent", "opaque"]),
+  ),
+
   // Care instructions
   careInstructions: types.array(types.string),
   washingInstructions: types.maybeNull(types.string),
-  
+
   // Inventory and pricing
-  inventory: types.optional(FabricInventoryModel, () => FabricInventoryModel.create({
-    quantity: 0,
-    unit: "meters",
-    availableQuantity: 0,
-    reorderLevel: 10,
-    maxStock: 100,
-    location: null,
-    lastRestocked: null,
-    lastUpdated: createTimestamp(),
-  })),
-  pricing: types.optional(FabricPricingModel, () => FabricPricingModel.create({
-    basePrice: 0,
-    currency: "USD",
-    pricePerUnit: 0,
-    discountPrice: null,
-    wholesalePrice: null,
-    minimumOrder: 1,
-    bulkPricing: [],
-    lastUpdated: createTimestamp(),
-  })),
-  
+  inventory: types.optional(FabricInventoryModel, () =>
+    FabricInventoryModel.create({
+      quantity: 0,
+      unit: "meters",
+      availableQuantity: 0,
+      reorderLevel: 10,
+      maxStock: 100,
+      location: null,
+      lastRestocked: null,
+      lastUpdated: createTimestamp(),
+    }),
+  ),
+  pricing: types.optional(FabricPricingModel, () =>
+    FabricPricingModel.create({
+      basePrice: 0,
+      currency: "USD",
+      pricePerUnit: 0,
+      discountPrice: null,
+      wholesalePrice: null,
+      minimumOrder: 1,
+      bulkPricing: [],
+      lastUpdated: createTimestamp(),
+    }),
+  ),
+
   // Media and display
   images: types.array(types.string),
   primaryImage: types.maybeNull(types.string),
   thumbnailImage: types.maybeNull(types.string),
-  
+
   // Metadata
   sku: types.string,
   barcode: types.maybeNull(types.string),
@@ -101,12 +123,12 @@ const FabricModel = types.model("Fabric", {
   tags: types.array(types.string),
   isActive: types.optional(types.boolean, true),
   isFeatured: types.optional(types.boolean, false),
-  
+
   // Ratings and reviews
   averageRating: types.optional(types.number, 0),
   reviewCount: types.optional(types.number, 0),
   popularityScore: types.optional(types.number, 0),
-  
+
   createdAt: types.string,
   updatedAt: types.string,
 })
@@ -119,62 +141,62 @@ const FabricsCollectionModel = createCollectionModel("FabricsCollection", Fabric
 /**
  * Search model with fabric-specific filters
  */
-const FabricSearchModel = createSearchModel()
-  .actions(self => ({
-    /**
-     * Set category filter
-     */
-    setCategoryFilter(category: FabricCategory | null) {
-      if (category) {
-        self.setFilter("category", category)
-      } else {
-        self.removeFilter("category")
-      }
-    },
+const FabricSearchModel = createSearchModel().actions((self) => ({
+  /**
+   * Set category filter
+   */
+  setCategoryFilter(category: FabricCategory | null) {
+    if (category) {
+      self.setFilter("category", category)
+    } else {
+      self.removeFilter("category")
+    }
+  },
 
-    /**
-     * Set color filter
-     */
-    setColorFilter(color: string | null) {
-      if (color) {
-        self.setFilter("color", color)
-      } else {
-        self.removeFilter("color")
-      }
-    },
+  /**
+   * Set color filter
+   */
+  setColorFilter(color: string | null) {
+    if (color) {
+      self.setFilter("color", color)
+    } else {
+      self.removeFilter("color")
+    }
+  },
 
-    /**
-     * Set price range filter
-     */
-    setPriceRangeFilter(min: number | null, max: number | null) {
-      if (min !== null) self.setFilter("priceMin", min)
-      else self.removeFilter("priceMin")
-      
-      if (max !== null) self.setFilter("priceMax", max)
-      else self.removeFilter("priceMax")
-    },
+  /**
+   * Set price range filter
+   */
+  setPriceRangeFilter(min: number | null, max: number | null) {
+    if (min !== null) self.setFilter("priceMin", min)
+    else self.removeFilter("priceMin")
 
-    /**
-     * Set availability filter
-     */
-    setAvailabilityFilter(available: boolean | null) {
-      if (available !== null) {
-        self.setFilter("available", available)
-      } else {
-        self.removeFilter("available")
-      }
-    },
-  }))
+    if (max !== null) self.setFilter("priceMax", max)
+    else self.removeFilter("priceMax")
+  },
+
+  /**
+   * Set availability filter
+   */
+  setAvailabilityFilter(available: boolean | null) {
+    if (available !== null) {
+      self.setFilter("available", available)
+    } else {
+      self.removeFilter("available")
+    }
+  },
+}))
 
 /**
  * Wishlist model for user fabric preferences
  */
-const WishlistModel = types.model("Wishlist", {
-  userId: types.string,
-  fabricIds: types.array(types.string),
-  lastUpdated: types.string,
-})
-  .actions(self => ({
+const WishlistModel = types
+  .model("Wishlist", {
+    userId: types.string,
+    fabricIds: types.array(types.string),
+    lastUpdated: types.string,
+  })
+  .actions((self) => ({
     addFabric(fabricId: string) {
       if (!self.fabricIds.includes(fabricId)) {
         self.fabricIds.push(fabricId)
@@ -195,7 +217,7 @@ const WishlistModel = types.model("Wishlist", {
       self.lastUpdated = createTimestamp()
     },
   }))
-  .views(self => ({
+  .views((self) => ({
     get count() {
       return self.fabricIds.length
     },
@@ -212,48 +234,54 @@ export const FabricStoreModel = types
   .model("FabricStore", {
     // Fabrics collection
     fabrics: types.optional(FabricsCollectionModel, {}),
-    
+
     // Current fabric being viewed
     currentFabric: types.maybeNull(FabricModel),
-    
+
     // Search and filtering
     search: types.optional(FabricSearchModel, {}),
-    
+
     // Wishlist
     wishlist: types.maybeNull(WishlistModel),
-    
+
     // Categories and filters data
-    categories: types.array(types.model("Category", {
-      id: types.string,
-      name: types.string,
-      count: types.number,
-    })),
-    colors: types.array(types.model("Color", {
-      name: types.string,
-      hex: types.string,
-      count: types.number,
-    })),
+    categories: types.array(
+      types.model("Category", {
+        id: types.string,
+        name: types.string,
+        count: types.number,
+      }),
+    ),
+    colors: types.array(
+      types.model("Color", {
+        name: types.string,
+        hex: types.string,
+        count: types.number,
+      }),
+    ),
     priceRange: types.model("PriceRange", {
       min: types.optional(types.number, 0),
       max: types.optional(types.number, 1000),
     }),
-    
+
     // Loading and error states
     isLoading: types.optional(types.boolean, false),
     error: types.maybeNull(types.string),
     lastFetched: types.maybeNull(types.string),
-    
+
     // Inventory alerts
-    lowStockAlerts: types.array(types.model("LowStockAlert", {
-      fabricId: types.string,
-      fabricName: types.string,
-      currentStock: types.number,
-      reorderLevel: types.number,
-      alertLevel: types.enumeration("AlertLevel", ["warning", "critical"]),
-      createdAt: types.string,
-    })),
+    lowStockAlerts: types.array(
+      types.model("LowStockAlert", {
+        fabricId: types.string,
+        fabricName: types.string,
+        currentStock: types.number,
+        reorderLevel: types.number,
+        alertLevel: types.enumeration("AlertLevel", ["warning", "critical"]),
+        createdAt: types.string,
+      }),
+    ),
   })
-  .actions(self => {
+  .actions((self) => {
     // Helper actions
     const setLoading = (loading: boolean) => {
       self.isLoading = loading
@@ -329,7 +357,8 @@ export const FabricStoreModel = types
 
           // Update available quantity
           if (updates.quantity !== undefined || updates.reservedQuantity !== undefined) {
-            fabric.inventory.availableQuantity = fabric.inventory.quantity - fabric.inventory.reservedQuantity
+            fabric.inventory.availableQuantity =
+              fabric.inventory.quantity - fabric.inventory.reservedQuantity
           }
 
           // Check for low stock alerts
@@ -380,11 +409,11 @@ export const FabricStoreModel = types
        * Check and create low stock alerts
        */
       checkLowStockAlert(fabric: any) {
-        const existingAlert = self.lowStockAlerts.find(alert => alert.fabricId === fabric.id)
-        
+        const existingAlert = self.lowStockAlerts.find((alert) => alert.fabricId === fabric.id)
+
         if (fabric.inventory.availableQuantity <= fabric.inventory.reorderLevel) {
           const alertLevel = fabric.inventory.availableQuantity === 0 ? "critical" : "warning"
-          
+
           if (!existingAlert) {
             self.lowStockAlerts.push({
               fabricId: fabric.id,
@@ -429,22 +458,24 @@ export const FabricStoreModel = types
       },
     }
   })
-  .actions(self => {
+  .actions((self) => {
     // Async actions
     const fetchFabrics = createAsyncAction(
       self,
-      async (params: {
-        page?: number
-        category?: FabricCategory
-        color?: string
-        priceMin?: number
-        priceMax?: number
-        available?: boolean
-        featured?: boolean
-        search?: string
-        sortBy?: string
-        sortOrder?: "asc" | "desc"
-      } = {}) => {
+      async (
+        params: {
+          page?: number
+          category?: FabricCategory
+          color?: string
+          priceMin?: number
+          priceMax?: number
+          available?: boolean
+          featured?: boolean
+          search?: string
+          sortBy?: string
+          sortOrder?: "asc" | "desc"
+        } = {},
+      ) => {
         const queryParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
@@ -453,50 +484,50 @@ export const FabricStoreModel = types
         })
 
         const response = await fetch(`/api/fabrics?${queryParams}`, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch fabrics')
+          throw new Error("Failed to fetch fabrics")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to load fabrics" }
+      { errorPrefix: "Failed to load fabrics" },
     )
 
     const fetchFabricDetails = createAsyncAction(
       self,
       async (fabricId: string) => {
         const response = await fetch(`/api/fabrics/${fabricId}`, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch fabric details')
+          throw new Error("Failed to fetch fabric details")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to load fabric details" }
+      { errorPrefix: "Failed to load fabric details" },
     )
 
     const updateFabric = createAsyncAction(
       self,
       async (fabricId: string, updates: Partial<Fabric>) => {
         const response = await fetch(`/api/fabrics/${fabricId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to update fabric')
+          throw new Error("Failed to update fabric")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to update fabric" }
+      { errorPrefix: "Failed to update fabric" },
     )
 
     const syncWishlist = createAsyncAction(
@@ -505,18 +536,18 @@ export const FabricStoreModel = types
         if (!self.wishlist) return
 
         const response = await fetch(`/api/users/${self.wishlist.userId}/wishlist`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ fabricIds }),
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to sync wishlist')
+          throw new Error("Failed to sync wishlist")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to sync wishlist", showLoading: false }
+      { errorPrefix: "Failed to sync wishlist", showLoading: false },
     )
 
     return {
@@ -526,20 +557,20 @@ export const FabricStoreModel = types
       loadFabrics: flow(function* (params: any = {}, reset: boolean = false) {
         try {
           const result = yield fetchFabrics(params)
-          
+
           if (reset) {
             self.fabrics.setItems(result.fabrics)
           } else {
             self.fabrics.addItems(result.fabrics)
           }
-          
+
           self.fabrics.setHasMore(result.hasMore)
-          
+
           // Update filter data if provided
           if (result.filterData) {
             self.updateFilterData(result.filterData)
           }
-          
+
           return result
         } catch (error) {
           throw error
@@ -567,7 +598,7 @@ export const FabricStoreModel = types
         Object.entries(filters).forEach(([key, value]) => {
           self.search.setFilter(key, value)
         })
-        
+
         try {
           const params = { ...filters, search: query, page: 1 }
           const result = yield fetchFabrics(params)
@@ -598,11 +629,11 @@ export const FabricStoreModel = types
         try {
           const updatedFabric = yield updateFabric(fabricId, updates)
           self.fabrics.updateItem(fabricId, updatedFabric)
-          
+
           if (self.currentFabric?.id === fabricId) {
             self.setCurrentFabric(updatedFabric)
           }
-          
+
           return updatedFabric
         } catch (error) {
           throw error
@@ -619,7 +650,7 @@ export const FabricStoreModel = types
           yield syncWishlist([...self.wishlist.fabricIds])
         } catch (error) {
           // Silently fail wishlist sync
-          console.warn('Failed to sync wishlist:', error)
+          console.warn("Failed to sync wishlist:", error)
         }
       }),
 
@@ -629,8 +660,8 @@ export const FabricStoreModel = types
       loadWishlist: flow(function* (userId: string) {
         try {
           const response = yield fetch(`/api/users/${userId}/wishlist`)
-          if (!response.ok) throw new Error('Failed to load wishlist')
-          
+          if (!response.ok) throw new Error("Failed to load wishlist")
+
           const wishlistData = yield response.json()
           self.wishlist = WishlistModel.create({
             userId,
@@ -644,7 +675,7 @@ export const FabricStoreModel = types
       }),
     }
   })
-  .views(self => ({
+  .views((self) => ({
     /**
      * Get fabrics by category
      */
@@ -679,8 +710,8 @@ export const FabricStoreModel = types
     get wishlistFabrics() {
       if (!self.wishlist) return []
       return self.wishlist.fabricIds
-        .map(id => self.fabrics.findById(id))
-        .filter(fabric => fabric !== undefined)
+        .map((id) => self.fabrics.findById(id))
+        .filter((fabric) => fabric !== undefined)
     },
 
     /**
@@ -694,8 +725,8 @@ export const FabricStoreModel = types
      * Get low stock fabrics
      */
     get lowStockFabrics() {
-      return self.fabrics.filter((fabric: any) => 
-        fabric.inventory.availableQuantity <= fabric.inventory.reorderLevel
+      return self.fabrics.filter(
+        (fabric: any) => fabric.inventory.availableQuantity <= fabric.inventory.reorderLevel,
       )
     },
 
@@ -711,7 +742,7 @@ export const FabricStoreModel = types
      */
     get totalInventoryValue() {
       return self.fabrics.items.reduce((total: number, fabric: any) => {
-        return total + (fabric.inventory.quantity * fabric.pricing.pricePerUnit)
+        return total + fabric.inventory.quantity * fabric.pricing.pricePerUnit
       }, 0)
     },
 

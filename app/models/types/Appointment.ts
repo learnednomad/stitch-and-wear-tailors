@@ -2,24 +2,24 @@
  * Appointment Model - Scheduling, availability, and reminders
  */
 
-export type AppointmentType = 
-  | 'consultation' 
-  | 'measurement' 
-  | 'fitting' 
-  | 'delivery' 
-  | 'alteration'
-  | 'design_review'
+export type AppointmentType =
+  | "consultation"
+  | "measurement"
+  | "fitting"
+  | "delivery"
+  | "alteration"
+  | "design_review"
 
-export type AppointmentStatus = 
-  | 'scheduled' 
-  | 'confirmed' 
-  | 'in_progress' 
-  | 'completed' 
-  | 'cancelled' 
-  | 'no_show'
-  | 'rescheduled'
+export type AppointmentStatus =
+  | "scheduled"
+  | "confirmed"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+  | "no_show"
+  | "rescheduled"
 
-export type ReminderType = 'email' | 'sms' | 'push' | 'call'
+export type ReminderType = "email" | "sms" | "push" | "call"
 
 export interface AppointmentReminder {
   type: ReminderType
@@ -29,7 +29,7 @@ export interface AppointmentReminder {
 }
 
 export interface AppointmentLocation {
-  type: 'shop' | 'client_home' | 'virtual'
+  type: "shop" | "client_home" | "virtual"
   address?: {
     street: string
     city: string
@@ -91,12 +91,12 @@ export interface CreateAppointmentInput {
   tailorId: string
   orderId?: string
   type: AppointmentType
-  services: Omit<AppointmentServices, 'estimatedDuration'>
+  services: Omit<AppointmentServices, "estimatedDuration">
   scheduledAt: string
   startTime: string
   endTime: string
   location: AppointmentLocation
-  reminders?: Omit<AppointmentReminder, 'sent' | 'sentAt'>[]
+  reminders?: Omit<AppointmentReminder, "sent" | "sentAt">[]
   notes?: string
   preparation?: {
     clientInstructions?: string[]

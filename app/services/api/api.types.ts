@@ -183,7 +183,20 @@ export interface FabricListParams extends SearchParams {
 export interface CreateMeasurementRequest {
   clientId: string
   templateId?: string
-  garmentType: "shirt" | "pants" | "dress" | "suit" | "blazer" | "skirt" | "blouse" | "agbada" | "kaftan" | "plain_kaftan" | "senator" | "traditional" | "custom"
+  garmentType:
+    | "shirt"
+    | "pants"
+    | "dress"
+    | "suit"
+    | "blazer"
+    | "skirt"
+    | "blouse"
+    | "agbada"
+    | "kaftan"
+    | "plain_kaftan"
+    | "senator"
+    | "traditional"
+    | "custom"
   measurements: Array<{
     name: string
     value: number

@@ -25,7 +25,7 @@ const _rootStore = RootStoreModel.create({
       revenue: 0,
       averageOrderValue: 0,
       lastUpdated: null,
-    }
+    },
   },
   fabricStore: {
     priceRange: {
@@ -43,7 +43,7 @@ const _rootStore = RootStoreModel.create({
   },
   appointmentStore: {
     calendarView: {
-      currentDate: new Date().toISOString().split('T')[0],
+      currentDate: new Date().toISOString().split("T")[0],
       viewMode: "week",
       selectedTailorId: null,
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,

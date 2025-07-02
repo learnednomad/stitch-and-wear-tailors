@@ -86,7 +86,7 @@ export const ReactotronDevConfig = {
  */
 export function getCurrentReactotronConfig() {
   const environment = __DEV__ ? "development" : "production"
-  
+
   switch (environment) {
     case "production":
       return ReactotronDevConfig.production
@@ -283,15 +283,12 @@ export const ReactotronDevUtils = {
    * Setup development shortcuts
    */
   setupDevShortcuts(): void {
-    if (!__DEV__) return
-
-    // Add global shortcuts for common debugging tasks
+    if (!__DEV__) return // Add global shortcuts for common debugging tasks
     ;(global as any).debugApi = () => {
       const { ReactotronApiUtils } = require("./ReactotronApiPlugin")
       ReactotronApiUtils.logServiceStats()
       ReactotronApiUtils.showRequestHistory()
     }
-
     ;(global as any).clearAllData = () => {
       const { clear } = require("../utils/storage")
       const { ReactotronApiUtils } = require("./ReactotronApiPlugin")
@@ -353,12 +350,12 @@ export const DevEnvironmentValidator = {
     if (!__DEV__) return
 
     const validation = this.validate()
-    
+
     if (validation.valid) {
       console.log("✅ Development environment is properly configured")
     } else {
       console.log("⚠️ Development environment issues found:")
-      validation.issues.forEach(issue => console.log(`  - ${issue}`))
+      validation.issues.forEach((issue) => console.log(`  - ${issue}`))
     }
   },
 }

@@ -1,6 +1,6 @@
 /**
  * Appwrite API Adapter
- * 
+ *
  * Bridges the existing API service pattern with Appwrite's SDK,
  * maintaining compatibility with the current service architecture
  * while providing Appwrite-specific functionality.
@@ -48,7 +48,7 @@ export class AppwriteApiAdapter {
    */
   private async wrapResponse<T>(
     operation: () => Promise<T>,
-    errorContext?: string
+    errorContext?: string,
   ): Promise<AppwriteApiResponse<T>> {
     try {
       const data = await operation()
@@ -64,9 +64,9 @@ export class AppwriteApiAdapter {
       } as AppwriteApiResponse<T>
     } catch (error) {
       console.error(`Appwrite API Error ${errorContext}:`, error)
-      
+
       const problem: GeneralApiProblem = this.mapAppwriteError(error)
-      
+
       return {
         ok: false,
         status: problem === "NETWORK_ERROR" ? 0 : 400,
@@ -85,10 +85,10 @@ export class AppwriteApiAdapter {
    */
   private mapAppwriteError(error: any): GeneralApiProblem {
     if (!error) return "UNKNOWN_ERROR"
-    
+
     const message = error.message || error.toString()
     const code = error.code || error.type
-    
+
     // Map common Appwrite errors
     if (code === 401 || message.includes("unauthorized")) return "UNAUTHORIZED"
     if (code === 404 || message.includes("not found")) return "NOT_FOUND"
@@ -96,7 +96,7 @@ export class AppwriteApiAdapter {
     if (message.includes("network") || message.includes("connection")) return "NETWORK_ERROR"
     if (code >= 500) return "SERVER_ERROR"
     if (code >= 400) return "CLIENT_ERROR"
-    
+
     return "UNKNOWN_ERROR"
   }
 
@@ -121,10 +121,14 @@ export class AppwriteApiAdapter {
   /**
    * Create user account
    */
-  async createAccount(email: string, password: string, name?: string): Promise<AppwriteApiResponse<any>> {
+  async createAccount(
+    email: string,
+    password: string,
+    name?: string,
+  ): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
       () => this.client.account.create("unique()", email, password, name),
-      "createAccount"
+      "createAccount",
     )
   }
 
@@ -134,7 +138,7 @@ export class AppwriteApiAdapter {
   async createSession(email: string, password: string): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
       () => this.client.account.createEmailSession(email, password),
-      "createSession"
+      "createSession",
     )
   }
 
@@ -142,30 +146,21 @@ export class AppwriteApiAdapter {
    * Get current user session
    */
   async getCurrentUser(): Promise<AppwriteApiResponse<any>> {
-    return this.wrapResponse(
-      () => this.client.account.get(),
-      "getCurrentUser"
-    )
+    return this.wrapResponse(() => this.client.account.get(), "getCurrentUser")
   }
 
   /**
    * Delete current session (logout)
    */
   async deleteSession(): Promise<AppwriteApiResponse<any>> {
-    return this.wrapResponse(
-      () => this.client.account.deleteSession("current"),
-      "deleteSession"
-    )
+    return this.wrapResponse(() => this.client.account.deleteSession("current"), "deleteSession")
   }
 
   /**
    * Update user preferences
    */
   async updateUserPrefs(prefs: Record<string, any>): Promise<AppwriteApiResponse<any>> {
-    return this.wrapResponse(
-      () => this.client.account.updatePrefs(prefs),
-      "updateUserPrefs"
-    )
+    return this.wrapResponse(() => this.client.account.updatePrefs(prefs), "updateUserPrefs")
   }
 
   /**
@@ -173,8 +168,9 @@ export class AppwriteApiAdapter {
    */
   async createPasswordRecovery(email: string, url?: string): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
-      () => this.client.account.createRecovery(email, url || "https://localhost:3000/reset-password"),
-      "createPasswordRecovery"
+      () =>
+        this.client.account.createRecovery(email, url || "https://localhost:3000/reset-password"),
+      "createPasswordRecovery",
     )
   }
 
@@ -185,20 +181,23 @@ export class AppwriteApiAdapter {
     // Note: For Appwrite, we need to parse userId and secret from the token
     // This assumes token contains "userId:secret" format
     const [userId, secret] = token.split(":")
-    
+
     return this.wrapResponse(
       () => this.client.account.updateRecovery(userId, secret, password, password),
-      "updatePasswordRecovery"
+      "updatePasswordRecovery",
     )
   }
 
   /**
    * Update password for authenticated user
    */
-  async updatePassword(newPassword: string, oldPassword?: string): Promise<AppwriteApiResponse<any>> {
+  async updatePassword(
+    newPassword: string,
+    oldPassword?: string,
+  ): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
       () => this.client.account.updatePassword(newPassword, oldPassword),
-      "updatePassword"
+      "updatePassword",
     )
   }
 
@@ -206,10 +205,7 @@ export class AppwriteApiAdapter {
    * Delete all sessions (logout from all devices)
    */
   async deleteAllSessions(): Promise<AppwriteApiResponse<any>> {
-    return this.wrapResponse(
-      () => this.client.account.deleteSessions(),
-      "deleteAllSessions"
-    )
+    return this.wrapResponse(() => this.client.account.deleteSessions(), "deleteAllSessions")
   }
 
   /**
@@ -218,7 +214,7 @@ export class AppwriteApiAdapter {
   async createEmailVerification(url?: string): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
       () => this.client.account.createVerification(url || "https://localhost:3000/verify-email"),
-      "createEmailVerification"
+      "createEmailVerification",
     )
   }
 
@@ -229,10 +225,10 @@ export class AppwriteApiAdapter {
     // Note: For Appwrite, we need to parse userId and secret from the token
     // This assumes token contains "userId:secret" format
     const [userId, secret] = token.split(":")
-    
+
     return this.wrapResponse(
       () => this.client.account.updateVerification(userId, secret),
-      "updateEmailVerification"
+      "updateEmailVerification",
     )
   }
 
@@ -247,17 +243,18 @@ export class AppwriteApiAdapter {
     collectionId: string,
     data: Record<string, any>,
     documentId?: string,
-    permissions?: string[]
+    permissions?: string[],
   ): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
-      () => this.client.databases.createDocument(
-        this.databaseId,
-        collectionId,
-        documentId || "unique()",
-        data,
-        permissions
-      ),
-      `createDocument:${collectionId}`
+      () =>
+        this.client.databases.createDocument(
+          this.databaseId,
+          collectionId,
+          documentId || "unique()",
+          data,
+          permissions,
+        ),
+      `createDocument:${collectionId}`,
     )
   }
 
@@ -267,7 +264,7 @@ export class AppwriteApiAdapter {
   async getDocument(collectionId: string, documentId: string): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
       () => this.client.databases.getDocument(this.databaseId, collectionId, documentId),
-      `getDocument:${collectionId}:${documentId}`
+      `getDocument:${collectionId}:${documentId}`,
     )
   }
 
@@ -278,27 +275,31 @@ export class AppwriteApiAdapter {
     collectionId: string,
     documentId: string,
     data: Record<string, any>,
-    permissions?: string[]
+    permissions?: string[],
   ): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
-      () => this.client.databases.updateDocument(
-        this.databaseId,
-        collectionId,
-        documentId,
-        data,
-        permissions
-      ),
-      `updateDocument:${collectionId}:${documentId}`
+      () =>
+        this.client.databases.updateDocument(
+          this.databaseId,
+          collectionId,
+          documentId,
+          data,
+          permissions,
+        ),
+      `updateDocument:${collectionId}:${documentId}`,
     )
   }
 
   /**
    * Delete document
    */
-  async deleteDocument(collectionId: string, documentId: string): Promise<AppwriteApiResponse<any>> {
+  async deleteDocument(
+    collectionId: string,
+    documentId: string,
+  ): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
       () => this.client.databases.deleteDocument(this.databaseId, collectionId, documentId),
-      `deleteDocument:${collectionId}:${documentId}`
+      `deleteDocument:${collectionId}:${documentId}`,
     )
   }
 
@@ -307,17 +308,13 @@ export class AppwriteApiAdapter {
    */
   async listDocuments(
     collectionId: string,
-    options: AppwriteQueryOptions = {}
+    options: AppwriteQueryOptions = {},
   ): Promise<AppwriteApiResponse<any>> {
     const { queries = [], limit, offset } = options
-    
+
     return this.wrapResponse(
-      () => this.client.databases.listDocuments(
-        this.databaseId,
-        collectionId,
-        queries
-      ),
-      `listDocuments:${collectionId}`
+      () => this.client.databases.listDocuments(this.databaseId, collectionId, queries),
+      `listDocuments:${collectionId}`,
     )
   }
 
@@ -332,16 +329,11 @@ export class AppwriteApiAdapter {
     bucketId: string,
     file: File,
     fileId?: string,
-    permissions?: string[]
+    permissions?: string[],
   ): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
-      () => this.client.storage.createFile(
-        bucketId,
-        fileId || "unique()",
-        file,
-        permissions
-      ),
-      `uploadFile:${bucketId}`
+      () => this.client.storage.createFile(bucketId, fileId || "unique()", file, permissions),
+      `uploadFile:${bucketId}`,
     )
   }
 
@@ -353,7 +345,7 @@ export class AppwriteApiAdapter {
     fileId: string,
     width?: number,
     height?: number,
-    quality?: number
+    quality?: number,
   ): string {
     return this.client.storage.getFilePreview(bucketId, fileId, width, height, undefined, quality)
   }
@@ -371,7 +363,7 @@ export class AppwriteApiAdapter {
   async deleteFile(bucketId: string, fileId: string): Promise<AppwriteApiResponse<any>> {
     return this.wrapResponse(
       () => this.client.storage.deleteFile(bucketId, fileId),
-      `deleteFile:${bucketId}:${fileId}`
+      `deleteFile:${bucketId}:${fileId}`,
     )
   }
 
@@ -383,20 +375,14 @@ export class AppwriteApiAdapter {
    * Test connection to Appwrite
    */
   async testConnection(): Promise<AppwriteApiResponse<any>> {
-    return this.wrapResponse(
-      () => this.client.testConnection(),
-      "testConnection"
-    )
+    return this.wrapResponse(() => this.client.testConnection(), "testConnection")
   }
 
   /**
    * Get health status
    */
   async getHealthStatus(): Promise<AppwriteApiResponse<any>> {
-    return this.wrapResponse(
-      () => this.client.getHealthStatus(),
-      "getHealthStatus"
-    )
+    return this.wrapResponse(() => this.client.getHealthStatus(), "getHealthStatus")
   }
 
   /**

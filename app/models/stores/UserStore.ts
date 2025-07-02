@@ -38,7 +38,9 @@ const UserProfileModel = types.model("UserProfile", {
     phone: types.maybeNull(types.string),
     avatar: types.maybeNull(types.string),
     dateOfBirth: types.maybeNull(types.string),
-    gender: types.maybeNull(types.enumeration("Gender", ["male", "female", "other", "prefer_not_to_say"])),
+    gender: types.maybeNull(
+      types.enumeration("Gender", ["male", "female", "other", "prefer_not_to_say"]),
+    ),
     bio: types.maybeNull(types.string),
   }),
   addresses: types.array(UserAddressModel),
@@ -72,20 +74,20 @@ export const UserStoreModel = types
   .model("UserStore", {
     // Current user profile (expanded from auth)
     currentUserProfile: types.maybeNull(UserProfileModel),
-    
+
     // Users collection (for admin/tailor viewing clients)
     users: types.optional(UsersCollectionModel, {}),
-    
+
     // Profile editing state
     isEditingProfile: types.optional(types.boolean, false),
     profileChanges: types.map(types.union(types.string, types.boolean, types.null)),
-    
+
     // Loading and error states
     isLoading: types.optional(types.boolean, false),
     error: types.maybeNull(types.string),
     lastFetched: types.maybeNull(types.string),
   })
-  .actions(self => {
+  .actions((self) => {
     // Helper actions
     const setLoading = (loading: boolean) => {
       self.isLoading = loading
@@ -149,7 +151,7 @@ export const UserStoreModel = types
       updateProfileField(field: string, value: any) {
         if (!self.currentUserProfile) return
 
-        const fieldPath = field.split('.')
+        const fieldPath = field.split(".")
         let target: any = self.currentUserProfile
 
         // Navigate to the nested field
@@ -167,7 +169,7 @@ export const UserStoreModel = types
       /**
        * Add address to current user
        */
-      addAddress(addressData: Omit<UserAddress, 'id' | 'createdAt' | 'updatedAt'>) {
+      addAddress(addressData: Omit<UserAddress, "id" | "createdAt" | "updatedAt">) {
         if (!self.currentUserProfile) return
 
         const validatedAddress = validateUserAddress({
@@ -180,7 +182,7 @@ export const UserStoreModel = types
         // If this is the first address or marked as default, set it as default
         if (self.currentUserProfile.addresses.length === 0 || addressData.isDefault) {
           // Unset other default addresses
-          self.currentUserProfile.addresses.forEach(addr => {
+          self.currentUserProfile.addresses.forEach((addr) => {
             addr.isDefault = false
           })
         }
@@ -195,11 +197,11 @@ export const UserStoreModel = types
       updateAddress(addressId: string, updates: Partial<UserAddress>) {
         if (!self.currentUserProfile) return
 
-        const address = self.currentUserProfile.addresses.find(a => a.id === addressId)
+        const address = self.currentUserProfile.addresses.find((a) => a.id === addressId)
         if (address) {
           // If setting as default, unset others
           if (updates.isDefault === true) {
-            self.currentUserProfile.addresses.forEach(addr => {
+            self.currentUserProfile.addresses.forEach((addr) => {
               if (addr.id !== addressId) addr.isDefault = false
             })
           }
@@ -215,16 +217,16 @@ export const UserStoreModel = types
       removeAddress(addressId: string) {
         if (!self.currentUserProfile) return
 
-        const index = self.currentUserProfile.addresses.findIndex(a => a.id === addressId)
+        const index = self.currentUserProfile.addresses.findIndex((a) => a.id === addressId)
         if (index !== -1) {
           const wasDefault = self.currentUserProfile.addresses[index].isDefault
           self.currentUserProfile.addresses.splice(index, 1)
-          
+
           // If removed address was default and there are other addresses, set first as default
           if (wasDefault && self.currentUserProfile.addresses.length > 0) {
             self.currentUserProfile.addresses[0].isDefault = true
           }
-          
+
           self.currentUserProfile.updatedAt = createTimestamp()
         }
       },
@@ -232,11 +234,11 @@ export const UserStoreModel = types
       /**
        * Update user preferences
        */
-      updatePreferences(updates: Partial<User['preferences']>) {
+      updatePreferences(updates: Partial<User["preferences"]>) {
         if (!self.currentUserProfile) return
 
         const prefs = self.currentUserProfile.preferences
-        
+
         if (updates.notifications) {
           Object.assign(prefs.notifications, updates.notifications)
         }
@@ -259,82 +261,82 @@ export const UserStoreModel = types
       },
     }
   })
-  .actions(self => {
+  .actions((self) => {
     // Async actions
     const fetchUserProfile = createAsyncAction(
       self,
       async (userId: string) => {
         const response = await fetch(`/api/users/${userId}`, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch user profile')
+          throw new Error("Failed to fetch user profile")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to load user profile" }
+      { errorPrefix: "Failed to load user profile" },
     )
 
     const updateUserProfile = createAsyncAction(
       self,
       async (userId: string, updates: Partial<User>) => {
         const response = await fetch(`/api/users/${userId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to update user profile')
+          throw new Error("Failed to update user profile")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to update profile" }
+      { errorPrefix: "Failed to update profile" },
     )
 
     const uploadAvatar = createAsyncAction(
       self,
       async (userId: string, file: File) => {
         const formData = new FormData()
-        formData.append('avatar', file)
-        
+        formData.append("avatar", file)
+
         const response = await fetch(`/api/users/${userId}/avatar`, {
-          method: 'POST',
+          method: "POST",
           body: formData,
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to upload avatar')
+          throw new Error("Failed to upload avatar")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Avatar upload failed" }
+      { errorPrefix: "Avatar upload failed" },
     )
 
     const fetchUsers = createAsyncAction(
       self,
       async (params: { page?: number; role?: UserRole; status?: string; search?: string } = {}) => {
         const queryParams = new URLSearchParams()
-        if (params.page) queryParams.set('page', params.page.toString())
-        if (params.role) queryParams.set('role', params.role)
-        if (params.status) queryParams.set('status', params.status)
-        if (params.search) queryParams.set('search', params.search)
+        if (params.page) queryParams.set("page", params.page.toString())
+        if (params.role) queryParams.set("role", params.role)
+        if (params.status) queryParams.set("status", params.status)
+        if (params.search) queryParams.set("search", params.search)
 
         const response = await fetch(`/api/users?${queryParams}`, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch users')
+          throw new Error("Failed to fetch users")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to load users" }
+      { errorPrefix: "Failed to load users" },
     )
 
     return {
@@ -381,7 +383,7 @@ export const UserStoreModel = types
 
         try {
           const result = yield uploadAvatar(self.currentUserProfile.id, file)
-          self.updateProfileField('profile.avatar', result.avatarUrl)
+          self.updateProfileField("profile.avatar", result.avatarUrl)
           return result
         } catch (error) {
           throw error
@@ -394,13 +396,13 @@ export const UserStoreModel = types
       loadUsers: flow(function* (params: any = {}, reset: boolean = false) {
         try {
           const result = yield fetchUsers(params)
-          
+
           if (reset) {
             self.users.setItems(result.users)
           } else {
             self.users.addItems(result.users)
           }
-          
+
           self.users.setHasMore(result.hasMore)
           return result
         } catch (error) {
@@ -423,7 +425,7 @@ export const UserStoreModel = types
       }),
     }
   })
-  .views(self => ({
+  .views((self) => ({
     /**
      * Get current user's full name
      */
@@ -445,8 +447,11 @@ export const UserStoreModel = types
      */
     get defaultAddress() {
       if (!self.currentUserProfile) return null
-      return self.currentUserProfile.addresses.find(addr => addr.isDefault) || 
-             self.currentUserProfile.addresses[0] || null
+      return (
+        self.currentUserProfile.addresses.find((addr) => addr.isDefault) ||
+        self.currentUserProfile.addresses[0] ||
+        null
+      )
     },
 
     /**
@@ -463,7 +468,7 @@ export const UserStoreModel = types
      */
     get profileCompletionPercentage() {
       if (!self.currentUserProfile) return 0
-      
+
       const profile = self.currentUserProfile.profile
       const fields = [
         profile.firstName,
@@ -473,8 +478,8 @@ export const UserStoreModel = types
         profile.dateOfBirth,
         profile.bio,
       ]
-      
-      const completedFields = fields.filter(field => field && field.trim().length > 0).length
+
+      const completedFields = fields.filter((field) => field && field.trim().length > 0).length
       return Math.round((completedFields / fields.length) * 100)
     },
 
@@ -490,21 +495,21 @@ export const UserStoreModel = types
      */
     get profilePreview() {
       if (!self.currentUserProfile) return null
-      
+
       // Create a copy with pending changes applied
       const preview = { ...self.currentUserProfile }
       self.profileChanges.forEach((value, key) => {
-        const fieldPath = key.split('.')
+        const fieldPath = key.split(".")
         let target: any = preview
-        
+
         for (let i = 0; i < fieldPath.length - 1; i++) {
           target = target[fieldPath[i]]
         }
-        
+
         const finalField = fieldPath[fieldPath.length - 1]
         target[finalField] = value
       })
-      
+
       return preview
     },
 
@@ -519,7 +524,7 @@ export const UserStoreModel = types
      * Get active users count
      */
     get activeUsersCount() {
-      return self.users.filter((user: any) => user.status === 'active').length
+      return self.users.filter((user: any) => user.status === "active").length
     },
 
     /**

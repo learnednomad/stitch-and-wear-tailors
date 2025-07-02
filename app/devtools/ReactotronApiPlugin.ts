@@ -136,15 +136,12 @@ export class ReactotronApiPlugin {
         cached,
         deduplicated,
         retryCount,
-      }
+      },
     )
 
     // For errors, use Reactotron's error display
     if (!success && (error || response?.problem)) {
-      Reactotron.error(
-        `API Error: ${request.method} ${request.url}`,
-        error || response?.problem
-      )
+      Reactotron.error(`API Error: ${request.method} ${request.url}`, error || response?.problem)
     }
 
     // Clean up old requests (keep last 100)
@@ -165,14 +162,14 @@ export class ReactotronApiPlugin {
    * Get failed requests
    */
   getFailedRequests(): ApiRequestLog[] {
-    return this.getAllRequests().filter(req => !req.response || req.error)
+    return this.getAllRequests().filter((req) => !req.response || req.error)
   }
 
   /**
    * Get slow requests (> 2 seconds)
    */
   getSlowRequests(): ApiRequestLog[] {
-    return this.getAllRequests().filter(req => req.duration && req.duration > 2000)
+    return this.getAllRequests().filter((req) => req.duration && req.duration > 2000)
   }
 
   /**
@@ -251,10 +248,10 @@ export const ReactotronApiUtils = {
       cached?: boolean
       deduplicated?: boolean
       retryCount?: number
-    } = {}
+    } = {},
   ): Promise<ApiResponse<T>> {
     const id = ReactotronApiUtils.generateRequestId()
-    
+
     // Track request start
     reactotronApiPlugin.trackRequest({
       id,
@@ -268,7 +265,7 @@ export const ReactotronApiUtils = {
 
     try {
       const response = await apiCall()
-      
+
       // Track response
       reactotronApiPlugin.trackResponse({
         id,

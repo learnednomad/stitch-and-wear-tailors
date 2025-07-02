@@ -36,10 +36,10 @@ export class FabricApiService extends BaseApiService implements IFabricApiServic
     if (result.ok) {
       return { success: true, data: result.data?.success || false }
     }
-    return { 
-      success: false, 
-      problem: { kind: result.problem || "unknown" }, 
-      message: "Appwrite connection failed" 
+    return {
+      success: false,
+      problem: { kind: result.problem || "unknown" },
+      message: "Appwrite connection failed",
     }
   }
 
@@ -95,7 +95,7 @@ export class FabricApiService extends BaseApiService implements IFabricApiServic
     queryOptions.queries.push(Query.orderDesc("createdAt"))
 
     const result = await this.appwriteAdapter.listDocuments(COLLECTION_IDS.FABRICS, queryOptions)
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -109,7 +109,7 @@ export class FabricApiService extends BaseApiService implements IFabricApiServic
       total: result.data.total,
       page: Math.floor((params?.offset || 0) / (params?.limit || 50)) + 1,
       limit: params?.limit || 50,
-      hasMore: (result.data.total || 0) > ((params?.offset || 0) + (params?.limit || 50)),
+      hasMore: (result.data.total || 0) > (params?.offset || 0) + (params?.limit || 50),
     }
 
     return { success: true, data: response }
@@ -128,7 +128,7 @@ export class FabricApiService extends BaseApiService implements IFabricApiServic
     }
 
     const result = await this.appwriteAdapter.getDocument(COLLECTION_IDS.FABRICS, fabricId)
-    
+
     if (!result.ok) {
       return {
         success: false,

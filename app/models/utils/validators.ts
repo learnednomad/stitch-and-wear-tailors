@@ -14,7 +14,7 @@ import type {
   OrderStatus,
   AppointmentStatus,
   InvoiceStatus,
-} from '../types'
+} from "../types"
 
 /**
  * Validation error types
@@ -39,17 +39,17 @@ export const businessRules = {
    */
   orderStatusTransition: (currentStatus: OrderStatus, newStatus: OrderStatus): ValidationResult => {
     const validTransitions: Record<OrderStatus, OrderStatus[]> = {
-      draft: ['pending', 'cancelled'],
-      pending: ['confirmed', 'cancelled'],
-      confirmed: ['measuring', 'cancelled'],
-      measuring: ['cutting', 'confirmed'],
-      cutting: ['stitching', 'measuring'],
-      stitching: ['fitting', 'cutting'],
-      fitting: ['finishing', 'stitching'],
-      finishing: ['ready', 'fitting'],
-      ready: ['delivered', 'fitting'],
+      draft: ["pending", "cancelled"],
+      pending: ["confirmed", "cancelled"],
+      confirmed: ["measuring", "cancelled"],
+      measuring: ["cutting", "confirmed"],
+      cutting: ["stitching", "measuring"],
+      stitching: ["fitting", "cutting"],
+      fitting: ["finishing", "stitching"],
+      finishing: ["ready", "fitting"],
+      ready: ["delivered", "fitting"],
       delivered: [],
-      cancelled: ['pending', 'confirmed'],
+      cancelled: ["pending", "confirmed"],
       refunded: [],
     }
 
@@ -57,11 +57,15 @@ export const businessRules = {
 
     return {
       valid: allowed || false,
-      errors: allowed ? [] : [{
-        field: 'status',
-        message: `Cannot transition from ${currentStatus} to ${newStatus}`,
-        code: 'INVALID_STATUS_TRANSITION',
-      }],
+      errors: allowed
+        ? []
+        : [
+            {
+              field: "status",
+              message: `Cannot transition from ${currentStatus} to ${newStatus}`,
+              code: "INVALID_STATUS_TRANSITION",
+            },
+          ],
     }
   },
 
@@ -69,12 +73,12 @@ export const businessRules = {
    * Validate appointment scheduling conflicts
    */
   appointmentConflict: (
-    newAppointment: Pick<Appointment, 'tailorId' | 'startTime' | 'endTime'>,
-    existingAppointments: Pick<Appointment, 'tailorId' | 'startTime' | 'endTime' | 'status'>[]
+    newAppointment: Pick<Appointment, "tailorId" | "startTime" | "endTime">,
+    existingAppointments: Pick<Appointment, "tailorId" | "startTime" | "endTime" | "status">[],
   ): ValidationResult => {
-    const conflicts = existingAppointments.filter(existing => {
+    const conflicts = existingAppointments.filter((existing) => {
       if (existing.tailorId !== newAppointment.tailorId) return false
-      if (existing.status === 'cancelled') return false
+      if (existing.status === "cancelled") return false
 
       const newStart = new Date(newAppointment.startTime)
       const newEnd = new Date(newAppointment.endTime)
@@ -90,11 +94,16 @@ export const businessRules = {
 
     return {
       valid: conflicts.length === 0,
-      errors: conflicts.length > 0 ? [{
-        field: 'timeSlot',
-        message: 'Appointment conflicts with existing booking',
-        code: 'APPOINTMENT_CONFLICT',
-      }] : [],
+      errors:
+        conflicts.length > 0
+          ? [
+              {
+                field: "timeSlot",
+                message: "Appointment conflicts with existing booking",
+                code: "APPOINTMENT_CONFLICT",
+              },
+            ]
+          : [],
     }
   },
 
@@ -104,40 +113,46 @@ export const businessRules = {
   fabricInventory: (
     fabricId: string,
     requiredQuantity: number,
-    fabrics: Fabric[]
+    fabrics: Fabric[],
   ): ValidationResult => {
-    const fabric = fabrics.find(f => f.id === fabricId)
-    
+    const fabric = fabrics.find((f) => f.id === fabricId)
+
     if (!fabric) {
       return {
         valid: false,
-        errors: [{
-          field: 'fabricId',
-          message: 'Fabric not found',
-          code: 'FABRIC_NOT_FOUND',
-        }],
+        errors: [
+          {
+            field: "fabricId",
+            message: "Fabric not found",
+            code: "FABRIC_NOT_FOUND",
+          },
+        ],
       }
     }
 
     if (!fabric.active) {
       return {
         valid: false,
-        errors: [{
-          field: 'fabricId',
-          message: 'Fabric is not active',
-          code: 'FABRIC_INACTIVE',
-        }],
+        errors: [
+          {
+            field: "fabricId",
+            message: "Fabric is not active",
+            code: "FABRIC_INACTIVE",
+          },
+        ],
       }
     }
 
     if (fabric.inventory.availableQuantity < requiredQuantity) {
       return {
         valid: false,
-        errors: [{
-          field: 'quantity',
-          message: `Insufficient fabric inventory. Available: ${fabric.inventory.availableQuantity}, Required: ${requiredQuantity}`,
-          code: 'INSUFFICIENT_INVENTORY',
-        }],
+        errors: [
+          {
+            field: "quantity",
+            message: `Insufficient fabric inventory. Available: ${fabric.inventory.availableQuantity}, Required: ${requiredQuantity}`,
+            code: "INSUFFICIENT_INVENTORY",
+          },
+        ],
       }
     }
 
@@ -147,30 +162,31 @@ export const businessRules = {
   /**
    * Validate measurement requirements for style
    */
-  measurementRequirements: (
-    style: Style,
-    measurements: Measurement
-  ): ValidationResult => {
+  measurementRequirements: (style: Style, measurements: Measurement): ValidationResult => {
     const errors: ValidationError[] = []
-    
+
     // Check required measurements
-    style.measurements.required.forEach(required => {
-      if (!measurements.standardMeasurements[required as keyof typeof measurements.standardMeasurements]) {
+    style.measurements.required.forEach((required) => {
+      if (
+        !measurements.standardMeasurements[
+          required as keyof typeof measurements.standardMeasurements
+        ]
+      ) {
         errors.push({
           field: `measurements.${required}`,
           message: `Required measurement '${required}' is missing`,
-          code: 'MISSING_REQUIRED_MEASUREMENT',
+          code: "MISSING_REQUIRED_MEASUREMENT",
         })
       }
     })
 
     // Check if measurements are validated for complex styles
-    if (style.complexity === 'advanced' || style.complexity === 'expert') {
-      if (!measurements.validation || measurements.validation.status !== 'approved') {
+    if (style.complexity === "advanced" || style.complexity === "expert") {
+      if (!measurements.validation || measurements.validation.status !== "approved") {
         errors.push({
-          field: 'measurements.validation',
-          message: 'Measurements must be validated for complex styles',
-          code: 'UNVALIDATED_MEASUREMENTS',
+          field: "measurements.validation",
+          message: "Measurements must be validated for complex styles",
+          code: "UNVALIDATED_MEASUREMENTS",
         })
       }
     }
@@ -186,7 +202,7 @@ export const businessRules = {
    */
   invoiceCalculations: (invoice: Invoice): ValidationResult => {
     const errors: ValidationError[] = []
-    
+
     // Validate line item totals
     invoice.lineItems.forEach((item, index) => {
       const expectedTotal = item.quantity * item.unitPrice
@@ -194,7 +210,7 @@ export const businessRules = {
         errors.push({
           field: `lineItems[${index}].totalPrice`,
           message: `Line item total incorrect. Expected: ${expectedTotal}, Got: ${item.totalPrice}`,
-          code: 'INCORRECT_LINE_TOTAL',
+          code: "INCORRECT_LINE_TOTAL",
         })
       }
     })
@@ -203,19 +219,20 @@ export const businessRules = {
     const expectedSubtotal = invoice.lineItems.reduce((sum, item) => sum + item.totalPrice, 0)
     if (Math.abs(invoice.totals.subtotal - expectedSubtotal) > 0.01) {
       errors.push({
-        field: 'totals.subtotal',
+        field: "totals.subtotal",
         message: `Subtotal incorrect. Expected: ${expectedSubtotal}, Got: ${invoice.totals.subtotal}`,
-        code: 'INCORRECT_SUBTOTAL',
+        code: "INCORRECT_SUBTOTAL",
       })
     }
 
     // Validate total calculation
-    const expectedTotal = invoice.totals.subtotal - invoice.totals.discountAmount + invoice.totals.taxAmount
+    const expectedTotal =
+      invoice.totals.subtotal - invoice.totals.discountAmount + invoice.totals.taxAmount
     if (Math.abs(invoice.totals.total - expectedTotal) > 0.01) {
       errors.push({
-        field: 'totals.total',
+        field: "totals.total",
         message: `Total incorrect. Expected: ${expectedTotal}, Got: ${invoice.totals.total}`,
-        code: 'INCORRECT_TOTAL',
+        code: "INCORRECT_TOTAL",
       })
     }
 
@@ -223,9 +240,9 @@ export const businessRules = {
     const expectedAmountDue = invoice.totals.total - invoice.totals.amountPaid
     if (Math.abs(invoice.totals.amountDue - expectedAmountDue) > 0.01) {
       errors.push({
-        field: 'totals.amountDue',
+        field: "totals.amountDue",
         message: `Amount due incorrect. Expected: ${expectedAmountDue}, Got: ${invoice.totals.amountDue}`,
-        code: 'INCORRECT_AMOUNT_DUE',
+        code: "INCORRECT_AMOUNT_DUE",
       })
     }
 
@@ -238,41 +255,56 @@ export const businessRules = {
   /**
    * Validate user permissions for actions
    */
-  userPermissions: (
-    user: User,
-    action: string,
-    resource?: string
-  ): ValidationResult => {
+  userPermissions: (user: User, action: string, resource?: string): ValidationResult => {
     const permissions: Record<string, string[]> = {
-      admin: ['*'],
+      admin: ["*"],
       tailor: [
-        'order:read', 'order:update', 'order:create',
-        'measurement:read', 'measurement:create', 'measurement:update',
-        'appointment:read', 'appointment:create', 'appointment:update',
-        'invoice:read', 'invoice:create', 'invoice:update',
-        'fabric:read', 'style:read',
-        'notification:read', 'feedback:read', 'feedback:respond',
+        "order:read",
+        "order:update",
+        "order:create",
+        "measurement:read",
+        "measurement:create",
+        "measurement:update",
+        "appointment:read",
+        "appointment:create",
+        "appointment:update",
+        "invoice:read",
+        "invoice:create",
+        "invoice:update",
+        "fabric:read",
+        "style:read",
+        "notification:read",
+        "feedback:read",
+        "feedback:respond",
       ],
       client: [
-        'order:read', 'order:create',
-        'measurement:read',
-        'appointment:read', 'appointment:create',
-        'invoice:read',
-        'fabric:read', 'style:read',
-        'notification:read', 'feedback:create',
+        "order:read",
+        "order:create",
+        "measurement:read",
+        "appointment:read",
+        "appointment:create",
+        "invoice:read",
+        "fabric:read",
+        "style:read",
+        "notification:read",
+        "feedback:create",
       ],
     }
 
     const userPermissions = permissions[user.role] || []
-    const hasPermission = userPermissions.includes('*') || userPermissions.includes(action)
+    const hasPermission = userPermissions.includes("*") || userPermissions.includes(action)
 
     return {
       valid: hasPermission,
-      errors: hasPermission ? [] : [{
-        field: 'permission',
-        message: `User does not have permission for action: ${action}`,
-        code: 'INSUFFICIENT_PERMISSIONS',
-      }],
+      errors: hasPermission
+        ? []
+        : [
+            {
+              field: "permission",
+              message: `User does not have permission for action: ${action}`,
+              code: "INSUFFICIENT_PERMISSIONS",
+            },
+          ],
     }
   },
 }
@@ -281,8 +313,8 @@ export const businessRules = {
  * Utility to run multiple validations
  */
 export const validateMultiple = (...validationResults: ValidationResult[]): ValidationResult => {
-  const allErrors = validationResults.flatMap(result => result.errors)
-  
+  const allErrors = validationResults.flatMap((result) => result.errors)
+
   return {
     valid: allErrors.length === 0,
     errors: allErrors,
@@ -303,11 +335,11 @@ export const isBusinessHours = (date: string): boolean => {
   const appointmentDate = new Date(date)
   const hour = appointmentDate.getHours()
   const day = appointmentDate.getDay()
-  
+
   // Monday = 1, Saturday = 6, Sunday = 0
   const isWeekday = day >= 1 && day <= 6
   const isBusinessHour = hour >= 9 && hour < 18 // Changed <= to < for 6 PM cutoff
-  
+
   return isWeekday && isBusinessHour
 }
 
@@ -317,7 +349,7 @@ export const isBusinessHours = (date: string): boolean => {
 export const validateMeasurementRange = (
   measurementName: string,
   value: number,
-  unit: 'cm' | 'inch'
+  unit: "cm" | "inch",
 ): ValidationResult => {
   const ranges = {
     cm: {
@@ -338,8 +370,8 @@ export const validateMeasurementRange = (
     },
   }
 
-  const range = ranges[unit][measurementName as keyof typeof ranges[typeof unit]]
-  
+  const range = ranges[unit][measurementName as keyof (typeof ranges)[typeof unit]]
+
   if (!range) {
     return { valid: true, errors: [] } // No validation for unknown measurements
   }
@@ -348,10 +380,14 @@ export const validateMeasurementRange = (
 
   return {
     valid,
-    errors: valid ? [] : [{
-      field: measurementName,
-      message: `${measurementName} must be between ${range.min} and ${range.max} ${unit}`,
-      code: 'MEASUREMENT_OUT_OF_RANGE',
-    }],
+    errors: valid
+      ? []
+      : [
+          {
+            field: measurementName,
+            message: `${measurementName} must be between ${range.min} and ${range.max} ${unit}`,
+            code: "MEASUREMENT_OUT_OF_RANGE",
+          },
+        ],
   }
 }

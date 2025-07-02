@@ -31,7 +31,7 @@ interface MeasurementScreenProps extends AppStackScreenProps<"Measurement"> {}
 export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
-  
+
   const [measurements, setMeasurements] = useState<MeasurementData>({})
   const [specialInstructions, setSpecialInstructions] = useState("")
   const [unit, setUnit] = useState<"cm" | "inches">("cm")
@@ -46,27 +46,87 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
   // Different measurement fields based on style
   const getMeasurementFields = (styleId: string): MeasurementField[] => {
     const baseFields = [
-      { id: "chest", label: "Chest/Bust", placeholder: "Enter chest measurement", required: true, unit: unit },
-      { id: "waist", label: "Waist", placeholder: "Enter waist measurement", required: true, unit: unit },
-      { id: "hips", label: "Hips", placeholder: "Enter hip measurement", required: true, unit: unit },
-      { id: "length", label: "Length", placeholder: "Enter desired length", required: true, unit: unit },
+      {
+        id: "chest",
+        label: "Chest/Bust",
+        placeholder: "Enter chest measurement",
+        required: true,
+        unit: unit,
+      },
+      {
+        id: "waist",
+        label: "Waist",
+        placeholder: "Enter waist measurement",
+        required: true,
+        unit: unit,
+      },
+      {
+        id: "hips",
+        label: "Hips",
+        placeholder: "Enter hip measurement",
+        required: true,
+        unit: unit,
+      },
+      {
+        id: "length",
+        label: "Length",
+        placeholder: "Enter desired length",
+        required: true,
+        unit: unit,
+      },
     ]
 
     if (styleId?.includes("agbada") || styleId?.includes("kaftan")) {
       return [
         ...baseFields,
-        { id: "shoulders", label: "Shoulders", placeholder: "Enter shoulder width", required: true, unit: unit },
-        { id: "sleeves", label: "Sleeve Length", placeholder: "Enter sleeve length", required: true, unit: unit },
-        { id: "neck", label: "Neck", placeholder: "Enter neck measurement", required: false, unit: unit },
+        {
+          id: "shoulders",
+          label: "Shoulders",
+          placeholder: "Enter shoulder width",
+          required: true,
+          unit: unit,
+        },
+        {
+          id: "sleeves",
+          label: "Sleeve Length",
+          placeholder: "Enter sleeve length",
+          required: true,
+          unit: unit,
+        },
+        {
+          id: "neck",
+          label: "Neck",
+          placeholder: "Enter neck measurement",
+          required: false,
+          unit: unit,
+        },
       ]
     }
 
     if (styleId?.includes("shirt")) {
       return [
         ...baseFields,
-        { id: "shoulders", label: "Shoulders", placeholder: "Enter shoulder width", required: true, unit: unit },
-        { id: "sleeves", label: "Sleeve Length", placeholder: "Enter sleeve length", required: true, unit: unit },
-        { id: "collar", label: "Collar", placeholder: "Enter collar size", required: false, unit: unit },
+        {
+          id: "shoulders",
+          label: "Shoulders",
+          placeholder: "Enter shoulder width",
+          required: true,
+          unit: unit,
+        },
+        {
+          id: "sleeves",
+          label: "Sleeve Length",
+          placeholder: "Enter sleeve length",
+          required: true,
+          unit: unit,
+        },
+        {
+          id: "collar",
+          label: "Collar",
+          placeholder: "Enter collar size",
+          required: false,
+          unit: unit,
+        },
       ]
     }
 
@@ -76,20 +136,20 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
   const measurementFields = getMeasurementFields(styleId)
 
   const handleMeasurementChange = (fieldId: string, value: string) => {
-    setMeasurements(prev => ({
+    setMeasurements((prev) => ({
       ...prev,
-      [fieldId]: value
+      [fieldId]: value,
     }))
   }
 
   const validateMeasurements = (): boolean => {
-    const requiredFields = measurementFields.filter(field => field.required)
-    const missingFields = requiredFields.filter(field => !measurements[field.id]?.trim())
-    
+    const requiredFields = measurementFields.filter((field) => field.required)
+    const missingFields = requiredFields.filter((field) => !measurements[field.id]?.trim())
+
     if (missingFields.length > 0) {
       Alert.alert(
         "Missing Measurements",
-        `Please provide measurements for: ${missingFields.map(f => f.label).join(", ")}`
+        `Please provide measurements for: ${missingFields.map((f) => f.label).join(", ")}`,
       )
       return false
     }
@@ -99,10 +159,10 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
     for (const [fieldId, value] of numericFields) {
       const numValue = parseFloat(value)
       if (isNaN(numValue) || numValue <= 0 || numValue > 200) {
-        const field = measurementFields.find(f => f.id === fieldId)
+        const field = measurementFields.find((f) => f.id === fieldId)
         Alert.alert(
           "Invalid Measurement",
-          `Please check the ${field?.label} measurement. It should be a valid number.`
+          `Please check the ${field?.label} measurement. It should be a valid number.`,
         )
         return false
       }
@@ -116,32 +176,28 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
       return
     }
 
-    Alert.alert(
-      "Create Order",
-      "Your measurements have been collected. Create the order now?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Create Order",
-          onPress: () => {
-            // Here you would typically:
-            // 1. Save measurements to store/API
-            // 2. Create the order
-            // 3. Navigate to order confirmation or orders list
-            Alert.alert(
-              "Order Created Successfully!",
-              "Your custom order has been created. You will receive updates on the progress.",
-              [
-                {
-                  text: "View Orders",
-                  onPress: () => navigation.navigate("Orders" as never),
-                },
-              ]
-            )
-          },
+    Alert.alert("Create Order", "Your measurements have been collected. Create the order now?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Create Order",
+        onPress: () => {
+          // Here you would typically:
+          // 1. Save measurements to store/API
+          // 2. Create the order
+          // 3. Navigate to order confirmation or orders list
+          Alert.alert(
+            "Order Created Successfully!",
+            "Your custom order has been created. You will receive updates on the progress.",
+            [
+              {
+                text: "View Orders",
+                onPress: () => navigation.navigate("Orders" as never),
+              },
+            ],
+          )
         },
-      ],
-    )
+      },
+    ])
   }
 
   const renderMeasurementField = (field: MeasurementField) => (
@@ -197,7 +253,8 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
             <View style={$introContent}>
               <Text style={$introTitle}>Precise Measurements Required</Text>
               <Text style={$introText}>
-                Accurate measurements ensure a perfect fit. Please use a measuring tape and have someone assist you for best results.
+                Accurate measurements ensure a perfect fit. Please use a measuring tape and have
+                someone assist you for best results.
               </Text>
             </View>
           </View>
@@ -208,30 +265,18 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
           <Text style={$sectionTitle}>Measurement Unit</Text>
           <View style={$unitSelector}>
             <TouchableOpacity
-              style={[
-                $unitOption,
-                unit === "cm" && $selectedUnitOption,
-              ]}
+              style={[$unitOption, unit === "cm" && $selectedUnitOption]}
               onPress={() => setUnit("cm")}
             >
-              <Text style={[
-                $unitOptionText,
-                unit === "cm" && $selectedUnitOptionText,
-              ]}>
+              <Text style={[$unitOptionText, unit === "cm" && $selectedUnitOptionText]}>
                 Centimeters (cm)
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                $unitOption,
-                unit === "inches" && $selectedUnitOption,
-              ]}
+              style={[$unitOption, unit === "inches" && $selectedUnitOption]}
               onPress={() => setUnit("inches")}
             >
-              <Text style={[
-                $unitOptionText,
-                unit === "inches" && $selectedUnitOptionText,
-              ]}>
+              <Text style={[$unitOptionText, unit === "inches" && $selectedUnitOptionText]}>
                 Inches (in)
               </Text>
             </TouchableOpacity>
@@ -241,9 +286,7 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
         {/* Measurement Fields */}
         <View style={$section}>
           <Text style={$sectionTitle}>Body Measurements</Text>
-          <View style={$measurementContainer}>
-            {measurementFields.map(renderMeasurementField)}
-          </View>
+          <View style={$measurementContainer}>{measurementFields.map(renderMeasurementField)}</View>
         </View>
 
         {/* Special Instructions */}

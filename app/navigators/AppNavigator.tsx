@@ -46,7 +46,11 @@ export type AppStackParamList = {
   Order: undefined
   OrderHistory: undefined
   OrderTracking: undefined
-  Payment: { orderId: string; amount: number; orderDetails: { measurementName: string; status: string; dueDate: string } }
+  Payment: {
+    orderId: string
+    amount: number
+    orderDetails: { measurementName: string; status: string; dueDate: string }
+  }
   Tailor: undefined
   TailorOrder: undefined
   Measurment: undefined
@@ -91,7 +95,14 @@ const AppStack = observer(function AppStack() {
   // Show loading screen while checking authentication
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.background,
+        }}
+      >
         <Text>Loading...</Text>
       </View>
     )
@@ -102,12 +113,12 @@ const AppStack = observer(function AppStack() {
     if (!isAuthenticated) {
       return "SignIn"
     }
-    
+
     // Navigate based on user role
     if (user?.role === "tailor") {
       return "TailorTab"
     }
-    
+
     return "ClientTab"
   }
 
@@ -125,7 +136,7 @@ const AppStack = observer(function AppStack() {
       {/* Authentication Screens - Always available */}
       <Stack.Screen name="SignIn" component={Screens.SignInScreen} />
       <Stack.Screen name="SignUp" component={Screens.SignUpScreen} />
-      
+
       {/* Protected Screens - Only available when authenticated */}
       {isAuthenticated && (
         <>

@@ -19,11 +19,13 @@ export class TestEnvironment {
   /**
    * Setup test environment before tests
    */
-  setup(options: {
-    suppressConsoleErrors?: boolean
-    mockScenario?: keyof typeof MockScenarios
-    enableMocks?: boolean
-  } = {}) {
+  setup(
+    options: {
+      suppressConsoleErrors?: boolean
+      mockScenario?: keyof typeof MockScenarios
+      enableMocks?: boolean
+    } = {},
+  ) {
     // Suppress console errors/warnings in tests if needed
     if (options.suppressConsoleErrors) {
       console.error = jest.fn()
@@ -92,20 +94,20 @@ export class ServiceTestUtils {
    */
   static async testServiceErrorHandling(
     serviceMethod: () => Promise<ServiceResult<any>>,
-    expectedErrorKind?: string
+    expectedErrorKind?: string,
   ) {
     mockController.setErrorRate(1) // Force errors
-    
+
     const result = await serviceMethod()
-    
+
     expect(result.success).toBe(false)
     expect(result.problem).toBeDefined()
     expect(result.message).toBeDefined()
-    
+
     if (expectedErrorKind) {
       expect(result.problem?.kind).toBe(expectedErrorKind)
     }
-    
+
     mockController.reset()
   }
 
@@ -114,17 +116,17 @@ export class ServiceTestUtils {
    */
   static async testServiceTimeout(
     serviceMethod: () => Promise<ServiceResult<any>>,
-    timeoutMs = 5000
+    timeoutMs = 5000,
   ) {
     mockController.setScenario("slowNetwork")
-    
+
     const startTime = Date.now()
     const result = await serviceMethod()
     const duration = Date.now() - startTime
-    
+
     // Should either succeed quickly or fail with timeout
     expect(duration < timeoutMs || !result.success).toBe(true)
-    
+
     mockController.reset()
   }
 
@@ -133,7 +135,7 @@ export class ServiceTestUtils {
    */
   static async testPagination(
     serviceMethod: (params: any) => Promise<ServiceResult<any>>,
-    testParams = {}
+    testParams = {},
   ) {
     // Test first page
     const firstPage = await serviceMethod({ ...testParams, limit: 5, offset: 0 })
@@ -163,9 +165,7 @@ export class ServiceTestUtils {
   /**
    * Test authentication requirement
    */
-  static async testAuthRequired(
-    serviceMethod: () => Promise<ServiceResult<any>>
-  ) {
+  static async testAuthRequired(serviceMethod: () => Promise<ServiceResult<any>>) {
     // Mock unauthorized response
     const result = await MockHelpers.simulateAuthFlow.expiredToken()
     expect(result.ok).toBe(false)
@@ -258,7 +258,7 @@ export const TestScenarios = {
     async testAvatarUpload() {
       const mockFile = new File(["mock"], "avatar.jpg", { type: "image/jpeg" })
       const result = await MockServices.user.uploadAvatar(mockFile)
-      
+
       ServiceTestUtils.expectValidData(result, (data) => {
         return !!data.url
       })
@@ -266,7 +266,7 @@ export const TestScenarios = {
 
     async testUserSearch() {
       const result = await MockServices.user.searchUsers({ search: "john" })
-      
+
       ServiceTestUtils.expectValidData(result, (data) => {
         return Array.isArray(data.data) && data.total >= 0
       })
@@ -293,7 +293,7 @@ export const TestScenarios = {
       }
 
       const result = await MockServices.order.createOrder(orderData)
-      
+
       ServiceTestUtils.expectValidData(result, (data) => {
         return !!(data.id && data.clientId && data.items?.length)
       })
@@ -318,12 +318,12 @@ export const TestScenarios = {
 
     async testProgressTracking() {
       const orderId = "test_order_123"
-      
+
       const progressUpdate = await MockServices.order.addProgressUpdate(orderId, {
         message: "Started cutting fabric",
         images: [],
       })
-      
+
       expect(progressUpdate.success).toBe(true)
 
       const progress = await MockServices.order.getOrderProgress(orderId)
@@ -333,10 +333,9 @@ export const TestScenarios = {
     },
 
     async testOrderListing() {
-      await ServiceTestUtils.testPagination(
-        (params) => MockServices.order.getOrders(params),
-        { status: "confirmed" }
-      )
+      await ServiceTestUtils.testPagination((params) => MockServices.order.getOrders(params), {
+        status: "confirmed",
+      })
     },
   },
 
@@ -345,15 +344,14 @@ export const TestScenarios = {
    */
   fabricCatalog: {
     async testFabricListing() {
-      await ServiceTestUtils.testPagination(
-        (params) => MockServices.fabric.getFabrics(params),
-        { category: "cotton" }
-      )
+      await ServiceTestUtils.testPagination((params) => MockServices.fabric.getFabrics(params), {
+        category: "cotton",
+      })
     },
 
     async testFabricDetails() {
       const result = await MockServices.fabric.getFabric("fabric_123")
-      
+
       ServiceTestUtils.expectValidData(result, (data) => {
         return !!(data.id && data.name && data.pricePerMeter)
       })
@@ -363,7 +361,7 @@ export const TestScenarios = {
       const result = await MockServices.fabric.searchFabrics("cotton", {
         limit: 10,
       })
-      
+
       ServiceTestUtils.expectValidData(result, (data) => {
         return Array.isArray(data.data) && data.total >= 0
       })
@@ -380,12 +378,12 @@ export class PerformanceTestUtils {
    */
   static async testResponseTime(
     serviceMethod: () => Promise<ServiceResult<any>>,
-    maxResponseTime = 1000
+    maxResponseTime = 1000,
   ) {
     const startTime = Date.now()
     await serviceMethod()
     const responseTime = Date.now() - startTime
-    
+
     expect(responseTime).toBeLessThan(maxResponseTime)
     return responseTime
   }
@@ -395,45 +393,42 @@ export class PerformanceTestUtils {
    */
   static async testConcurrentRequests(
     serviceMethod: () => Promise<ServiceResult<any>>,
-    concurrency = 10
+    concurrency = 10,
   ) {
     const requests = Array.from({ length: concurrency }, () => serviceMethod())
     const results = await Promise.all(requests)
-    
+
     // All requests should complete
     expect(results).toHaveLength(concurrency)
-    
+
     // Most should succeed (allowing for some mock failures)
-    const successCount = results.filter(r => r.success).length
+    const successCount = results.filter((r) => r.success).length
     expect(successCount).toBeGreaterThan(concurrency * 0.7) // At least 70% success
-    
+
     return results
   }
 
   /**
    * Test memory usage during operations
    */
-  static async testMemoryUsage(
-    serviceMethod: () => Promise<ServiceResult<any>>,
-    iterations = 100
-  ) {
+  static async testMemoryUsage(serviceMethod: () => Promise<ServiceResult<any>>, iterations = 100) {
     const initialMemory = process.memoryUsage().heapUsed
-    
+
     for (let i = 0; i < iterations; i++) {
       await serviceMethod()
     }
-    
+
     // Force garbage collection if available
     if (global.gc) {
       global.gc()
     }
-    
+
     const finalMemory = process.memoryUsage().heapUsed
     const memoryIncrease = finalMemory - initialMemory
-    
+
     // Memory increase should be reasonable (less than 50MB for 100 operations)
     expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024)
-    
+
     return memoryIncrease
   }
 }
@@ -470,17 +465,16 @@ export const createServiceTestSuite = (serviceName: string, service: any) => {
       test("should maintain reasonable response times", async () => {
         const responseTime = await PerformanceTestUtils.testResponseTime(
           () => service.ping(),
-          500 // 500ms max for health check
+          500, // 500ms max for health check
         )
         console.log(`${serviceName} ping response time: ${responseTime}ms`)
       })
 
       test("should handle concurrent requests", async () => {
-        const results = await PerformanceTestUtils.testConcurrentRequests(
-          () => service.ping(),
-          5
+        const results = await PerformanceTestUtils.testConcurrentRequests(() => service.ping(), 5)
+        console.log(
+          `${serviceName} concurrent requests: ${results.filter((r) => r.success).length}/5 succeeded`,
         )
-        console.log(`${serviceName} concurrent requests: ${results.filter(r => r.success).length}/5 succeeded`)
       })
     },
   }

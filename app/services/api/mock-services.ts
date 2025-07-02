@@ -7,16 +7,16 @@
  */
 
 import { ServiceResult } from "./base-api-service"
-import { 
-  LoginRequest, 
-  LoginResponse, 
-  RegisterRequest, 
+import {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
   UpdateUserProfileRequest,
   CreateOrderRequest,
   UpdateOrderRequest,
   OrderListParams,
   FabricListParams,
-  ApiResponse 
+  ApiResponse,
 } from "./api.types"
 
 /**
@@ -35,13 +35,13 @@ const MOCK_CONFIG = {
 /**
  * Utility function to simulate network delay
  */
-const delay = (ms: number = MOCK_CONFIG.networkDelay.normal): Promise<void> => 
-  new Promise(resolve => setTimeout(resolve, ms))
+const delay = (ms: number = MOCK_CONFIG.networkDelay.normal): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * Utility function to randomly simulate errors
  */
-const shouldSimulateError = (): boolean => 
+const shouldSimulateError = (): boolean =>
   MOCK_CONFIG.enableRandomErrors && Math.random() < MOCK_CONFIG.errorRate
 
 /**
@@ -140,7 +140,7 @@ export class MockAuthApiService {
 
   async login(credentials: LoginRequest): Promise<ServiceResult<LoginResponse>> {
     await delay()
-    
+
     if (shouldSimulateError()) {
       return {
         success: false,
@@ -174,7 +174,7 @@ export class MockAuthApiService {
 
   async register(userData: RegisterRequest): Promise<ServiceResult<LoginResponse>> {
     await delay(MOCK_CONFIG.networkDelay.slow)
-    
+
     if (shouldSimulateError()) {
       return {
         success: false,
@@ -237,7 +237,7 @@ export class MockUserApiService {
 
   async getProfile(userId?: string): Promise<ServiceResult<any>> {
     await delay()
-    
+
     if (shouldSimulateError()) {
       return {
         success: false,
@@ -255,7 +255,7 @@ export class MockUserApiService {
 
   async updateProfile(updates: UpdateUserProfileRequest): Promise<ServiceResult<any>> {
     await delay()
-    
+
     const user = MockDataGenerators.user({
       profile: { ...MockDataGenerators.user().profile, ...updates.profile },
       updatedAt: new Date().toISOString(),
@@ -266,7 +266,7 @@ export class MockUserApiService {
 
   async uploadAvatar(file: File): Promise<ServiceResult<{ url: string }>> {
     await delay(MOCK_CONFIG.networkDelay.slow)
-    
+
     return {
       success: true,
       data: { url: "https://via.placeholder.com/150" },
@@ -275,9 +275,9 @@ export class MockUserApiService {
 
   async searchUsers(params: any): Promise<ServiceResult<ApiResponse<any[]>>> {
     await delay()
-    
+
     const users = Array.from({ length: 5 }, () => MockDataGenerators.user())
-    
+
     return {
       success: true,
       data: {
@@ -302,7 +302,7 @@ export class MockOrderApiService {
 
   async createOrder(orderData: CreateOrderRequest): Promise<ServiceResult<any>> {
     await delay(MOCK_CONFIG.networkDelay.slow)
-    
+
     if (shouldSimulateError()) {
       return {
         success: false,
@@ -322,14 +322,14 @@ export class MockOrderApiService {
 
   async getOrder(orderId: string): Promise<ServiceResult<any>> {
     await delay()
-    
+
     const order = MockDataGenerators.order({ id: orderId })
     return { success: true, data: order }
   }
 
   async updateOrder(orderId: string, updates: UpdateOrderRequest): Promise<ServiceResult<any>> {
     await delay()
-    
+
     const order = MockDataGenerators.order({
       id: orderId,
       ...updates,
@@ -341,9 +341,9 @@ export class MockOrderApiService {
 
   async getOrders(params?: OrderListParams): Promise<ServiceResult<ApiResponse<any[]>>> {
     await delay()
-    
+
     const orders = Array.from({ length: 10 }, () => MockDataGenerators.order())
-    
+
     return {
       success: true,
       data: {
@@ -358,7 +358,7 @@ export class MockOrderApiService {
 
   async confirmOrder(orderId: string): Promise<ServiceResult<any>> {
     await delay()
-    
+
     const order = MockDataGenerators.order({
       id: orderId,
       status: "confirmed",
@@ -370,7 +370,7 @@ export class MockOrderApiService {
 
   async startOrder(orderId: string): Promise<ServiceResult<any>> {
     await delay()
-    
+
     const order = MockDataGenerators.order({
       id: orderId,
       status: "in_progress",
@@ -382,7 +382,7 @@ export class MockOrderApiService {
 
   async completeOrder(orderId: string): Promise<ServiceResult<any>> {
     await delay()
-    
+
     const order = MockDataGenerators.order({
       id: orderId,
       status: "completed",
@@ -394,7 +394,7 @@ export class MockOrderApiService {
 
   async addProgressUpdate(orderId: string, update: any): Promise<ServiceResult<any>> {
     await delay()
-    
+
     const progressUpdate = MockDataGenerators.progressUpdate({
       orderId,
       message: update.message,
@@ -406,10 +406,8 @@ export class MockOrderApiService {
 
   async getOrderProgress(orderId: string): Promise<ServiceResult<any[]>> {
     await delay()
-    
-    const updates = Array.from({ length: 3 }, () => 
-      MockDataGenerators.progressUpdate({ orderId })
-    )
+
+    const updates = Array.from({ length: 3 }, () => MockDataGenerators.progressUpdate({ orderId }))
 
     return { success: true, data: updates }
   }
@@ -426,9 +424,9 @@ export class MockFabricApiService {
 
   async getFabrics(params?: FabricListParams): Promise<ServiceResult<ApiResponse<any[]>>> {
     await delay()
-    
+
     const fabrics = Array.from({ length: 20 }, () => MockDataGenerators.fabric())
-    
+
     return {
       success: true,
       data: {
@@ -443,20 +441,23 @@ export class MockFabricApiService {
 
   async getFabric(fabricId: string): Promise<ServiceResult<any>> {
     await delay()
-    
+
     const fabric = MockDataGenerators.fabric({ id: fabricId })
     return { success: true, data: fabric }
   }
 
-  async searchFabrics(query: string, params?: FabricListParams): Promise<ServiceResult<ApiResponse<any[]>>> {
+  async searchFabrics(
+    query: string,
+    params?: FabricListParams,
+  ): Promise<ServiceResult<ApiResponse<any[]>>> {
     await delay()
-    
-    const fabrics = Array.from({ length: 5 }, () => 
+
+    const fabrics = Array.from({ length: 5 }, () =>
       MockDataGenerators.fabric({
         name: `${query} Fabric`,
-      })
+      }),
     )
-    
+
     return {
       success: true,
       data: {
@@ -487,15 +488,15 @@ export const MockConfig = {
   isEnabled: __DEV__,
   networkDelay: MOCK_CONFIG.networkDelay,
   errorRate: MOCK_CONFIG.errorRate,
-  
+
   setNetworkDelay(delay: keyof typeof MOCK_CONFIG.networkDelay) {
     MOCK_CONFIG.networkDelay.normal = MOCK_CONFIG.networkDelay[delay]
   },
-  
+
   setErrorRate(rate: number) {
     MOCK_CONFIG.errorRate = rate
   },
-  
+
   enableRandomErrors(enabled: boolean) {
     MOCK_CONFIG.enableRandomErrors = enabled
   },

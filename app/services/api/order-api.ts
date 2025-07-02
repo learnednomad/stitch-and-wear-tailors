@@ -36,10 +36,10 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
     if (result.ok) {
       return { success: true, data: result.data?.success || false }
     }
-    return { 
-      success: false, 
-      problem: { kind: result.problem || "unknown" }, 
-      message: "Appwrite connection failed" 
+    return {
+      success: false,
+      problem: { kind: result.problem || "unknown" },
+      message: "Appwrite connection failed",
     }
   }
 
@@ -84,7 +84,7 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
 
     // Get current user (tailor creating the order)
     const userResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!userResult.ok) {
       return {
         success: false,
@@ -108,7 +108,7 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
 
     const orderResult = await this.appwriteAdapter.createDocument(
       COLLECTION_IDS.ORDERS,
-      orderDocument
+      orderDocument,
     )
 
     if (!orderResult.ok) {
@@ -139,7 +139,7 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
 
       const itemResult = await this.appwriteAdapter.createDocument(
         COLLECTION_IDS.ORDER_ITEMS,
-        itemDocument
+        itemDocument,
       )
 
       if (!itemResult.ok) {
@@ -150,14 +150,10 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
     }
 
     // Update order with total amount
-    const updateResult = await this.appwriteAdapter.updateDocument(
-      COLLECTION_IDS.ORDERS,
-      orderId,
-      {
-        totalAmount,
-        updatedAt: new Date().toISOString(),
-      }
-    )
+    const updateResult = await this.appwriteAdapter.updateDocument(COLLECTION_IDS.ORDERS, orderId, {
+      totalAmount,
+      updatedAt: new Date().toISOString(),
+    })
 
     if (!updateResult.ok) {
       console.warn("Failed to update order total:", updateResult.problem)
@@ -179,7 +175,7 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
     }
 
     const result = await this.appwriteAdapter.getDocument(COLLECTION_IDS.ORDERS, orderId)
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -189,12 +185,9 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
     }
 
     // Get order items
-    const itemsResult = await this.appwriteAdapter.listDocuments(
-      COLLECTION_IDS.ORDER_ITEMS,
-      {
-        queries: [Query.equal("orderId", orderId)],
-      }
-    )
+    const itemsResult = await this.appwriteAdapter.listDocuments(COLLECTION_IDS.ORDER_ITEMS, {
+      queries: [Query.equal("orderId", orderId)],
+    })
 
     const orderData = {
       ...result.data,
@@ -227,9 +220,9 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
     const result = await this.appwriteAdapter.updateDocument(
       COLLECTION_IDS.ORDERS,
       orderId,
-      updateData
+      updateData,
     )
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -301,7 +294,7 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
     queryOptions.queries.push(Query.orderDesc("createdAt"))
 
     const result = await this.appwriteAdapter.listDocuments(COLLECTION_IDS.ORDERS, queryOptions)
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -315,7 +308,7 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
       total: result.data.total,
       page: Math.floor((params?.offset || 0) / (params?.limit || 50)) + 1,
       limit: params?.limit || 50,
-      hasMore: (result.data.total || 0) > ((params?.offset || 0) + (params?.limit || 50)),
+      hasMore: (result.data.total || 0) > (params?.offset || 0) + (params?.limit || 50),
     }
 
     return { success: true, data: response }
@@ -382,16 +375,12 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
       }
     }
 
-    const result = await this.appwriteAdapter.updateDocument(
-      COLLECTION_IDS.ORDERS,
-      orderId,
-      {
-        status: "confirmed",
-        confirmedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-    )
-    
+    const result = await this.appwriteAdapter.updateDocument(COLLECTION_IDS.ORDERS, orderId, {
+      status: "confirmed",
+      confirmedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+
     if (!result.ok) {
       return {
         success: false,
@@ -418,16 +407,12 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
       }
     }
 
-    const result = await this.appwriteAdapter.updateDocument(
-      COLLECTION_IDS.ORDERS,
-      orderId,
-      {
-        status: "in_progress",
-        startedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-    )
-    
+    const result = await this.appwriteAdapter.updateDocument(COLLECTION_IDS.ORDERS, orderId, {
+      status: "in_progress",
+      startedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+
     if (!result.ok) {
       return {
         success: false,
@@ -454,16 +439,12 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
       }
     }
 
-    const result = await this.appwriteAdapter.updateDocument(
-      COLLECTION_IDS.ORDERS,
-      orderId,
-      {
-        status: "completed",
-        completedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-    )
-    
+    const result = await this.appwriteAdapter.updateDocument(COLLECTION_IDS.ORDERS, orderId, {
+      status: "completed",
+      completedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+
     if (!result.ok) {
       return {
         success: false,
@@ -490,17 +471,13 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
       }
     }
 
-    const result = await this.appwriteAdapter.updateDocument(
-      COLLECTION_IDS.ORDERS,
-      orderId,
-      {
-        status: "cancelled",
-        cancellationReason: reason,
-        cancelledAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-    )
-    
+    const result = await this.appwriteAdapter.updateDocument(COLLECTION_IDS.ORDERS, orderId, {
+      status: "cancelled",
+      cancellationReason: reason,
+      cancelledAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+
     if (!result.ok) {
       return {
         success: false,
@@ -601,7 +578,7 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
 
     // Get current user
     const userResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!userResult.ok) {
       return {
         success: false,
@@ -621,9 +598,9 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
 
     const result = await this.appwriteAdapter.createDocument(
       COLLECTION_IDS.PROGRESS_UPDATES,
-      progressData
+      progressData,
     )
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -639,7 +616,7 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
       {
         lastActivity: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      }
+      },
     )
 
     if (!orderUpdateResult.ok) {
@@ -662,17 +639,14 @@ export class OrderApiService extends BaseApiService implements IOrderApiService 
     }
 
     const queryOptions = {
-      queries: [
-        Query.equal("orderId", orderId),
-        Query.orderDesc("createdAt"),
-      ],
+      queries: [Query.equal("orderId", orderId), Query.orderDesc("createdAt")],
     }
 
     const result = await this.appwriteAdapter.listDocuments(
       COLLECTION_IDS.PROGRESS_UPDATES,
-      queryOptions
+      queryOptions,
     )
-    
+
     if (!result.ok) {
       return {
         success: false,

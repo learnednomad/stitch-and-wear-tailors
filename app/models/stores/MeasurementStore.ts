@@ -26,17 +26,19 @@ const TemplateModel = types.model("MeasurementTemplate", {
   name: types.string,
   description: types.string,
   category: types.enumeration("Category", ["shirt", "pants", "dress", "suit", "custom"]),
-  measurements: types.array(types.model("TemplateMeasurement", {
-    name: types.string,
-    label: types.string,
-    required: types.boolean,
-    unit: types.enumeration("Unit", ["cm", "inches"]),
-    defaultValue: types.maybeNull(types.number),
-    minValue: types.maybeNull(types.number),
-    maxValue: types.maybeNull(types.number),
-    description: types.maybeNull(types.string),
-    instructions: types.maybeNull(types.string),
-  })),
+  measurements: types.array(
+    types.model("TemplateMeasurement", {
+      name: types.string,
+      label: types.string,
+      required: types.boolean,
+      unit: types.enumeration("Unit", ["cm", "inches"]),
+      defaultValue: types.maybeNull(types.number),
+      minValue: types.maybeNull(types.number),
+      maxValue: types.maybeNull(types.number),
+      description: types.maybeNull(types.string),
+      instructions: types.maybeNull(types.string),
+    }),
+  ),
   isDefault: types.optional(types.boolean, false),
   isActive: types.optional(types.boolean, true),
   createdAt: types.string,
@@ -62,47 +64,54 @@ const MeasurementModel = types.model("Measurement", {
   id: types.string,
   clientId: types.string,
   tailorId: types.string,
-  
+
   // Measurement details
   templateId: types.maybeNull(types.string),
   templateName: types.maybeNull(types.string),
   occasion: types.maybeNull(types.string),
   garmentType: types.enumeration("GarmentType", [
-    "shirt", "pants", "dress", "suit", "blazer", "skirt", "blouse", "custom"
+    "shirt",
+    "pants",
+    "dress",
+    "suit",
+    "blazer",
+    "skirt",
+    "blouse",
+    "custom",
   ]),
-  
+
   // Measurements data
   measurements: types.array(MeasurementValueModel),
   unit: types.enumeration("Unit", ["cm", "inches"]),
-  
+
   // Validation and status
   isComplete: types.optional(types.boolean, false),
   isValidated: types.optional(types.boolean, false),
   validationErrors: types.array(types.string),
-  
+
   // Session info
   sessionDate: types.string,
   sessionDuration: types.maybeNull(types.number), // in minutes
   sessionNotes: types.maybeNull(types.string),
-  
+
   // Comparison with previous measurements
   previousMeasurementId: types.maybeNull(types.string),
   comparisons: types.array(MeasurementComparisonModel),
   hasSignificantChanges: types.optional(types.boolean, false),
-  
+
   // Quality assurance
   measuredBy: types.string, // tailor who took measurements
   verifiedBy: types.maybeNull(types.string), // senior tailor who verified
   confidenceLevel: types.enumeration("Confidence", ["low", "medium", "high"]),
-  
+
   // Client feedback
   clientApproved: types.maybeNull(types.boolean),
   clientNotes: types.maybeNull(types.string),
-  
+
   // Photos and references
   photos: types.array(types.string),
   referencePhotos: types.array(types.string),
-  
+
   createdAt: types.string,
   updatedAt: types.string,
 })
@@ -110,7 +119,10 @@ const MeasurementModel = types.model("Measurement", {
 /**
  * Collection model for measurements
  */
-const MeasurementsCollectionModel = createCollectionModel("MeasurementsCollection", MeasurementModel)
+const MeasurementsCollectionModel = createCollectionModel(
+  "MeasurementsCollection",
+  MeasurementModel,
+)
 
 /**
  * Collection model for templates
@@ -124,33 +136,36 @@ export const MeasurementStoreModel = types
   .model("MeasurementStore", {
     // Measurements collection
     measurements: types.optional(MeasurementsCollectionModel, {}),
-    
+
     // Templates collection
     templates: types.optional(TemplatesCollectionModel, {}),
-    
+
     // Current measurement session
     currentMeasurement: types.maybeNull(MeasurementModel),
     activeTemplate: types.maybeNull(TemplateModel),
-    
+
     // Session state
     isInSession: types.optional(types.boolean, false),
     sessionStartTime: types.maybeNull(types.string),
     pendingMeasurements: types.map(types.number),
-    
+
     // Loading and error states
     isLoading: types.optional(types.boolean, false),
     error: types.maybeNull(types.string),
     lastFetched: types.maybeNull(types.string),
-    
+
     // Validation settings
     validationSettings: types.model("ValidationSettings", {
       enableAutoValidation: types.optional(types.boolean, true),
       significantChangeThreshold: types.optional(types.number, 2), // cm
-      confidenceRequirement: types.optional(types.enumeration("Confidence", ["low", "medium", "high"]), "medium"),
+      confidenceRequirement: types.optional(
+        types.enumeration("Confidence", ["low", "medium", "high"]),
+        "medium",
+      ),
       requireVerification: types.optional(types.boolean, false),
     }),
   })
-  .actions(self => {
+  .actions((self) => {
     // Helper actions
     const setLoading = (loading: boolean) => {
       self.isLoading = loading
@@ -248,7 +263,7 @@ export const MeasurementStoreModel = types
       addMeasurementValue(name: string, value: number, unit: "cm" | "inches", notes?: string) {
         if (!self.currentMeasurement) return
 
-        const existingIndex = self.currentMeasurement.measurements.findIndex(m => m.name === name)
+        const existingIndex = self.currentMeasurement.measurements.findIndex((m) => m.name === name)
         const measurementValue = MeasurementValueModel.create({
           name,
           value,
@@ -265,7 +280,7 @@ export const MeasurementStoreModel = types
         }
 
         self.currentMeasurement.updatedAt = createTimestamp()
-        
+
         // Store in pending measurements for quick access
         self.pendingMeasurements.set(name, value)
 
@@ -281,7 +296,7 @@ export const MeasurementStoreModel = types
       removeMeasurementValue(name: string) {
         if (!self.currentMeasurement) return
 
-        const index = self.currentMeasurement.measurements.findIndex(m => m.name === name)
+        const index = self.currentMeasurement.measurements.findIndex((m) => m.name === name)
         if (index !== -1) {
           self.currentMeasurement.measurements.splice(index, 1)
           self.pendingMeasurements.delete(name)
@@ -299,18 +314,24 @@ export const MeasurementStoreModel = types
 
         // Check required measurements if using template
         if (self.activeTemplate) {
-          const requiredMeasurements = self.activeTemplate.measurements.filter(m => m.required)
+          const requiredMeasurements = self.activeTemplate.measurements.filter((m) => m.required)
           for (const required of requiredMeasurements) {
-            const existing = self.currentMeasurement.measurements.find(m => m.name === required.name)
+            const existing = self.currentMeasurement.measurements.find(
+              (m) => m.name === required.name,
+            )
             if (!existing) {
               errors.push(`Missing required measurement: ${required.label}`)
             } else {
               // Check value ranges
               if (required.minValue && existing.value < required.minValue) {
-                errors.push(`${required.label} is below minimum value (${required.minValue}${required.unit})`)
+                errors.push(
+                  `${required.label} is below minimum value (${required.minValue}${required.unit})`,
+                )
               }
               if (required.maxValue && existing.value > required.maxValue) {
-                errors.push(`${required.label} is above maximum value (${required.maxValue}${required.unit})`)
+                errors.push(
+                  `${required.label} is above maximum value (${required.maxValue}${required.unit})`,
+                )
               }
             }
           }
@@ -321,8 +342,11 @@ export const MeasurementStoreModel = types
           if (measurement.value <= 0) {
             errors.push(`${measurement.name} must be greater than 0`)
           }
-          if (measurement.value > 200) { // 200cm seems reasonable as max for most measurements
-            errors.push(`${measurement.name} seems unusually large (${measurement.value}${measurement.unit})`)
+          if (measurement.value > 200) {
+            // 200cm seems reasonable as max for most measurements
+            errors.push(
+              `${measurement.name} seems unusually large (${measurement.value}${measurement.unit})`,
+            )
           }
         }
 
@@ -348,11 +372,12 @@ export const MeasurementStoreModel = types
 
         // Compare each measurement
         for (const current of self.currentMeasurement.measurements) {
-          const previousValue = previous.measurements.find(m => m.name === current.name)
+          const previousValue = previous.measurements.find((m) => m.name === current.name)
           if (previousValue) {
             const difference = current.value - previousValue.value
             const percentageChange = (difference / previousValue.value) * 100
-            const isSignificant = Math.abs(difference) >= self.validationSettings.significantChangeThreshold
+            const isSignificant =
+              Math.abs(difference) >= self.validationSettings.significantChangeThreshold
 
             if (isSignificant) {
               hasSignificantChanges = true
@@ -442,68 +467,70 @@ export const MeasurementStoreModel = types
       },
     }
   })
-  .actions(self => {
+  .actions((self) => {
     // Async actions
     const fetchMeasurements = createAsyncAction(
       self,
-      async (params: {
-        clientId?: string
-        tailorId?: string
-        garmentType?: string
-        dateFrom?: string
-        dateTo?: string
-        page?: number
-      } = {}) => {
+      async (
+        params: {
+          clientId?: string
+          tailorId?: string
+          garmentType?: string
+          dateFrom?: string
+          dateTo?: string
+          page?: number
+        } = {},
+      ) => {
         const queryParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
           if (value) queryParams.set(key, value.toString())
         })
 
         const response = await fetch(`/api/measurements?${queryParams}`, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch measurements')
+          throw new Error("Failed to fetch measurements")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to load measurements" }
+      { errorPrefix: "Failed to load measurements" },
     )
 
     const saveMeasurement = createAsyncAction(
       self,
       async (measurementData: Partial<Measurement>) => {
-        const response = await fetch('/api/measurements', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/measurements", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(measurementData),
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to save measurement')
+          throw new Error("Failed to save measurement")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to save measurement" }
+      { errorPrefix: "Failed to save measurement" },
     )
 
     const fetchTemplates = createAsyncAction(
       self,
       async () => {
-        const response = await fetch('/api/measurement-templates', {
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/measurement-templates", {
+          headers: { "Content-Type": "application/json" },
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch templates')
+          throw new Error("Failed to fetch templates")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to load templates" }
+      { errorPrefix: "Failed to load templates" },
     )
 
     return {
@@ -513,13 +540,13 @@ export const MeasurementStoreModel = types
       loadMeasurements: flow(function* (params: any = {}, reset: boolean = false) {
         try {
           const result = yield fetchMeasurements(params)
-          
+
           if (reset) {
             self.measurements.setItems(result.measurements)
           } else {
             self.measurements.addItems(result.measurements)
           }
-          
+
           self.measurements.setHasMore(result.hasMore)
           return result
         } catch (error) {
@@ -569,7 +596,7 @@ export const MeasurementStoreModel = types
       }),
     }
   })
-  .views(self => ({
+  .views((self) => ({
     /**
      * Get measurements by client
      */
@@ -582,9 +609,11 @@ export const MeasurementStoreModel = types
      */
     getLatestMeasurement(clientId: string) {
       const clientMeasurements = this.getMeasurementsByClient(clientId)
-      return clientMeasurements.sort((a: any, b: any) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )[0] || null
+      return (
+        clientMeasurements.sort(
+          (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )[0] || null
+      )
     },
 
     /**
@@ -606,17 +635,17 @@ export const MeasurementStoreModel = types
      */
     get isCurrentMeasurementComplete() {
       if (!self.currentMeasurement) return false
-      
+
       // Check if all required measurements are present if using template
       if (self.activeTemplate) {
         const requiredNames = self.activeTemplate.measurements
-          .filter(m => m.required)
-          .map(m => m.name)
-        
-        const currentNames = self.currentMeasurement.measurements.map(m => m.name)
-        return requiredNames.every(name => currentNames.includes(name))
+          .filter((m) => m.required)
+          .map((m) => m.name)
+
+        const currentNames = self.currentMeasurement.measurements.map((m) => m.name)
+        return requiredNames.every((name) => currentNames.includes(name))
       }
-      
+
       return self.currentMeasurement.measurements.length > 0
     },
 

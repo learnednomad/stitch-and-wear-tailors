@@ -4,7 +4,13 @@
  */
 
 import { types, flow, Instance, SnapshotOut } from "mobx-state-tree"
-import { createAsyncAction, createCollectionModel, createSearchModel, generateId, createTimestamp } from "../mst"
+import {
+  createAsyncAction,
+  createCollectionModel,
+  createSearchModel,
+  generateId,
+  createTimestamp,
+} from "../mst"
 import { Order, OrderStatus, OrderPriority, OrderItem } from "../types"
 import { validateOrder } from "../schemas"
 
@@ -22,7 +28,13 @@ const OrderItemModel = types.model("OrderItem", {
   customizations: types.map(types.string),
   notes: types.maybeNull(types.string),
   status: types.enumeration("OrderItemStatus", [
-    "pending", "measuring", "cutting", "sewing", "finishing", "quality_check", "completed"
+    "pending",
+    "measuring",
+    "cutting",
+    "sewing",
+    "finishing",
+    "quality_check",
+    "completed",
   ]),
   estimatedDays: types.number,
   actualDays: types.maybeNull(types.number),
@@ -35,20 +47,35 @@ const OrderItemModel = types.model("OrderItem", {
  */
 const OrderProgressModel = types.model("OrderProgress", {
   status: types.enumeration("OrderStatus", [
-    "draft", "pending", "confirmed", "in_progress", "ready_for_fitting",
-    "fitting_scheduled", "alterations_needed", "completed", "delivered", "cancelled"
+    "draft",
+    "pending",
+    "confirmed",
+    "in_progress",
+    "ready_for_fitting",
+    "fitting_scheduled",
+    "alterations_needed",
+    "completed",
+    "delivered",
+    "cancelled",
   ]),
   percentage: types.number,
   currentStep: types.string,
   estimatedCompletion: types.maybeNull(types.string),
   actualCompletion: types.maybeNull(types.string),
-  milestones: types.array(types.model("Milestone", {
-    name: types.string,
-    status: types.enumeration("MilestoneStatus", ["pending", "in_progress", "completed", "skipped"]),
-    startedAt: types.maybeNull(types.string),
-    completedAt: types.maybeNull(types.string),
-    notes: types.maybeNull(types.string),
-  })),
+  milestones: types.array(
+    types.model("Milestone", {
+      name: types.string,
+      status: types.enumeration("MilestoneStatus", [
+        "pending",
+        "in_progress",
+        "completed",
+        "skipped",
+      ]),
+      startedAt: types.maybeNull(types.string),
+      completedAt: types.maybeNull(types.string),
+      notes: types.maybeNull(types.string),
+    }),
+  ),
   lastUpdated: types.string,
 })
 
@@ -60,42 +87,52 @@ const OrderModel = types.model("Order", {
   orderNumber: types.string,
   clientId: types.string,
   tailorId: types.maybeNull(types.string),
-  
+
   // Order details
   items: types.array(OrderItemModel),
   status: types.enumeration("OrderStatus", [
-    "draft", "pending", "confirmed", "in_progress", "ready_for_fitting",
-    "fitting_scheduled", "alterations_needed", "completed", "delivered", "cancelled"
+    "draft",
+    "pending",
+    "confirmed",
+    "in_progress",
+    "ready_for_fitting",
+    "fitting_scheduled",
+    "alterations_needed",
+    "completed",
+    "delivered",
+    "cancelled",
   ]),
   priority: types.enumeration("OrderPriority", ["low", "medium", "high", "urgent"]),
-  
+
   // Pricing
   subtotal: types.number,
   tax: types.number,
   discount: types.number,
   total: types.number,
-  
+
   // Dates
   orderDate: types.string,
   dueDate: types.string,
   deliveryDate: types.maybeNull(types.string),
-  
+
   // Progress tracking
-  progress: types.optional(OrderProgressModel, () => OrderProgressModel.create({
-    status: "draft",
-    percentage: 0,
-    currentStep: "Order Placed",
-    estimatedCompletion: null,
-    actualCompletion: null,
-    milestones: [],
-    lastUpdated: createTimestamp(),
-  })),
-  
+  progress: types.optional(OrderProgressModel, () =>
+    OrderProgressModel.create({
+      status: "draft",
+      percentage: 0,
+      currentStep: "Order Placed",
+      estimatedCompletion: null,
+      actualCompletion: null,
+      milestones: [],
+      lastUpdated: createTimestamp(),
+    }),
+  ),
+
   // Additional details
   notes: types.maybeNull(types.string),
   specialInstructions: types.maybeNull(types.string),
   fittingScheduled: types.maybeNull(types.string),
-  
+
   // Metadata
   createdAt: types.string,
   updatedAt: types.string,
@@ -118,21 +155,21 @@ export const OrderStoreModel = types
   .model("OrderStore", {
     // Orders collection
     orders: types.optional(OrdersCollectionModel, {}),
-    
+
     // Current order being viewed/edited
     currentOrder: types.maybeNull(OrderModel),
-    
+
     // Draft order for creation
     draftOrder: types.maybeNull(OrderModel),
-    
+
     // Search and filtering
     search: types.optional(OrderSearchModel, {}),
-    
+
     // Loading and error states
     isLoading: types.optional(types.boolean, false),
     error: types.maybeNull(types.string),
     lastFetched: types.maybeNull(types.string),
-    
+
     // Statistics
     statistics: types.model("OrderStatistics", {
       totalOrders: types.optional(types.number, 0),
@@ -144,7 +181,7 @@ export const OrderStoreModel = types
       lastUpdated: types.maybeNull(types.string),
     }),
   })
-  .actions(self => {
+  .actions((self) => {
     // Helper actions
     const setLoading = (loading: boolean) => {
       self.isLoading = loading
@@ -185,7 +222,7 @@ export const OrderStoreModel = types
        */
       createDraftOrder(clientId: string) {
         const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`
-        
+
         self.draftOrder = OrderModel.create({
           id: generateId(),
           orderNumber,
@@ -212,7 +249,7 @@ export const OrderStoreModel = types
       /**
        * Add item to draft order
        */
-      addItemToDraft(itemData: Omit<OrderItem, 'id' | 'createdAt' | 'updatedAt'>) {
+      addItemToDraft(itemData: Omit<OrderItem, "id" | "createdAt" | "updatedAt">) {
         if (!self.draftOrder) return
 
         const item = OrderItemModel.create({
@@ -232,7 +269,7 @@ export const OrderStoreModel = types
       updateDraftItem(itemId: string, updates: Partial<OrderItem>) {
         if (!self.draftOrder) return
 
-        const item = self.draftOrder.items.find(i => i.id === itemId)
+        const item = self.draftOrder.items.find((i) => i.id === itemId)
         if (item) {
           Object.assign(item, updates, { updatedAt: createTimestamp() })
           self.recalculateDraftTotals()
@@ -245,7 +282,7 @@ export const OrderStoreModel = types
       removeDraftItem(itemId: string) {
         if (!self.draftOrder) return
 
-        const index = self.draftOrder.items.findIndex(i => i.id === itemId)
+        const index = self.draftOrder.items.findIndex((i) => i.id === itemId)
         if (index !== -1) {
           self.draftOrder.items.splice(index, 1)
           self.recalculateDraftTotals()
@@ -303,7 +340,7 @@ export const OrderStoreModel = types
           order.progress.percentage = statusPercentages[status] || 0
 
           // Add milestone if it doesn't exist
-          const existingMilestone = order.progress.milestones.find(m => m.name === status)
+          const existingMilestone = order.progress.milestones.find((m) => m.name === status)
           if (!existingMilestone) {
             order.progress.milestones.push({
               name: status,
@@ -336,7 +373,11 @@ export const OrderStoreModel = types
           order.fittingScheduled = fittingDate
           order.status = "fitting_scheduled"
           order.updatedAt = createTimestamp()
-          self.updateOrderStatus(orderId, "fitting_scheduled", `Fitting scheduled for ${fittingDate}`)
+          self.updateOrderStatus(
+            orderId,
+            "fitting_scheduled",
+            `Fitting scheduled for ${fittingDate}`,
+          )
         }
       },
 
@@ -359,72 +400,74 @@ export const OrderStoreModel = types
       },
     }
   })
-  .actions(self => {
+  .actions((self) => {
     // Async actions
     const fetchOrders = createAsyncAction(
       self,
-      async (params: {
-        page?: number
-        status?: OrderStatus
-        clientId?: string
-        tailorId?: string
-        priority?: OrderPriority
-        search?: string
-        dateFrom?: string
-        dateTo?: string
-      } = {}) => {
+      async (
+        params: {
+          page?: number
+          status?: OrderStatus
+          clientId?: string
+          tailorId?: string
+          priority?: OrderPriority
+          search?: string
+          dateFrom?: string
+          dateTo?: string
+        } = {},
+      ) => {
         const queryParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
           if (value) queryParams.set(key, value.toString())
         })
 
         const response = await fetch(`/api/orders?${queryParams}`, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch orders')
+          throw new Error("Failed to fetch orders")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to load orders" }
+      { errorPrefix: "Failed to load orders" },
     )
 
     const createOrder = createAsyncAction(
       self,
       async (orderData: Partial<Order>) => {
-        const response = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(orderData),
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to create order')
+          throw new Error("Failed to create order")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to create order" }
+      { errorPrefix: "Failed to create order" },
     )
 
     const updateOrder = createAsyncAction(
       self,
       async (orderId: string, updates: Partial<Order>) => {
         const response = await fetch(`/api/orders/${orderId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to update order')
+          throw new Error("Failed to update order")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to update order" }
+      { errorPrefix: "Failed to update order" },
     )
 
     const fetchOrderStatistics = createAsyncAction(
@@ -436,16 +479,16 @@ export const OrderStoreModel = types
         })
 
         const response = await fetch(`/api/orders/statistics?${queryParams}`, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         })
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch statistics')
+          throw new Error("Failed to fetch statistics")
         }
-        
+
         return response.json()
       },
-      { errorPrefix: "Failed to load statistics" }
+      { errorPrefix: "Failed to load statistics" },
     )
 
     return {
@@ -455,13 +498,13 @@ export const OrderStoreModel = types
       loadOrders: flow(function* (params: any = {}, reset: boolean = false) {
         try {
           const result = yield fetchOrders(params)
-          
+
           if (reset) {
             self.orders.setItems(result.orders)
           } else {
             self.orders.addItems(result.orders)
           }
-          
+
           self.orders.setHasMore(result.hasMore)
           return result
         } catch (error) {
@@ -475,8 +518,8 @@ export const OrderStoreModel = types
       loadOrder: flow(function* (orderId: string) {
         try {
           const response = yield fetch(`/api/orders/${orderId}`)
-          if (!response.ok) throw new Error('Failed to fetch order')
-          
+          if (!response.ok) throw new Error("Failed to fetch order")
+
           const order = yield response.json()
           self.setCurrentOrder(order)
           return order
@@ -497,7 +540,7 @@ export const OrderStoreModel = types
             ...self.draftOrder,
             status: "pending" as OrderStatus,
           }
-          
+
           const createdOrder = yield createOrder(orderData)
           self.orders.addItem(OrderModel.create(createdOrder))
           self.clearDraftOrder()
@@ -514,11 +557,11 @@ export const OrderStoreModel = types
         try {
           const updatedOrder = yield updateOrder(orderId, updates)
           self.orders.updateItem(orderId, updatedOrder)
-          
+
           if (self.currentOrder?.id === orderId) {
             self.setCurrentOrder(updatedOrder)
           }
-          
+
           return updatedOrder
         } catch (error) {
           throw error
@@ -534,7 +577,7 @@ export const OrderStoreModel = types
             status: "cancelled" as OrderStatus,
             notes: reason,
           }
-          
+
           yield self.saveOrder(orderId, updates)
           self.updateOrderStatus(orderId, "cancelled", reason)
         } catch (error) {
@@ -563,7 +606,7 @@ export const OrderStoreModel = types
         Object.entries(filters).forEach(([key, value]) => {
           self.search.setFilter(key, value)
         })
-        
+
         try {
           const params = { ...filters, search: query, page: 1 }
           const result = yield fetchOrders(params)
@@ -576,7 +619,7 @@ export const OrderStoreModel = types
       }),
     }
   })
-  .views(self => ({
+  .views((self) => ({
     /**
      * Get orders by status
      */
@@ -637,7 +680,10 @@ export const OrderStoreModel = types
      */
     get averageOrderValue() {
       if (self.orders.count === 0) return 0
-      const totalRevenue = self.orders.items.reduce((sum: number, order: any) => sum + order.total, 0)
+      const totalRevenue = self.orders.items.reduce(
+        (sum: number, order: any) => sum + order.total,
+        0,
+      )
       return totalRevenue / self.orders.count
     },
 
@@ -657,11 +703,9 @@ export const OrderStoreModel = types
      * Get orders requiring attention
      */
     get ordersRequiringAttention() {
-      return [
-        ...self.urgentOrders,
-        ...self.overdueOrders,
-        ...self.ordersReadyForFitting,
-      ].filter((order, index, arr) => arr.findIndex(o => o.id === order.id) === index)
+      return [...self.urgentOrders, ...self.overdueOrders, ...self.ordersReadyForFitting].filter(
+        (order, index, arr) => arr.findIndex((o) => o.id === order.id) === index,
+      )
     },
 
     /**

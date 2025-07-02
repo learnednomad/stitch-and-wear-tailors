@@ -36,10 +36,10 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     if (result.ok) {
       return { success: true, data: result.data?.success || false }
     }
-    return { 
-      success: false, 
-      problem: { kind: result.problem || "unknown" }, 
-      message: "Appwrite connection failed" 
+    return {
+      success: false,
+      problem: { kind: result.problem || "unknown" },
+      message: "Appwrite connection failed",
     }
   }
 
@@ -62,7 +62,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     if (userId) {
       // Get specific user's profile from users collection
       const result = await this.appwriteAdapter.getDocument(COLLECTION_IDS.USERS, userId)
-      
+
       if (!result.ok) {
         return {
           success: false,
@@ -70,7 +70,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
           message: "Failed to get user profile",
         }
       }
-      
+
       return { success: true, data: result.data }
     } else {
       // Get current user's profile (requires authentication)
@@ -78,7 +78,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
       if (authCheck) return authCheck
 
       const userResult = await this.appwriteAdapter.getCurrentUser()
-      
+
       if (!userResult.ok) {
         return {
           success: false,
@@ -88,8 +88,11 @@ export class UserApiService extends BaseApiService implements IUserApiService {
       }
 
       // Get extended profile from users collection
-      const profileResult = await this.appwriteAdapter.getDocument(COLLECTION_IDS.USERS, userResult.data.$id)
-      
+      const profileResult = await this.appwriteAdapter.getDocument(
+        COLLECTION_IDS.USERS,
+        userResult.data.$id,
+      )
+
       if (!profileResult.ok) {
         // Return basic profile from account if user document doesn't exist
         return {
@@ -103,7 +106,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
           },
         }
       }
-      
+
       return { success: true, data: profileResult.data }
     }
   }
@@ -125,7 +128,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Get current user
     const userResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!userResult.ok) {
       return {
         success: false,
@@ -155,7 +158,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
       const updateResult = await this.appwriteAdapter.updateDocument(
         COLLECTION_IDS.USERS,
         userId,
-        updateData
+        updateData,
       )
 
       if (!updateResult.ok) {
@@ -169,7 +172,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
             ...updateData,
             createdAt: new Date().toISOString(),
           },
-          userId
+          userId,
         )
 
         if (!createResult.ok) {
@@ -206,7 +209,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Get current user
     const userResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!userResult.ok) {
       return {
         success: false,
@@ -221,7 +224,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     const uploadResult = await this.appwriteAdapter.uploadFile(
       BUCKET_IDS.AVATARS,
       file,
-      `avatar_${userId}`
+      `avatar_${userId}`,
     )
 
     if (!uploadResult.ok) {
@@ -236,15 +239,11 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     const fileUrl = this.appwriteAdapter.getFileDownload(BUCKET_IDS.AVATARS, uploadResult.data.$id)
 
     // Update user profile with avatar URL
-    const updateResult = await this.appwriteAdapter.updateDocument(
-      COLLECTION_IDS.USERS,
-      userId,
-      {
-        avatarUrl: fileUrl,
-        avatarFileId: uploadResult.data.$id,
-        updatedAt: new Date().toISOString(),
-      }
-    )
+    const updateResult = await this.appwriteAdapter.updateDocument(COLLECTION_IDS.USERS, userId, {
+      avatarUrl: fileUrl,
+      avatarFileId: uploadResult.data.$id,
+      updatedAt: new Date().toISOString(),
+    })
 
     if (!updateResult.ok) {
       console.warn("Failed to update user profile with avatar URL:", updateResult.problem)
@@ -262,7 +261,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Get current user
     const userResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!userResult.ok) {
       return {
         success: false,
@@ -275,14 +274,14 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Delete user document from users collection
     const deleteUserResult = await this.appwriteAdapter.deleteDocument(COLLECTION_IDS.USERS, userId)
-    
+
     if (!deleteUserResult.ok) {
       console.warn("Failed to delete user document:", deleteUserResult.problem)
     }
 
     // Delete all user sessions (logout from all devices)
     const deleteSessionsResult = await this.appwriteAdapter.deleteAllSessions()
-    
+
     if (!deleteSessionsResult.ok) {
       return {
         success: false,
@@ -293,7 +292,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Note: Appwrite doesn't provide account deletion via client SDK
     // This would typically require a server function to permanently delete the account
-    
+
     return { success: true, data: undefined }
   }
 
@@ -329,7 +328,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     }
 
     const result = await this.appwriteAdapter.listDocuments(COLLECTION_IDS.USERS, queryOptions)
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -343,7 +342,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
       total: result.data.total,
       page: Math.floor((params.offset || 0) / (params.limit || 50)) + 1,
       limit: params.limit || 50,
-      hasMore: (result.data.total || 0) > ((params.offset || 0) + (params.limit || 50)),
+      hasMore: (result.data.total || 0) > (params.offset || 0) + (params.limit || 50),
     }
 
     return { success: true, data: response }
@@ -397,7 +396,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Get current user
     const userResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!userResult.ok) {
       return {
         success: false,
@@ -414,7 +413,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     }
 
     const result = await this.appwriteAdapter.createDocument("follows", followData)
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -443,7 +442,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Get current user
     const userResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!userResult.ok) {
       return {
         success: false,
@@ -461,7 +460,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     }
 
     const followsResult = await this.appwriteAdapter.listDocuments("follows", queryOptions)
-    
+
     if (!followsResult.ok || !followsResult.data.documents.length) {
       return {
         success: false,
@@ -472,7 +471,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     const followId = followsResult.data.documents[0].$id
     const deleteResult = await this.appwriteAdapter.deleteDocument("follows", followId)
-    
+
     if (!deleteResult.ok) {
       return {
         success: false,
@@ -489,14 +488,14 @@ export class UserApiService extends BaseApiService implements IUserApiService {
    */
   async getFollowing(userId?: string): Promise<ServiceResult<any[]>> {
     let targetUserId = userId
-    
+
     if (!targetUserId) {
       // Get current user's following list (requires authentication)
       const authCheck = this.requireAuthentication()
       if (authCheck) return authCheck
 
       const userResult = await this.appwriteAdapter.getCurrentUser()
-      
+
       if (!userResult.ok) {
         return {
           success: false,
@@ -504,7 +503,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
           message: "Failed to get current user",
         }
       }
-      
+
       targetUserId = userResult.data.$id
     }
 
@@ -514,7 +513,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     }
 
     const followsResult = await this.appwriteAdapter.listDocuments("follows", queryOptions)
-    
+
     if (!followsResult.ok) {
       return {
         success: false,
@@ -525,7 +524,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Extract the following user IDs and get their profiles
     const followingIds = followsResult.data.documents.map((follow: any) => follow.followingId)
-    
+
     if (followingIds.length === 0) {
       return { success: true, data: [] }
     }
@@ -535,8 +534,11 @@ export class UserApiService extends BaseApiService implements IUserApiService {
       queries: [Query.equal("$id", followingIds)],
     }
 
-    const usersResult = await this.appwriteAdapter.listDocuments(COLLECTION_IDS.USERS, usersQueryOptions)
-    
+    const usersResult = await this.appwriteAdapter.listDocuments(
+      COLLECTION_IDS.USERS,
+      usersQueryOptions,
+    )
+
     if (!usersResult.ok) {
       return {
         success: false,
@@ -553,14 +555,14 @@ export class UserApiService extends BaseApiService implements IUserApiService {
    */
   async getFollowers(userId?: string): Promise<ServiceResult<any[]>> {
     let targetUserId = userId
-    
+
     if (!targetUserId) {
       // Get current user's followers list (requires authentication)
       const authCheck = this.requireAuthentication()
       if (authCheck) return authCheck
 
       const userResult = await this.appwriteAdapter.getCurrentUser()
-      
+
       if (!userResult.ok) {
         return {
           success: false,
@@ -568,7 +570,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
           message: "Failed to get current user",
         }
       }
-      
+
       targetUserId = userResult.data.$id
     }
 
@@ -578,7 +580,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     }
 
     const followsResult = await this.appwriteAdapter.listDocuments("follows", queryOptions)
-    
+
     if (!followsResult.ok) {
       return {
         success: false,
@@ -589,7 +591,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Extract the follower user IDs and get their profiles
     const followerIds = followsResult.data.documents.map((follow: any) => follow.followerId)
-    
+
     if (followerIds.length === 0) {
       return { success: true, data: [] }
     }
@@ -599,8 +601,11 @@ export class UserApiService extends BaseApiService implements IUserApiService {
       queries: [Query.equal("$id", followerIds)],
     }
 
-    const usersResult = await this.appwriteAdapter.listDocuments(COLLECTION_IDS.USERS, usersQueryOptions)
-    
+    const usersResult = await this.appwriteAdapter.listDocuments(
+      COLLECTION_IDS.USERS,
+      usersQueryOptions,
+    )
+
     if (!usersResult.ok) {
       return {
         success: false,
@@ -675,7 +680,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Get current user
     const userResult = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!userResult.ok) {
       return {
         success: false,
@@ -694,7 +699,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     }
 
     const result = await this.appwriteAdapter.createDocument(COLLECTION_IDS.REVIEWS, reviewData)
-    
+
     if (!result.ok) {
       return {
         success: false,
@@ -722,7 +727,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
 
     // Update user preferences in Appwrite account
     const currentPrefs = await this.appwriteAdapter.getCurrentUser()
-    
+
     if (!currentPrefs.ok) {
       return {
         success: false,
@@ -740,7 +745,7 @@ export class UserApiService extends BaseApiService implements IUserApiService {
     }
 
     const result = await this.appwriteAdapter.updateUserPrefs(updatedPrefs)
-    
+
     if (!result.ok) {
       return {
         success: false,

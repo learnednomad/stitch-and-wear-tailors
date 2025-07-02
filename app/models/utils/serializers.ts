@@ -13,7 +13,7 @@ import type {
   Invoice,
   Notification,
   Feedback,
-} from '../types'
+} from "../types"
 
 /**
  * Serialize models for API transmission (snake_case conversion)
@@ -30,13 +30,15 @@ export const serializeForApi = {
       phone: user.profile.phone,
       avatar: user.profile.avatar,
       date_of_birth: user.profile.dateOfBirth,
-      address: user.profile.address ? {
-        street: user.profile.address.street,
-        city: user.profile.address.city,
-        state: user.profile.address.state,
-        zip_code: user.profile.address.zipCode,
-        country: user.profile.address.country,
-      } : undefined,
+      address: user.profile.address
+        ? {
+            street: user.profile.address.street,
+            city: user.profile.address.city,
+            state: user.profile.address.state,
+            zip_code: user.profile.address.zipCode,
+            country: user.profile.address.country,
+          }
+        : undefined,
     },
     preferences: user.preferences,
     email_verified: user.emailVerified,
@@ -103,13 +105,15 @@ export const deserializeFromApi = {
       phone: apiData.profile.phone,
       avatar: apiData.profile.avatar,
       dateOfBirth: apiData.profile.date_of_birth || apiData.profile.dateOfBirth,
-      address: apiData.profile.address ? {
-        street: apiData.profile.address.street,
-        city: apiData.profile.address.city,
-        state: apiData.profile.address.state,
-        zipCode: apiData.profile.address.zip_code || apiData.profile.address.zipCode,
-        country: apiData.profile.address.country,
-      } : undefined,
+      address: apiData.profile.address
+        ? {
+            street: apiData.profile.address.street,
+            city: apiData.profile.address.city,
+            state: apiData.profile.address.state,
+            zipCode: apiData.profile.address.zip_code || apiData.profile.address.zipCode,
+            country: apiData.profile.address.country,
+          }
+        : undefined,
     },
     preferences: apiData.preferences,
     emailVerified: apiData.email_verified ?? apiData.emailVerified,
@@ -127,10 +131,13 @@ export const deserializeFromApi = {
     priority: apiData.priority,
     items: apiData.items,
     timeline: {
-      estimatedStartDate: apiData.timeline.estimated_start_date || apiData.timeline.estimatedStartDate,
-      estimatedCompletionDate: apiData.timeline.estimated_completion_date || apiData.timeline.estimatedCompletionDate,
+      estimatedStartDate:
+        apiData.timeline.estimated_start_date || apiData.timeline.estimatedStartDate,
+      estimatedCompletionDate:
+        apiData.timeline.estimated_completion_date || apiData.timeline.estimatedCompletionDate,
       actualStartDate: apiData.timeline.actual_start_date || apiData.timeline.actualStartDate,
-      actualCompletionDate: apiData.timeline.actual_completion_date || apiData.timeline.actualCompletionDate,
+      actualCompletionDate:
+        apiData.timeline.actual_completion_date || apiData.timeline.actualCompletionDate,
       milestones: apiData.timeline.milestones,
     },
     pricing: apiData.pricing,
@@ -149,8 +156,8 @@ export const serializeForStorage = <T>(data: T): string => {
   try {
     return JSON.stringify(data)
   } catch (error) {
-    console.error('Serialization error:', error)
-    throw new Error('Failed to serialize data for storage')
+    console.error("Serialization error:", error)
+    throw new Error("Failed to serialize data for storage")
   }
 }
 
@@ -161,18 +168,15 @@ export const deserializeFromStorage = <T>(serializedData: string): T => {
   try {
     return JSON.parse(serializedData)
   } catch (error) {
-    console.error('Deserialization error:', error)
-    throw new Error('Failed to deserialize data from storage')
+    console.error("Deserialization error:", error)
+    throw new Error("Failed to deserialize data from storage")
   }
 }
 
 /**
  * Serialize arrays of models
  */
-export const serializeArray = <T>(
-  data: T[],
-  serializer: (item: T) => any
-): any[] => {
+export const serializeArray = <T>(data: T[], serializer: (item: T) => any): any[] => {
   return data.map(serializer)
 }
 
@@ -252,7 +256,7 @@ export const cloneModel = <T>(model: T): T => {
  */
 export const mergeModelUpdate = <T extends Record<string, any>>(
   existingModel: T,
-  updates: Partial<T>
+  updates: Partial<T>,
 ): T => {
   return {
     ...existingModel,

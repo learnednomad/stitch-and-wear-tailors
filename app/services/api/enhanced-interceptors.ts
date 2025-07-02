@@ -104,7 +104,7 @@ export function setupEnhancedRequestInterceptors(
     enableAnalytics = true,
     logLevel = "minimal",
     cacheStrategy = "standard",
-    retryStrategy = "standard"
+    retryStrategy = "standard",
   } = config
 
   // 1. Authentication and user context interceptor
@@ -117,13 +117,13 @@ export function setupEnhancedRequestInterceptors(
           Authorization: `Bearer ${token}`,
         }
       }
-      
+
       // Add user context for analytics and caching
       const userId = authProvider.getCurrentUserId?.()
       if (userId) {
         request.headers = {
           ...request.headers,
-          'X-User-ID': userId,
+          "X-User-ID": userId,
         }
       }
     })
@@ -137,27 +137,27 @@ export function setupEnhancedRequestInterceptors(
       requestId,
       userId: authProvider?.getCurrentUserId?.() || undefined,
     }
-    
+
     request.metadata = { ...request.metadata, ...metadata }
-    
+
     // Add request ID header for tracing
     request.headers = {
       ...request.headers,
-      'X-Request-ID': requestId,
+      "X-Request-ID": requestId,
     }
 
     // Track with Reactotron in development
     if (__DEV__ && ReactotronApiUtils) {
       ReactotronApiUtils.trackApiCall(
-        request.method || 'GET',
-        request.url || '',
+        request.method || "GET",
+        request.url || "",
         () => Promise.resolve({ ok: true, data: null }),
         {
           headers: request.headers,
           data: request.data,
           params: request.params,
           userId: metadata.userId,
-        }
+        },
       ).catch(() => {}) // Ignore tracking errors
     }
   })
@@ -165,18 +165,13 @@ export function setupEnhancedRequestInterceptors(
   // 3. Cache checking interceptor
   if (enableCaching && cacheStrategy !== "disabled") {
     apisauce.addRequestTransform((request) => {
-      const method = request.method?.toUpperCase() || 'GET'
-      
+      const method = request.method?.toUpperCase() || "GET"
+
       // Only check cache for GET requests
-      if (method === 'GET') {
+      if (method === "GET") {
         const userId = authProvider?.getCurrentUserId?.()
-        const cacheKey = CacheUtils.createApiKey(
-          request.url || '',
-          method,
-          request.params,
-          userId
-        )
-        
+        const cacheKey = CacheUtils.createApiKey(request.url || "", method, request.params, userId)
+
         const cachedResponse = globalCacheManager.get(cacheKey)
         if (cachedResponse) {
           // Store cache info in metadata
@@ -185,7 +180,7 @@ export function setupEnhancedRequestInterceptors(
             cached: true,
             cacheKey,
           }
-          
+
           if (logLevel === "debug") {
             console.log(`📦 Cache HIT: ${method} ${request.url}`)
           }
@@ -198,10 +193,10 @@ export function setupEnhancedRequestInterceptors(
   if (enableLogging) {
     apisauce.addRequestTransform((request) => {
       const timestamp = new Date().toISOString()
-      const method = request.method?.toUpperCase() || 'GET'
-      const url = request.url || ''
-      const requestId = request.metadata?.requestId || 'unknown'
-      
+      const method = request.method?.toUpperCase() || "GET"
+      const url = request.url || ""
+      const requestId = request.metadata?.requestId || "unknown"
+
       if (logLevel === "debug") {
         console.group(`🚀 [${requestId}] ${method} ${url}`)
         console.log("📤 Headers:", request.headers)
@@ -238,16 +233,16 @@ export function setupEnhancedResponseInterceptors(
     enableCaching = true,
     enableAnalytics = true,
     logLevel = "minimal",
-    cacheStrategy = "standard"
+    cacheStrategy = "standard",
   } = config
 
   // Response processing interceptor
   apisauce.addResponseTransform(async (response: ApiResponse<any>) => {
     const requestMetadata = response.config?.metadata as RequestMetadata
     const duration = requestMetadata ? Date.now() - requestMetadata.startTime : 0
-    const method = response.config?.method?.toUpperCase() || 'GET'
-    const url = response.config?.url || ''
-    
+    const method = response.config?.method?.toUpperCase() || "GET"
+    const url = response.config?.url || ""
+
     // 1. Analytics tracking
     if (enableAnalytics) {
       globalAnalyticsManager.trackRequest({
@@ -263,14 +258,14 @@ export function setupEnhancedResponseInterceptors(
     }
 
     // 2. Response caching
-    if (enableCaching && cacheStrategy !== "disabled" && method === 'GET') {
+    if (enableCaching && cacheStrategy !== "disabled" && method === "GET") {
       if (globalCacheManager.shouldCache(response)) {
         const userId = authProvider?.getCurrentUserId?.()
         const cacheKey = CacheUtils.createApiKey(url, method, response.config?.params, userId)
-        
+
         // Determine TTL based on strategy and response headers
         let ttl = globalCacheManager.getTtlFromHeaders(response)
-        
+
         // Apply strategy-specific TTL if no cache headers
         if (ttl === globalCacheManager.getConfig().defaultTtl) {
           const strategyConfig = CacheStrategies[cacheStrategy as keyof typeof CacheStrategies]
@@ -278,9 +273,9 @@ export function setupEnhancedResponseInterceptors(
             ttl = strategyConfig.ttl
           }
         }
-        
+
         globalCacheManager.set(cacheKey, response, ttl)
-        
+
         if (logLevel === "debug") {
           console.log(`📦 Cache SET: ${method} ${url} (TTL: ${ttl}ms)`)
         }
@@ -291,12 +286,14 @@ export function setupEnhancedResponseInterceptors(
     if (enableLogging) {
       const status = response.status || 0
       const statusEmoji = response.ok ? "✅" : "❌"
-      const requestId = requestMetadata?.requestId || 'unknown'
+      const requestId = requestMetadata?.requestId || "unknown"
       const cached = requestMetadata?.cached ? " [CACHED]" : ""
       const retried = requestMetadata?.retryCount ? ` [RETRY:${requestMetadata.retryCount}]` : ""
-      
+
       if (logLevel === "debug") {
-        console.group(`${statusEmoji} [${requestId}] ${status} ${url} - ${duration}ms${cached}${retried}`)
+        console.group(
+          `${statusEmoji} [${requestId}] ${status} ${url} - ${duration}ms${cached}${retried}`,
+        )
         console.log("📥 Headers:", response.headers)
         if (response.data) {
           console.log("📥 Data:", response.data)
@@ -307,13 +304,16 @@ export function setupEnhancedResponseInterceptors(
         console.log("📊 Duration:", `${duration}ms`)
         console.groupEnd()
       } else if (logLevel === "detailed") {
-        console.log(`${statusEmoji} [${requestId}] ${status} ${url} - ${duration}ms${cached}${retried}`)
+        console.log(
+          `${statusEmoji} [${requestId}] ${status} ${url} - ${duration}ms${cached}${retried}`,
+        )
         if (response.problem) {
           console.log("⚠️ Problem:", response.problem)
         }
       } else {
         console.log(`${statusEmoji} ${status} ${url} - ${duration}ms${cached}${retried}`)
-        if (response.problem && response.status !== 404) { // Don't log 404s in minimal mode
+        if (response.problem && response.status !== 404) {
+          // Don't log 404s in minimal mode
           console.log(`⚠️ ${response.problem}`)
         }
       }
@@ -324,7 +324,7 @@ export function setupEnhancedResponseInterceptors(
       if (logLevel !== "minimal") {
         console.log("🔄 Token expired, attempting refresh...")
       }
-      
+
       try {
         await authProvider.onTokenExpired()
       } catch (error) {
@@ -357,24 +357,23 @@ export async function processEnhancedApiResponse<T>(
     enableDeduplication?: boolean
     requestKey?: string
     authProvider?: EnhancedAuthTokenProvider
-  } = {}
-): Promise<{ success: true; data: T } | { success: false; problem: GeneralApiProblem; message?: string }> {
-  const {
-    retryConfig = {},
-    enableDeduplication = true,
-    requestKey,
-    authProvider
-  } = options
+  } = {},
+): Promise<
+  { success: true; data: T } | { success: false; problem: GeneralApiProblem; message?: string }
+> {
+  const { retryConfig = {}, enableDeduplication = true, requestKey, authProvider } = options
 
   const config = { ...ENHANCED_DEFAULT_RETRY_CONFIG, ...retryConfig }
-  
+
   // Deduplication wrapper
-  const executeRequest = enableDeduplication && requestKey
-    ? () => globalDeduplicationManager.execute(
-        { url: requestKey, method: "GET" }, // Simplified for deduplication
-        () => apiCall()
-      )
-    : apiCall
+  const executeRequest =
+    enableDeduplication && requestKey
+      ? () =>
+          globalDeduplicationManager.execute(
+            { url: requestKey, method: "GET" }, // Simplified for deduplication
+            () => apiCall(),
+          )
+      : apiCall
 
   // Retry wrapper
   const retryManager = ServiceRetryManagers.default
@@ -386,11 +385,11 @@ export async function processEnhancedApiResponse<T>(
 
   const lastResponse = result.error || result.data
   const problem = getGeneralApiProblem(lastResponse)
-  
+
   return {
     success: false,
     problem: problem || { kind: "unknown" },
-    message: getEnhancedErrorMessage(problem, result.attempts.length)
+    message: getEnhancedErrorMessage(problem, result.attempts.length),
   }
 }
 
@@ -399,10 +398,10 @@ export async function processEnhancedApiResponse<T>(
  */
 export function getEnhancedErrorMessage(
   problem: GeneralApiProblem | null,
-  attemptCount: number = 1
+  attemptCount: number = 1,
 ): string {
   const retryInfo = attemptCount > 1 ? ` (after ${attemptCount} attempts)` : ""
-  
+
   if (!problem) {
     return `An unexpected error occurred${retryInfo}. Please try again.`
   }
@@ -436,17 +435,17 @@ export function getEnhancedErrorMessage(
 export function setupAllEnhancedInterceptors(
   apisauce: ApisauceInstance,
   authProvider?: EnhancedAuthTokenProvider,
-  config: EnhancedInterceptorConfig = {}
+  config: EnhancedInterceptorConfig = {},
 ) {
   setupEnhancedRequestInterceptors(apisauce, authProvider, config)
   setupEnhancedResponseInterceptors(apisauce, authProvider, config)
-  
+
   // Initialize analytics monitoring in development
   if (__DEV__ && config.enableAnalytics !== false) {
     console.log("📊 Enhanced API analytics enabled")
     AnalyticsUtils.getDashboardData() // Initialize
   }
-  
+
   // Initialize cache monitoring in development
   if (__DEV__ && config.enableCaching !== false) {
     console.log("📦 Enhanced API caching enabled")
@@ -454,7 +453,7 @@ export function setupAllEnhancedInterceptors(
       CacheUtils.debugCache()
     }, 5000) // Debug after 5 seconds
   }
-  
+
   // Initialize deduplication monitoring in development
   if (__DEV__ && config.enableDeduplication !== false) {
     console.log("🔄 Enhanced API deduplication enabled")

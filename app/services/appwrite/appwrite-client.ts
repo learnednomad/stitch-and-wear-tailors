@@ -5,7 +5,15 @@
  * Stitch and Wear Tailors application backend integration.
  */
 
-import { Client, Account, Databases, Storage, Functions, Teams, Avatars } from "react-native-appwrite"
+import {
+  Client,
+  Account,
+  Databases,
+  Storage,
+  Functions,
+  Teams,
+  Avatars,
+} from "react-native-appwrite"
 
 import Config from "../../config"
 
@@ -29,7 +37,6 @@ export const DEFAULT_APPWRITE_CONFIG: AppwriteConfig = {
   storageId: Config.APPWRITE_STORAGE_ID || "stitch-and-wear-storage",
 }
 
-
 /**
  * Appwrite client wrapper with typed services
  */
@@ -52,7 +59,7 @@ export class AppwriteClient {
     this.client = new Client()
       .setEndpoint(config.endpoint)
       .setProject(config.projectId)
-      .setPlatform('com.stitchandwear') // Required for React Native
+      .setPlatform("com.stitchandwear") // Required for React Native
 
     // Initialize services
     this.account = new Account(this.client)
