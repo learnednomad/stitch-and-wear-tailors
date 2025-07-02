@@ -1,4 +1,4 @@
-import React, { FC } from "react"
+import { FC } from "react"
 import { TouchableOpacity, ViewStyle } from "react-native"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { Icon } from "./Icon"
@@ -16,7 +16,7 @@ export interface ThemeToggleProps {
 
 /**
  * Theme toggle component that allows users to switch between light and dark themes.
- * Shows a sun icon for light mode and moon icon for dark mode.
+ * Shows a sun icon when in dark mode (to switch to light) and moon icon when in light mode (to switch to dark).
  */
 export const ThemeToggle: FC<ThemeToggleProps> = ({ style: $styleOverride, size = 24 }) => {
   const { theme, themeContext, setThemeContextOverride } = useAppTheme()
@@ -26,7 +26,7 @@ export const ThemeToggle: FC<ThemeToggleProps> = ({ style: $styleOverride, size 
     setThemeContextOverride(newTheme)
   }
 
-  const iconName = themeContext === "dark" ? "view" : "hidden"
+  const iconName = themeContext === "dark" ? "sun" : "moon"
 
   return (
     <TouchableOpacity
@@ -37,11 +37,7 @@ export const ThemeToggle: FC<ThemeToggleProps> = ({ style: $styleOverride, size 
       accessibilityRole="button"
       accessibilityHint="Toggles between light and dark theme"
     >
-      <Icon 
-        icon={iconName} 
-        size={size} 
-        color={theme.colors.text} 
-      />
+      <Icon icon={iconName} size={size} color={theme.colors.text} />
     </TouchableOpacity>
   )
 }
