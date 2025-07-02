@@ -361,19 +361,24 @@ const $profileContainer: ViewStyle = {
   alignItems: "center",
   justifyContent: "space-between",
   width: "100%",
-  paddingVertical: spacing.sm,
-  borderRadius: 12,
+  paddingVertical: spacing.md,
+  paddingHorizontal: spacing.lg,
+  borderRadius: 16,
   backgroundColor: colors.palette.neutral100,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+  shadowColor: colors.palette.neutral900,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  elevation: 4,
 }
 
 const $profileImage: ViewStyle = {
-  width: 60,
-  height: 60,
-  borderRadius: 30,
+  width: 56,
+  height: 56,
+  borderRadius: 28,
   overflow: "hidden",
-  marginLeft: spacing.sm,
+  borderWidth: 3,
+  borderColor: colors.palette.primary200,
 }
 
 const $image: ImageStyle = {
@@ -432,29 +437,33 @@ const $notificationBadgeText: TextStyle = {
 }
 
 const $welcomeCard: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
+  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  backgroundColor: colors.palette.primary600,
   marginHorizontal: spacing.lg,
-  marginVertical: spacing.sm,
-  padding: spacing.lg,
-  borderRadius: 12,
-  shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  elevation: 2,
+  marginVertical: spacing.md,
+  padding: spacing.xl,
+  borderRadius: 20,
+  shadowColor: colors.palette.primary900,
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.25,
+  shadowRadius: 16,
+  elevation: 8,
 }
 
 const $welcomeTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
+  fontSize: 22,
+  fontWeight: "700",
   color: colors.palette.neutral100,
-  marginBottom: spacing.xs,
+  marginBottom: spacing.sm,
+  letterSpacing: 0.5,
 }
 
 const $welcomeSubtitle: TextStyle = {
-  fontSize: 14,
+  fontSize: 16,
+  fontWeight: "400",
   color: colors.palette.neutral100,
-  opacity: 0.9,
+  opacity: 0.95,
+  lineHeight: 22,
 }
 
 const $offlineBanner: ViewStyle = {
@@ -472,7 +481,7 @@ const $offlineText: TextStyle = {
 }
 
 const $section: ViewStyle = {
-  marginBottom: spacing.lg,
+  marginBottom: spacing.xl,
 }
 
 const $sectionHeader: ViewStyle = {
@@ -484,9 +493,10 @@ const $sectionHeader: ViewStyle = {
 }
 
 const $sectionTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
+  fontSize: 20,
+  fontWeight: "700",
   color: colors.palette.neutral900,
+  letterSpacing: 0.3,
 }
 
 const $viewAllText: TextStyle = {
@@ -500,29 +510,32 @@ const $quickActionListContent: ViewStyle = {
 }
 
 const $quickActionCard: ViewStyle = {
-  width: 100,
+  width: 110,
   backgroundColor: colors.palette.neutral100,
-  borderRadius: 8,
-  padding: spacing.sm,
-  marginRight: spacing.sm,
+  borderRadius: 16,
+  padding: spacing.md,
+  marginRight: spacing.md,
   alignItems: "center",
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
   shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.08,
-  shadowRadius: 2,
-  elevation: 1,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.12,
+  shadowRadius: 8,
+  elevation: 4,
 }
 
 const $quickActionIconContainer: ViewStyle = {
-  width: 40,
-  height: 40,
-  borderRadius: 20,
+  width: 48,
+  height: 48,
+  borderRadius: 24,
   backgroundColor: colors.palette.primary100,
   justifyContent: "center",
   alignItems: "center",
-  marginBottom: spacing.xs,
+  marginBottom: spacing.sm,
+  shadowColor: colors.palette.primary500,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.15,
+  shadowRadius: 4,
+  elevation: 2,
 }
 
 const $quickActionTitle: TextStyle = {
@@ -543,18 +556,16 @@ const $orderListContent: ViewStyle = {
 }
 
 const $orderCard: ViewStyle = {
-  width: 180,
+  width: 200,
   backgroundColor: colors.palette.neutral100,
-  borderRadius: 8,
-  padding: spacing.sm,
-  marginRight: spacing.sm,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+  borderRadius: 16,
+  padding: spacing.md,
+  marginRight: spacing.md,
   shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.08,
-  shadowRadius: 2,
-  elevation: 1,
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.12,
+  shadowRadius: 10,
+  elevation: 6,
 }
 
 const $orderHeader: ViewStyle = {
@@ -596,17 +607,15 @@ const $orderText: TextStyle = {
 
 const $measurementCard: ViewStyle = {
   backgroundColor: colors.palette.neutral100,
-  borderRadius: 8,
-  padding: spacing.md,
+  borderRadius: 16,
+  padding: spacing.lg,
   marginHorizontal: spacing.lg,
-  marginBottom: spacing.sm,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+  marginBottom: spacing.md,
   shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.08,
-  shadowRadius: 2,
-  elevation: 1,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.1,
+  shadowRadius: 12,
+  elevation: 4,
 }
 
 const $measurementHeader: ViewStyle = {
@@ -666,19 +675,21 @@ const $bottomContainer: ViewStyle = {
 }
 
 const $primaryButton: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
-  borderRadius: 8,
-  paddingVertical: spacing.sm,
-  shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  elevation: 2,
+  backgroundColor: colors.palette.primary600,
+  borderRadius: 16,
+  paddingVertical: spacing.md,
+  paddingHorizontal: spacing.lg,
+  shadowColor: colors.palette.primary900,
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.2,
+  shadowRadius: 12,
+  elevation: 6,
 }
 
 const $primaryButtonText: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
+  fontSize: 17,
+  fontWeight: "700",
   color: colors.palette.neutral100,
   textAlign: "center",
+  letterSpacing: 0.5,
 }
