@@ -13,7 +13,9 @@ import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { useAppTheme, useThemeProvider } from "@/utils/useAppTheme"
 import { Component, ComponentProps } from "react"
 import { TabNavigator, TabParamList } from "@/navigators/ClientTabsNavigator"
-// import { TabParamListTailor } from "@/navigators/TailorTabsNavigator"
+import { TailorTabNavigator, TailorTabParamList } from "@/navigators/TailorTabsNavigator"
+import { useAuth } from "@/contexts/AuthContext"
+import { Text, View } from "react-native"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -30,7 +32,7 @@ import { TabNavigator, TabParamList } from "@/navigators/ClientTabsNavigator"
  */
 export type AppStackParamList = {
   Welcome: undefined
-  // TailorTab: NavigatorScreenParams<TabParamListTailor>
+  TailorTab: NavigatorScreenParams<TailorTabParamList>
   ClientTab: NavigatorScreenParams<TabParamList>
 
   // 🔥 Your screens go here
@@ -84,10 +86,34 @@ const AppStack = observer(function AppStack() {
   const {
     theme: { colors },
   } = useAppTheme()
+  const { isAuthenticated, isLoading, user } = useAuth()
+
+  // Show loading screen while checking authentication
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
+        <Text>Loading...</Text>
+      </View>
+    )
+  }
+
+  // Determine initial route based on authentication status
+  const getInitialRouteName = () => {
+    if (!isAuthenticated) {
+      return "SignIn"
+    }
+    
+    // Navigate based on user role
+    if (user?.role === "tailor") {
+      return "TailorTab"
+    }
+    
+    return "ClientTab"
+  }
 
   return (
     <Stack.Navigator
-      initialRouteName="ClientTab"
+      initialRouteName={getInitialRouteName()}
       screenOptions={{
         headerShown: false,
         navigationBarColor: colors.background,
@@ -96,36 +122,48 @@ const AppStack = observer(function AppStack() {
         },
       }}
     >
-      <Stack.Screen name="ClientTab" component={TabNavigator} />
-      {/** 🔥 Your screens go here */}
+      {/* Authentication Screens - Always available */}
       <Stack.Screen name="SignIn" component={Screens.SignInScreen} />
       <Stack.Screen name="SignUp" component={Screens.SignUpScreen} />
-      <Stack.Screen name="Home" component={Screens.HomeScreen} />
-      <Stack.Screen name="Orders" component={Screens.OrdersScreen} />
-      <Stack.Screen name="OrderDetail" component={Screens.OrderDetailScreen} />
-      <Stack.Screen name="NewOrder" component={Screens.NewOrderScreen} />
-      <Stack.Screen name="Measurement" component={Screens.MeasurementScreen} />
-      <Stack.Screen name="OrderHistory" component={Screens.OrderHistoryScreen} />
-      <Stack.Screen name="OrderTracking" component={Screens.OrderTrackingScreen} />
-      <Stack.Screen name="Payment" component={Screens.PaymentScreen} />
-      <Stack.Screen name="Tailor" component={Screens.TailorScreen} />
-      <Stack.Screen name="TailorOrder" component={Screens.TailorOrderScreen} />
-      <Stack.Screen name="Measurment" component={Screens.MeasurmentScreen} />
-      <Stack.Screen name="AddMeasurment" component={Screens.AddMeasurmentScreen} />
-      <Stack.Screen name="EditMeasurment" component={Screens.EditMeasurmentScreen} />
-      <Stack.Screen name="DeleteMeasurment" component={Screens.DeleteMeasurmentScreen} />
-      <Stack.Screen name="Invoices" component={Screens.InvoicesScreen} />
-      <Stack.Screen name="FabricSearch" component={Screens.FabricSearchScreen} />
-      <Stack.Screen name="BookFitting" component={Screens.BookFittingScreen} />
-      <Stack.Screen name="Styles" component={Screens.StylesScreen} />
-      <Stack.Screen name="Catalog" component={Screens.CatalogScreen} />
-      <Stack.Screen name="Settings" component={Screens.SettingsScreen} />
-      <Stack.Screen name="Analytics" component={Screens.AnalyticsScreen} />
-      <Stack.Screen name="Onboarding" component={Screens.OnboardingScreen} />
-      <Stack.Screen name="VerifyOtp" component={Screens.VerifyOtpScreen} />
-      <Stack.Screen name="VerifyEmail" component={Screens.VerifyEmailScreen} />
-      <Stack.Screen name="ClientNotifications" component={Screens.ClientNotificationsScreen} />
-      <Stack.Screen name="TailorNotifications" component={Screens.TailorNotificationsScreen} />
+      
+      {/* Protected Screens - Only available when authenticated */}
+      {isAuthenticated && (
+        <>
+          <Stack.Screen name="ClientTab" component={TabNavigator} />
+          <Stack.Screen name="TailorTab" component={TailorTabNavigator} />
+        </>
+      )}
+      {/* Modal/Overlay Screens - Available when authenticated */}
+      {isAuthenticated && (
+        <>
+          <Stack.Screen name="Home" component={Screens.HomeScreen} />
+          <Stack.Screen name="Orders" component={Screens.OrdersScreen} />
+          <Stack.Screen name="OrderDetail" component={Screens.OrderDetailScreen} />
+          <Stack.Screen name="NewOrder" component={Screens.NewOrderScreen} />
+          <Stack.Screen name="Measurement" component={Screens.MeasurementScreen} />
+          <Stack.Screen name="OrderHistory" component={Screens.OrderHistoryScreen} />
+          <Stack.Screen name="OrderTracking" component={Screens.OrderTrackingScreen} />
+          <Stack.Screen name="Payment" component={Screens.PaymentScreen} />
+          <Stack.Screen name="Tailor" component={Screens.TailorScreen} />
+          <Stack.Screen name="TailorOrder" component={Screens.TailorOrderScreen} />
+          <Stack.Screen name="Measurment" component={Screens.MeasurmentScreen} />
+          <Stack.Screen name="AddMeasurment" component={Screens.AddMeasurmentScreen} />
+          <Stack.Screen name="EditMeasurment" component={Screens.EditMeasurmentScreen} />
+          <Stack.Screen name="DeleteMeasurment" component={Screens.DeleteMeasurmentScreen} />
+          <Stack.Screen name="Invoices" component={Screens.InvoicesScreen} />
+          <Stack.Screen name="FabricSearch" component={Screens.FabricSearchScreen} />
+          <Stack.Screen name="BookFitting" component={Screens.BookFittingScreen} />
+          <Stack.Screen name="Styles" component={Screens.StylesScreen} />
+          <Stack.Screen name="Catalog" component={Screens.CatalogScreen} />
+          <Stack.Screen name="Settings" component={Screens.SettingsScreen} />
+          <Stack.Screen name="Analytics" component={Screens.AnalyticsScreen} />
+          <Stack.Screen name="Onboarding" component={Screens.OnboardingScreen} />
+          <Stack.Screen name="VerifyOtp" component={Screens.VerifyOtpScreen} />
+          <Stack.Screen name="VerifyEmail" component={Screens.VerifyEmailScreen} />
+          <Stack.Screen name="ClientNotifications" component={Screens.ClientNotificationsScreen} />
+          <Stack.Screen name="TailorNotifications" component={Screens.TailorNotificationsScreen} />
+        </>
+      )}
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
     </Stack.Navigator>
   )

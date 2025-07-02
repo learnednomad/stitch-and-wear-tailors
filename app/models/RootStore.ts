@@ -15,11 +15,76 @@ export const RootStoreModel = types
   .props({
     authStore: types.optional(AuthStoreModel, {}),
     userStore: types.optional(UserStoreModel, {}),
-    orderStore: types.optional(OrderStoreModel, {}),
-    fabricStore: types.optional(FabricStoreModel, {}),
-    measurementStore: types.optional(MeasurementStoreModel, {}),
-    appointmentStore: types.optional(AppointmentStoreModel, {}),
-    notificationStore: types.optional(NotificationStoreModel, {}),
+    orderStore: types.optional(OrderStoreModel, {
+      statistics: {
+        totalOrders: 0,
+        pendingOrders: 0,
+        inProgressOrders: 0,
+        completedOrders: 0,
+        revenue: 0,
+        averageOrderValue: 0,
+        lastUpdated: null,
+      }
+    }),
+    fabricStore: types.optional(FabricStoreModel, {
+      priceRange: {
+        min: 0,
+        max: 1000,
+      },
+    }),
+    measurementStore: types.optional(MeasurementStoreModel, {
+      validationSettings: {
+        enableAutoValidation: true,
+        significantChangeThreshold: 2,
+        confidenceRequirement: "medium",
+        requireVerification: false,
+      },
+    }),
+    appointmentStore: types.optional(AppointmentStoreModel, {
+      calendarView: {
+        currentDate: new Date().toISOString().split('T')[0],
+        viewMode: "week",
+        selectedTailorId: null,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      bookingForm: {
+        clientId: null,
+        tailorId: null,
+        type: null,
+        duration: 60,
+        title: null,
+        description: null,
+        requirements: {
+          measurements: false,
+          fabricSamples: false,
+          garmentBringing: false,
+        },
+      },
+      statistics: {
+        totalAppointments: 0,
+        upcomingAppointments: 0,
+        completedAppointments: 0,
+        cancelledAppointments: 0,
+        noShowRate: 0,
+        averageRating: 0,
+        lastUpdated: null,
+      },
+    }),
+    notificationStore: types.optional(NotificationStoreModel, {
+      permissions: {
+        push: "default",
+        email: true,
+        sms: false,
+      },
+      statistics: {
+        totalSent: 0,
+        totalRead: 0,
+        totalClicked: 0,
+        readRate: 0,
+        clickRate: 0,
+        lastUpdated: null,
+      },
+    }),
   })
   .actions(self => ({
     /**

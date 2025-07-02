@@ -14,7 +14,79 @@ import { setupRootStore } from "./setupRootStore"
  * very large), you may want to use a different strategy than immediately
  * instantiating it, although that should be rare.
  */
-const _rootStore = RootStoreModel.create({})
+
+const _rootStore = RootStoreModel.create({
+  orderStore: {
+    statistics: {
+      totalOrders: 0,
+      pendingOrders: 0,
+      inProgressOrders: 0,
+      completedOrders: 0,
+      revenue: 0,
+      averageOrderValue: 0,
+      lastUpdated: null,
+    }
+  },
+  fabricStore: {
+    priceRange: {
+      min: 0,
+      max: 1000,
+    },
+  },
+  measurementStore: {
+    validationSettings: {
+      enableAutoValidation: true,
+      significantChangeThreshold: 2,
+      confidenceRequirement: "medium",
+      requireVerification: false,
+    },
+  },
+  appointmentStore: {
+    calendarView: {
+      currentDate: new Date().toISOString().split('T')[0],
+      viewMode: "week",
+      selectedTailorId: null,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+    bookingForm: {
+      clientId: null,
+      tailorId: null,
+      type: null,
+      duration: 60,
+      title: null,
+      description: null,
+      requirements: {
+        measurements: false,
+        fabricSamples: false,
+        garmentBringing: false,
+      },
+    },
+    statistics: {
+      totalAppointments: 0,
+      upcomingAppointments: 0,
+      completedAppointments: 0,
+      cancelledAppointments: 0,
+      noShowRate: 0,
+      averageRating: 0,
+      lastUpdated: null,
+    },
+  },
+  notificationStore: {
+    permissions: {
+      push: "default",
+      email: true,
+      sms: false,
+    },
+    statistics: {
+      totalSent: 0,
+      totalRead: 0,
+      totalClicked: 0,
+      readRate: 0,
+      clickRate: 0,
+      lastUpdated: null,
+    },
+  },
+})
 
 /**
  * The RootStoreContext provides a way to access

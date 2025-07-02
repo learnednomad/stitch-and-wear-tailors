@@ -181,23 +181,49 @@ export const AuthStoreModel = types
     }
   })
   .actions(self => {
+    // Import Appwrite auth adapter
+    const { getAppwriteAuthAdapter } = require("../../services/appwrite/appwrite-auth-adapter")
+    
     // Async actions using our utility
     const signIn = createAsyncAction(
       self,
       async (credentials: { email: string; password: string }) => {
-        // This would integrate with your API client
-        // For now, returning mock data structure
-        const response = await fetch('/api/auth/signin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(credentials),
-        })
+        const authAdapter = getAppwriteAuthAdapter()
+        const result = await authAdapter.login(credentials.email, credentials.password)
         
-        if (!response.ok) {
-          throw new Error('Invalid credentials')
+        if (!result.success) {
+          throw new Error(result.message || 'Invalid credentials')
         }
         
-        return response.json()
+        return {
+          user: {
+            id: result.data.user.$id,
+            email: result.data.user.email,
+            role: "client" as const, // Default role, will be enhanced with profile lookup
+            status: "active" as const,
+            profile: {
+              firstName: result.data.user.name.split(" ")[0] || "",
+              lastName: result.data.user.name.split(" ").slice(1).join(" ") || "",
+              phone: result.data.user.phone || null,
+              avatar: null,
+            },
+            preferences: {
+              notifications: { email: true, push: true, sms: false },
+              language: "en",
+              timezone: "UTC", 
+              currency: "USD",
+            },
+            emailVerified: result.data.user.emailVerification,
+            lastLoginAt: new Date().toISOString(),
+            createdAt: result.data.user.registration,
+            updatedAt: result.data.user.accessedAt,
+          },
+          session: {
+            accessToken: result.data.session.$id,
+            refreshToken: result.data.session.$id,
+            expiresAt: result.data.session.expire,
+          }
+        }
       },
       { errorPrefix: "Sign in failed" }
     )
@@ -210,17 +236,34 @@ export const AuthStoreModel = types
         role: UserRole
         profile: { firstName: string; lastName: string }
       }) => {
-        const response = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userData),
-        })
+        const authAdapter = getAppwriteAuthAdapter()
+        const fullName = `${userData.profile.firstName} ${userData.profile.lastName}`
         
-        if (!response.ok) {
-          throw new Error('Registration failed')
+        const result = await authAdapter.register(userData.email, userData.password, fullName)
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Registration failed')
         }
         
-        return response.json()
+        return {
+          user: {
+            id: result.data.$id,
+            email: result.data.email,
+            role: userData.role,
+            status: "active" as const,
+            profile: userData.profile,
+            preferences: {
+              notifications: { email: true, push: true, sms: false },
+              language: "en",
+              timezone: "UTC",
+              currency: "USD",
+            },
+            emailVerified: result.data.emailVerification,
+            lastLoginAt: null,
+            createdAt: result.data.registration,
+            updatedAt: result.data.registration,
+          }
+        }
       },
       { errorPrefix: "Sign up failed" }
     )
@@ -250,14 +293,11 @@ export const AuthStoreModel = types
     const signOut = createAsyncAction(
       self,
       async () => {
-        if (self.session.accessToken) {
-          await fetch('/api/auth/signout', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${self.session.accessToken}`
-            },
-          })
+        const authAdapter = getAppwriteAuthAdapter()
+        const result = await authAdapter.logout()
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Sign out failed')
         }
       },
       { errorPrefix: "Sign out failed", handleErrors: false }

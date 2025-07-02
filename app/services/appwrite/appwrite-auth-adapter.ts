@@ -5,7 +5,7 @@
  * providing a seamless integration layer.
  */
 
-import { Account, ID, Query } from "appwrite"
+import { Account, ID, Query } from "react-native-appwrite"
 import { AppwriteClient, getAppwriteClient } from "./appwrite-client"
 import { ServiceResult } from "../api/base-api-service"
 
@@ -61,8 +61,8 @@ export class AppwriteAuthAdapter {
     }>
   > {
     try {
-      // Create session
-      const session = await this.account.createEmailSession(email, password)
+      // Create session using correct method name
+      const session = await this.account.createEmailPasswordSession(email, password)
 
       // Get user info
       const user = await this.account.get()

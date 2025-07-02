@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react"
+import React, { FC, useState, useEffect } from "react"
 import {
   View,
   ScrollView,
@@ -8,11 +8,14 @@ import {
   FlatList,
   Alert,
 } from "react-native"
+import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
 import { Button, Screen, Icon, Text, AutoImage } from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "app/theme"
 import { useNavigation } from "@react-navigation/native"
+import { useStores } from "@/models"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface Style {
   id: string
@@ -39,13 +42,17 @@ interface Fabric {
 
 interface NewOrderScreenProps extends AppStackScreenProps<"NewOrder"> {}
 
-export const NewOrderScreen: FC<NewOrderScreenProps> = () => {
+export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
+  const { orderStore, fabricStore } = useStores()
+  const { user } = useAuth()
   
   const [selectedStyle, setSelectedStyle] = useState<string>("")
   const [selectedFabric, setSelectedFabric] = useState<string>("")
   const [currentStep, setCurrentStep] = useState<"style" | "fabric" | "review">("style")
+  const [isLoading, setIsLoading] = useState(false)
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false)
 
   // Mock data - would come from API/store in real implementation
   const styles: Style[] = [
@@ -435,7 +442,7 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = () => {
       </View>
     </Screen>
   )
-}
+})
 
 // Styles
 const $container: ViewStyle = {
