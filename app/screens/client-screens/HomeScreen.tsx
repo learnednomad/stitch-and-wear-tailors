@@ -2,7 +2,7 @@ import React, { FC } from "react"
 import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle, ImageStyle } from "react-native"
 import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon, AutoImage, Text, ThemeToggle } from "app/components"
+import { Button, Screen, Icon, AutoImage, Text, ThemeToggle, IconTypes } from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "app/utils/useAppTheme"
 import { colors, spacing } from "app/theme"
@@ -108,7 +108,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   const renderQuickAction = ({
     item,
   }: {
-    item: { title: string; subtitle: string; icon: string; onPress: () => void }
+    item: { title: string; subtitle: string; icon: IconTypes; onPress: () => void }
   }) => (
     <TouchableOpacity
       style={$quickActionCard}
