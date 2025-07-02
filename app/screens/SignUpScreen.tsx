@@ -87,8 +87,8 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
             profile: {
               firstName: firstName.trim(),
               lastName: lastName.trim(),
-              phone: null,
-              avatar: null,
+              phone: "",
+              avatar: "",
             },
             preferences: {
               notifications: {
@@ -102,8 +102,8 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
             },
             emailVerified: loginResult.data.user.emailVerification,
             lastLoginAt: new Date().toISOString(),
-            createdAt: loginResult.data.user.registration,
-            updatedAt: loginResult.data.user.accessedAt,
+            createdAt: new Date(loginResult.data.user.registration).toISOString(),
+            updatedAt: new Date(loginResult.data.user.accessedAt).toISOString(),
           }
 
           // Set user and session in auth store
