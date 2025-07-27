@@ -95,7 +95,7 @@ export function TailorTabNavigator() {
         options={{
           tabBarLabel: "Analytics",
           tabBarIcon: ({ focused }) => (
-            <Icon icon="bell" color={focused ? colors.tint : "#000"} size={24} />
+            <Icon icon="chart" color={focused ? colors.tint : "#000"} size={24} />
           ),
         }}
       />

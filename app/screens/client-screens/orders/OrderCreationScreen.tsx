@@ -67,9 +67,30 @@ export const OrderCreationScreen: FC<OrderCreationScreenProps> = observer(() => 
     }
   }
 
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      orderStore.nextCreationStep()
+  const handleNext = async () => {
+    try {
+      // Validate current step before proceeding
+      if (!canGoNext()) {
+        return
+      }
+
+      // Auto-calculate pricing when moving to pricing step
+      if (currentStep === 3) { // Moving from Style to Pricing
+        const garmentType = orderStore.orderCreationData?.styleConfig?.garmentType
+        const city = orderStore.orderCreationData?.customerInfo?.city
+        const isRush = orderStore.orderCreationData?.priority === "urgent"
+        
+        if (garmentType && city) {
+          orderStore.calculateNigerianPricing(garmentType, city, isRush)
+        }
+      }
+
+      if (currentStep < steps.length - 1) {
+        orderStore.nextCreationStep()
+      }
+    } catch (error) {
+      console.error("Error proceeding to next step:", error)
+      // Handle error - could show a toast or alert
     }
   }
 
@@ -170,10 +191,20 @@ export const OrderCreationScreen: FC<OrderCreationScreenProps> = observer(() => 
               text={orderStore.getTranslation("actions", "confirm")}
               style={[$primaryButton, !canGoNext() && $disabledButton]}
               textStyle={$primaryButtonText}
-              onPress={() => {
-                // Handle final confirmation
-                orderStore.createNigerianDraftOrder()
-                navigation.navigate("OrderConfirmation" as never)
+              onPress={async () => {
+                try {
+                  // Create draft order
+                  orderStore.createNigerianDraftOrder()
+                  
+                  // Submit the order
+                  await orderStore.submitNigerianDraftOrder()
+                  
+                  // Navigate to confirmation
+                  navigation.navigate("OrderConfirmation" as never)
+                } catch (error) {
+                  console.error("Error creating order:", error)
+                  // Handle error - show toast or alert
+                }
               }}
               disabled={!canGoNext()}
             />

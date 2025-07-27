@@ -583,6 +583,157 @@ export const OrderStoreModel = types
       },
 
       /**
+       * Recalculate draft order totals
+       */
+      recalculateDraftTotals() {
+        if (!self.draftOrder) return
+
+        const itemsTotal = self.draftOrder.items.reduce(
+          (sum: number, item: any) => sum + item.totalPrice,
+          0,
+        )
+
+        // Update pricing
+        const currentPricing = self.draftOrder.pricing
+        self.draftOrder.pricing = {
+          ...currentPricing,
+          totalPrice: currentPricing.basePrice + itemsTotal + currentPricing.urgencyFee,
+          balanceAmount:
+            currentPricing.basePrice + itemsTotal + currentPricing.urgencyFee - currentPricing.depositRequired,
+        }
+      },
+
+      /**
+       * Validate order creation data
+       */
+      validateOrderCreationData(): { isValid: boolean; errors: string[] } {
+        const errors: string[] = []
+        
+        if (!self.orderCreationData) {
+          errors.push("Order creation data is missing")
+          return { isValid: false, errors }
+        }
+
+        // Validate customer info
+        if (!self.orderCreationData.customerInfo) {
+          errors.push("Customer information is required")
+        } else {
+          const customer = self.orderCreationData.customerInfo
+          if (!customer.firstName?.trim()) errors.push("First name is required")
+          if (!customer.lastName?.trim()) errors.push("Last name is required")
+          if (!customer.email?.trim()) errors.push("Email is required")
+          if (customer.email && !/\S+@\S+\.\S+/.test(customer.email)) errors.push("Valid email is required")
+          if (!customer.phone?.trim()) errors.push("Phone number is required")
+          if (!customer.address?.trim()) errors.push("Address is required")
+        }
+
+        // Validate style config
+        if (!self.orderCreationData.styleConfig) {
+          errors.push("Style configuration is required")
+        } else if (!self.orderCreationData.styleConfig.garmentType) {
+          errors.push("Garment type selection is required")
+        }
+
+        // Validate fabric selection
+        if (!self.orderCreationData.fabricSelection) {
+          errors.push("Fabric selection is required")
+        } else {
+          const fabric = self.orderCreationData.fabricSelection
+          if (!fabric.type) errors.push("Fabric type is required")
+          if (!fabric.color?.trim()) errors.push("Fabric color is required")
+          if (fabric.quantity <= 0) errors.push("Fabric quantity must be greater than 0")
+          if (fabric.unitPrice <= 0) errors.push("Fabric unit price must be greater than 0")
+        }
+
+        return { isValid: errors.length === 0, errors }
+      },
+
+      /**
+       * Validate measurements for specific garment type
+       */
+      validateMeasurementsForGarment(garmentType: NigerianGarmentType, measurements: Record<string, number>): { isValid: boolean; errors: string[] } {
+        const errors: string[] = []
+        const garmentConfig = nigerianBusinessConfig.traditionalGarments[garmentType]
+        
+        if (!garmentConfig) {
+          errors.push(`Configuration not found for garment type: ${garmentType}`)
+          return { isValid: false, errors }
+        }
+
+        // Check required measurements
+        const requiredMeasurements = garmentConfig.requiredMeasurements || ['chest', 'waist', 'length']
+        
+        for (const measurement of requiredMeasurements) {
+          if (!measurements[measurement] || measurements[measurement] <= 0) {
+            errors.push(`${measurement} measurement is required and must be greater than 0`)
+          }
+        }
+
+        // Validate measurement ranges (basic sanity checks)
+        if (measurements.chest && (measurements.chest < 30 || measurements.chest > 200)) {
+          errors.push("Chest measurement should be between 30-200 cm")
+        }
+        if (measurements.waist && (measurements.waist < 25 || measurements.waist > 180)) {
+          errors.push("Waist measurement should be between 25-180 cm")
+        }
+        if (measurements.length && (measurements.length < 50 || measurements.length > 300)) {
+          errors.push("Length measurement should be between 50-300 cm")
+        }
+
+        return { isValid: errors.length === 0, errors }
+      },
+
+      /**
+       * Calculate order complexity score
+       */
+      calculateOrderComplexity(garmentType: NigerianGarmentType, embellishments: string[] = [], culturalSpecs?: string): number {
+        const garmentConfig = nigerianBusinessConfig.traditionalGarments[garmentType]
+        if (!garmentConfig) return 1
+
+        let complexity = garmentConfig.complexityLevel || 1
+        
+        // Add complexity for embellishments
+        complexity += embellishments.length * 0.5
+        
+        // Add complexity for cultural specifications
+        if (culturalSpecs && culturalSpecs.trim().length > 0) {
+          complexity += 1
+        }
+
+        // Cap at 5
+        return Math.min(complexity, 5)
+      },
+
+      /**
+       * Validate draft order before submission
+       */
+      validateDraftOrder(): { isValid: boolean; errors: string[] } {
+        const errors: string[] = []
+        
+        if (!self.draftOrder) {
+          errors.push("No draft order to validate")
+          return { isValid: false, errors }
+        }
+
+        const order = self.draftOrder
+
+        // Validate basic order info
+        if (!order.customerInfo.firstName?.trim()) errors.push("Customer first name is required")
+        if (!order.customerInfo.email?.trim()) errors.push("Customer email is required")
+        if (!order.garmentType) errors.push("Garment type is required")
+        if (order.pricing.totalPrice <= 0) errors.push("Order total price must be greater than 0")
+
+        // Validate fabric selection
+        if (!order.fabricSelection.type) errors.push("Fabric type is required")
+        if (order.fabricSelection.quantity <= 0) errors.push("Fabric quantity must be greater than 0")
+
+        // Validate style configuration
+        if (!order.styleConfig.fitPreference) errors.push("Fit preference is required")
+
+        return { isValid: errors.length === 0, errors }
+      },
+
+      /**
        * Update Nigerian order stage progress
        */
       updateNigerianOrderStage(orderId: string, stage: OrderStage, tailorId?: string, notes?: string, qualityScore?: number) {
@@ -843,6 +994,9 @@ export const OrderStoreModel = types
        */
       loadNigerianOrders: flow(function* (params: any = {}, reset: boolean = false) {
         try {
+          self.setLoading(true)
+          self.clearError()
+
           // Add Nigerian-specific parameters
           const nigerianParams = {
             ...params,
@@ -853,16 +1007,42 @@ export const OrderStoreModel = types
           
           const result = yield fetchOrders(nigerianParams)
 
-          if (reset) {
-            self.orders.setItems(result.orders.map((order: any) => NigerianOrderModel.create(order)))
-          } else {
-            self.orders.addItems(result.orders.map((order: any) => NigerianOrderModel.create(order)))
+          if (!result || !Array.isArray(result.orders)) {
+            throw new Error("Invalid orders data received")
           }
 
-          self.orders.setHasMore(result.hasMore)
-          return result
+          // Validate each order before adding to store
+          const validOrders = result.orders.filter((order: any) => {
+            try {
+              NigerianOrderModel.create(order)
+              return true
+            } catch (error) {
+              console.warn("Invalid order data skipped:", error.message, order)
+              return false
+            }
+          })
+
+          if (reset) {
+            self.orders.setItems(validOrders.map((order: any) => NigerianOrderModel.create(order)))
+          } else {
+            self.orders.addItems(validOrders.map((order: any) => NigerianOrderModel.create(order)))
+          }
+
+          self.orders.setHasMore(result.hasMore || false)
+          self.setLastFetched(createTimestamp())
+          
+          return {
+            ...result,
+            orders: validOrders,
+            skipped: result.orders.length - validOrders.length,
+          }
         } catch (error) {
-          throw error
+          const errorMessage = error.message || "Failed to load orders"
+          self.setError(errorMessage)
+          console.error("Failed to load Nigerian orders:", error)
+          throw new Error(errorMessage)
+        } finally {
+          self.setLoading(false)
         }
       }),
 
@@ -870,17 +1050,40 @@ export const OrderStoreModel = types
        * Load single Nigerian order
        */
       loadNigerianOrder: flow(function* (orderId: string) {
+        if (!orderId?.trim()) {
+          throw new Error("Order ID is required")
+        }
+
         try {
+          self.setLoading(true)
+          self.clearError()
+
           // TODO: Replace with Appwrite API call
           const response = yield fetch(`/api/nigerian-orders/${orderId}`)
-          if (!response.ok) throw new Error("Failed to fetch Nigerian order")
+          
+          if (!response.ok) {
+            if (response.status === 404) {
+              throw new Error("Order not found")
+            }
+            throw new Error(`Failed to fetch order: ${response.statusText}`)
+          }
 
           const order = yield response.json()
+          
+          if (!order || !order.id) {
+            throw new Error("Invalid order data received")
+          }
+
           self.setCurrentOrder(order)
+          self.setLastFetched(createTimestamp())
           return order
         } catch (error) {
-          self.setError(error.message)
-          throw error
+          const errorMessage = error.message || "Failed to load order"
+          self.setError(errorMessage)
+          console.error("Failed to load Nigerian order:", error)
+          throw new Error(errorMessage)
+        } finally {
+          self.setLoading(false)
         }
       }),
 
@@ -888,20 +1091,42 @@ export const OrderStoreModel = types
        * Submit Nigerian draft order
        */
       submitNigerianDraftOrder: flow(function* () {
-        if (!self.draftOrder) return
+        if (!self.draftOrder) {
+          throw new Error("No draft order to submit")
+        }
 
         try {
+          // Validate draft order before submission
+          const validation = self.validateDraftOrder()
+          if (!validation.isValid) {
+            throw new Error(`Order validation failed: ${validation.errors.join(', ')}`)
+          }
+
+          self.setLoading(true)
+          self.clearError()
+
           const orderData = {
             ...self.draftOrder,
             status: "pending" as OrderStatus,
           }
 
           const createdOrder = yield createNigerianOrder(orderData)
-          self.orders.addItem(NigerianOrderModel.create(createdOrder))
+          
+          if (createdOrder.success === false) {
+            throw new Error(createdOrder.message || "Failed to create order")
+          }
+
+          const orderToAdd = createdOrder.order || createdOrder
+          self.orders.addItem(NigerianOrderModel.create(orderToAdd))
           self.clearDraftOrder()
-          return createdOrder
+          self.setLastFetched(createTimestamp())
+          
+          return orderToAdd
         } catch (error) {
+          self.setError(error.message || "Failed to submit order")
           throw error
+        } finally {
+          self.setLoading(false)
         }
       }),
 

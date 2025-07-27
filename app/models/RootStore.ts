@@ -6,6 +6,7 @@ import { FabricStoreModel } from "./stores/FabricStore"
 import { MeasurementStoreModel } from "./stores/MeasurementStore"
 import { AppointmentStoreModel } from "./stores/AppointmentStore"
 import { NotificationStoreModel } from "./stores/NotificationStore"
+import { AnalyticsStoreModel } from "./stores/AnalyticsStore"
 
 /**
  * A RootStore model integrating all domain stores
@@ -85,6 +86,7 @@ export const RootStoreModel = types
         lastUpdated: null,
       },
     }),
+    analyticsStore: types.optional(AnalyticsStoreModel, {}),
   })
   .actions((self) => ({
     /**
@@ -157,6 +159,15 @@ export const RootStoreModel = types
       } catch (error) {
         console.warn("Failed to load notifications:", error)
       }
+
+      // Load analytics data for tailors
+      if (self.authStore.hasRole("tailor")) {
+        try {
+          await self.analyticsStore.loadAnalytics("30d")
+        } catch (error) {
+          console.warn("Failed to load analytics:", error)
+        }
+      }
     },
 
     /**
@@ -173,6 +184,7 @@ export const RootStoreModel = types
       self.notificationStore.notifications.setItems([])
       self.notificationStore.preferences = null
       self.notificationStore.unreadCount = 0
+      self.analyticsStore.resetAnalytics()
     },
 
     /**
@@ -319,7 +331,8 @@ export const RootStoreModel = types
         self.fabricStore.isLoading ||
         self.measurementStore.isLoading ||
         self.appointmentStore.isLoading ||
-        self.notificationStore.isLoading
+        self.notificationStore.isLoading ||
+        self.analyticsStore.isLoading
       )
     },
 
@@ -334,7 +347,8 @@ export const RootStoreModel = types
         self.fabricStore.error ||
         self.measurementStore.error ||
         self.appointmentStore.error ||
-        self.notificationStore.error
+        self.notificationStore.error ||
+        self.analyticsStore.error
       )
     },
 
@@ -349,6 +363,7 @@ export const RootStoreModel = types
       self.measurementStore.clearError()
       self.appointmentStore.clearError()
       self.notificationStore.clearError()
+      self.analyticsStore.clearError()
     },
   }))
 
