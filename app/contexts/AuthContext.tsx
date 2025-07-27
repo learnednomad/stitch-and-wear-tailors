@@ -32,65 +32,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
 
   // Check authentication status on app start
   useEffect(() => {
-    checkAuthStatus()
+    authStore.checkAuthStatus()
   }, [])
 
   const checkAuthStatus = async () => {
-    try {
-      authStore.setStatus("checking")
-
-      // Try to get stored session
-      const storedSession = storage.load("userSession")
-      const storedUser = storage.load("currentUser")
-
-      if (storedSession && storedUser) {
-        // Verify session is still valid with Appwrite
-        const authAdapter = getAppwriteAuthAdapter()
-        const result = await authAdapter.getCurrentUser()
-
-        if (result.success) {
-          // Restore auth state
-          authStore.setUser(storedUser)
-          authStore.setSession(storedSession)
-          authStore.setStatus("authenticated")
-        } else {
-          // Session expired, clear stored data
-          await clearStoredAuth()
-          authStore.setStatus("unauthenticated")
-        }
-      } else {
-        authStore.setStatus("unauthenticated")
-      }
-    } catch (error) {
-      console.error("Auth status check failed:", error)
-      await clearStoredAuth()
-      authStore.setStatus("unauthenticated")
-    }
+    // Use the AuthStore's built-in checkAuthStatus method
+    await authStore.checkAuthStatus()
   }
 
   const clearStoredAuth = async () => {
-    try {
-      storage.remove("userSession")
-      storage.remove("currentUser")
-    } catch (error) {
-      console.error("Failed to clear stored auth:", error)
-    }
+    // Use the AuthStore's built-in clearAuth method
+    authStore.clearAuth()
   }
 
   const signIn = async (email: string, password: string) => {
     try {
+      // AuthStore now handles persistence internally
       const result = await authStore.signIn({ email, password })
-
-      if (authStore.isAuthenticated && authStore.user && authStore.session) {
-        // Store session and user data
-        storage.save("userSession", {
-          accessToken: authStore.session.accessToken,
-          refreshToken: authStore.session.refreshToken,
-          expiresAt: authStore.session.expiresAt,
-        })
-        storage.save("currentUser", authStore.user)
-      }
-
       return result
     } catch (error) {
       await clearStoredAuth()
@@ -100,18 +58,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
 
   const signUp = async (userData: any) => {
     try {
+      // AuthStore now handles persistence internally
       const result = await authStore.signUp(userData)
-
-      if (authStore.isAuthenticated && authStore.user && authStore.session) {
-        // Store session and user data
-        storage.save("userSession", {
-          accessToken: authStore.session.accessToken,
-          refreshToken: authStore.session.refreshToken,
-          expiresAt: authStore.session.expiresAt,
-        })
-        storage.save("currentUser", authStore.user)
-      }
-
       return result
     } catch (error) {
       await clearStoredAuth()
@@ -120,11 +68,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
   }
 
   const signOut = async () => {
-    try {
-      await authStore.signOut()
-    } finally {
-      await clearStoredAuth()
-    }
+    // AuthStore now handles clearing persistence internally
+    await authStore.signOut()
   }
 
   const contextValue: AuthContextType = {

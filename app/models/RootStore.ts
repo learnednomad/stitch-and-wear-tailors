@@ -112,7 +112,7 @@ export const RootStoreModel = types
           const params = self.authStore.hasRole("client")
             ? { clientId: userId }
             : { tailorId: userId }
-          await self.orderStore.loadOrders(params, true)
+          await self.orderStore.loadNigerianOrders(params, true)
         } catch (error) {
           console.warn("Failed to load orders:", error)
         }
@@ -249,7 +249,7 @@ export const RootStoreModel = types
       if (!self.authStore.user) return []
 
       if (self.authStore.hasRole("client")) {
-        return self.orderStore.getOrdersByClient(self.authStore.user.id)
+        return self.orderStore.getOrdersByUser(self.authStore.user.id)
       } else if (self.authStore.hasRole("tailor")) {
         return self.orderStore.getOrdersByTailor(self.authStore.user.id)
       }
@@ -268,14 +268,14 @@ export const RootStoreModel = types
      * Get pending orders count for dashboard
      */
     get pendingOrdersCount() {
-      return self.orderStore.getOrdersByStatus("pending").length
+      return self.orderStore.getNigerianOrdersByStatus("pending").length
     },
 
     /**
      * Get urgent orders count
      */
     get urgentOrdersCount() {
-      return self.orderStore.urgentOrders.length
+      return self.orderStore.urgentNigerianOrders.length
     },
 
     /**

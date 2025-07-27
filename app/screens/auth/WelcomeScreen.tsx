@@ -3,13 +3,13 @@ import { FC } from "react"
 import { Image, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
 import { Text, Screen } from "@/components"
 import { isRTL } from "@/i18n"
-import { AppStackScreenProps } from "../navigators"
+import { AppStackScreenProps } from "@/navigators"
 import { $styles, type ThemedStyle } from "@/theme"
-import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-const welcomeLogo = require("../../assets/images/logo.png")
-const welcomeFace = require("../../assets/images/welcome-face.png")
+const welcomeLogo = require("../../../assets/images/logo.png")
+const welcomeFace = require("../../../assets/images/welcome-face.png")
 
 interface WelcomeScreenProps extends AppStackScreenProps<"Welcome"> {}
 

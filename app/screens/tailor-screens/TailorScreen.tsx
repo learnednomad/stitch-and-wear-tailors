@@ -51,7 +51,7 @@ interface TailorScreenProps extends AppStackScreenProps<"Tailor"> {}
 
 const getGreeting = () => {
   const currentHour = new Date().getHours()
-  const name = "John" // This would come from user context
+  const name = "Alhaji Bello" // Nigerian tailor name
   if (currentHour < 12) return `Good Morning, ${name}`
   if (currentHour < 18) return `Good Afternoon, ${name}`
   return `Good Evening, ${name}`
@@ -405,7 +405,7 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
 
   return (
     <Screen
-      backgroundColor={colors.palette.neutral100}
+      backgroundColor="#f7fafc"
       contentContainerStyle={$root}
       safeAreaEdges={["top"]}
       preset="scroll"
@@ -418,7 +418,7 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
             <Text style={$greetingText} accessibilityLabel={greeting}>
               {greeting}
             </Text>
-            <Text style={$welcomeText}>Welcome back to your workshop</Text>
+            <Text style={$welcomeText}>Welcome back to your atelier - crafting Nigerian excellence</Text>
           </View>
           <TouchableOpacity
             style={$notificationIcon}
@@ -426,7 +426,7 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
             accessible
             accessibilityLabel="Notifications"
           >
-            <Icon icon="bell" size={24} color={colors.palette.neutral700} />
+            <Icon icon="bell" size={24} color="#ffffff" />
             {unreadNotifications > 0 && (
               <View style={$notificationBadge}>
                 <Text style={$notificationBadgeText}>
@@ -533,21 +533,23 @@ const $greetingContainer: ViewStyle = {
 }
 
 const $greetingText: TextStyle = {
-  fontSize: 24,
-  fontWeight: "bold",
-  color: colors.palette.neutral900,
+  fontSize: 28,
+  fontWeight: "700",
+  color: "#1a202c",
   marginBottom: spacing.xs,
+  letterSpacing: 0.5,
 }
 
 const $welcomeText: TextStyle = {
   fontSize: 16,
-  color: colors.palette.neutral600,
+  color: "#4a5568",
+  fontWeight: "400",
 }
 
 const $notificationIcon: ViewStyle = {
   padding: spacing.sm,
   position: "relative",
-  backgroundColor: colors.palette.neutral200,
+  backgroundColor: "#2B5D2F",
   borderRadius: 12,
 }
 
@@ -624,10 +626,11 @@ const $statsTitle: TextStyle = {
 }
 
 const $sectionTitle: TextStyle = {
-  fontSize: 20,
-  fontWeight: "bold",
-  color: colors.palette.neutral900,
+  fontSize: 22,
+  fontWeight: "700",
+  color: "#1a202c",
   marginBottom: spacing.md,
+  letterSpacing: 0.3,
 }
 
 // Quick actions styles

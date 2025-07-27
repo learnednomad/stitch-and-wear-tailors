@@ -119,7 +119,7 @@ export const PasswordStrengthIndicator: FC<PasswordStrengthIndicatorProps> = ({
               style={[
                 $feedbackText,
                 {
-                  color: strength.score >= 3 ? theme.colors.palette.success600 : theme.colors.text,
+                  color: strength.score >= 3 ? theme.colors.palette.success500 : theme.colors.text,
                 },
                 compact && $feedbackTextCompact,
               ]}
@@ -146,7 +146,7 @@ const CriteriaItem: FC<CriteriaItemProps> = ({ label, met, description }) => {
         style={[
           $criteriaIcon,
           {
-            backgroundColor: met ? theme.colors.palette.success600 : theme.colors.palette.neutral400,
+            backgroundColor: met ? theme.colors.palette.success500 : theme.colors.palette.neutral400,
           },
         ]}
       >
@@ -163,7 +163,7 @@ const CriteriaItem: FC<CriteriaItemProps> = ({ label, met, description }) => {
           text={label}
           style={[
             $criteriaLabel,
-            { color: met ? theme.colors.palette.success600 : theme.colors.text },
+            { color: met ? theme.colors.palette.success500 : theme.colors.text },
           ]}
         />
         <Text

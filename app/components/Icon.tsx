@@ -109,6 +109,9 @@ export const iconRegistry = {
   money: require("../../assets/icons/donation_2800496.png"),
   sun: require("../../assets/icons/sun.png"),
   moon: require("../../assets/icons/moon.png"),
+  facebook: require("../../assets/icons/facebook.png"),
+  google: require("../../assets/icons/google.png"),
+  feedback: require("../../assets/icons/feedback.png"),
 }
 
 const $imageStyleBase: ImageStyle = {

@@ -10,8 +10,8 @@ import { AppStackParamList, AppStackScreenProps } from "./AppNavigator"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { TailorScreen } from "@/screens/tailor-screens/TailorScreen"
 import { TailorOrderScreen } from "@/screens/tailor-screens/orders/TailorOrderScreen"
-import { AnalyticsScreen } from "@/screens/tailor-screens/Analytics/AnalyticsScreen"
-import { MeasurmentScreen } from "@/screens/tailor-screens/measurments/MeasurmentScreen"
+import { AnalyticsScreen } from "@/screens/tailor-screens/analytics/AnalyticsScreen"
+import { MeasurementScreen } from "@/screens/tailor-screens/measurements/MeasurementScreen"
 
 export type TailorTabParamList = {
   TailorHome: undefined
@@ -81,7 +81,7 @@ export function TailorTabNavigator() {
       />
       <Tab.Screen
         name="Measurements"
-        component={MeasurmentScreen}
+        component={MeasurementScreen}
         options={{
           tabBarLabel: "Measurements",
           tabBarIcon: ({ focused }) => (
