@@ -7,6 +7,7 @@ export interface ConfigBaseProps {
   APPWRITE_DATABASE_ID?: string
   APPWRITE_STORAGE_ID?: string
   APPWRITE_API_KEY?: string
+  PASSWORD_RECOVERY_URL?: string
 }
 
 export type PersistNavigationConfig = ConfigBaseProps["persistNavigation"]

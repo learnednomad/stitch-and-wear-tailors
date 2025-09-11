@@ -31,7 +31,7 @@ interface OrdersScreenProps extends TabScreenProps<"Orders"> {}
 export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScreen() {
   const { orderStore, authStore } = useStores()
   const navigation = useNavigation()
-  
+
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "all">("all")
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -115,7 +115,12 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
       <View style={$orderHeader}>
         <View style={$orderTitleSection}>
           <Text style={$orderNumber}>#{order.orderNumber}</Text>
-          <View style={[$statusBadge, { backgroundColor: getStatusColor(order.status as OrderStatus) + "20" }]}>
+          <View
+            style={[
+              $statusBadge,
+              { backgroundColor: getStatusColor(order.status as OrderStatus) + "20" },
+            ]}
+          >
             <Text style={[$statusText, { color: getStatusColor(order.status as OrderStatus) }]}>
               {statusOptions.find((s) => s.value === order.status)?.label}
             </Text>
@@ -139,7 +144,9 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
         {order.items.slice(0, 2).map((item: any, index: number) => (
           <View key={index} style={$orderItem}>
             <Icon icon="sew" size={16} color={colors.palette.threadBlue} />
-            <Text style={$itemName}>{getGarmentDisplayName(item.garmentType as NigerianGarmentType)}</Text>
+            <Text style={$itemName}>
+              {getGarmentDisplayName(item.garmentType as NigerianGarmentType)}
+            </Text>
             <Text style={$itemPrice}>₦{item.totalPrice.toLocaleString()}</Text>
           </View>
         ))}

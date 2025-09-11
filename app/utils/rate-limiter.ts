@@ -3,7 +3,7 @@
  * Provides client-side rate limiting for login attempts and other sensitive operations
  */
 
-import { storage } from './storage'
+import { storage } from "./storage"
 
 export interface RateLimitConfig {
   maxAttempts: number
@@ -35,10 +35,7 @@ export class RateLimiter {
   /**
    * Check if an operation is allowed for a given key
    */
-  static checkLimit(
-    key: string,
-    config: Partial<RateLimitConfig> = {}
-  ): RateLimitResult {
+  static checkLimit(key: string, config: Partial<RateLimitConfig> = {}): RateLimitResult {
     const finalConfig = { ...this.DEFAULT_CONFIG, ...config }
     const storageKey = `rate_limit_${key}`
     const now = Date.now()
@@ -68,7 +65,7 @@ export class RateLimiter {
       if (record.count >= finalConfig.maxAttempts) {
         const blockUntil = now + finalConfig.blockDurationMs
         this.blockKey(storageKey, blockUntil)
-        
+
         return {
           allowed: false,
           attemptsRemaining: 0,
@@ -83,7 +80,7 @@ export class RateLimiter {
         resetTime: new Date(record.firstAttempt + finalConfig.windowMs),
       }
     } catch (error) {
-      console.warn('Rate limiter error:', error)
+      console.warn("Rate limiter error:", error)
       // If rate limiter fails, allow the operation
       return {
         allowed: true,
@@ -101,7 +98,7 @@ export class RateLimiter {
 
     try {
       const record = this.getAttemptRecord(storageKey)
-      
+
       // If this is a new window, reset
       if (now - record.firstAttempt > this.DEFAULT_CONFIG.windowMs) {
         this.saveAttemptRecord(storageKey, {
@@ -118,7 +115,7 @@ export class RateLimiter {
         })
       }
     } catch (error) {
-      console.warn('Failed to record rate limit attempt:', error)
+      console.warn("Failed to record rate limit attempt:", error)
     }
   }
 
@@ -127,11 +124,11 @@ export class RateLimiter {
    */
   static resetAttempts(key: string): void {
     const storageKey = `rate_limit_${key}`
-    
+
     try {
       storage.remove(storageKey)
     } catch (error) {
-      console.warn('Failed to reset rate limit attempts:', error)
+      console.warn("Failed to reset rate limit attempts:", error)
     }
   }
 
@@ -182,7 +179,7 @@ export class RateLimiter {
    * Check registration attempts from IP/device
    */
   static checkRegistrationAttempts(): RateLimitResult {
-    return this.checkLimit('registration_device', {
+    return this.checkLimit("registration_device", {
       maxAttempts: 3,
       windowMs: 60 * 60 * 1000, // 1 hour
       blockDurationMs: 24 * 60 * 60 * 1000, // 24 hours
@@ -193,7 +190,7 @@ export class RateLimiter {
    * Record a registration attempt
    */
   static recordRegistrationAttempt(): void {
-    this.recordAttempt('registration_device')
+    this.recordAttempt("registration_device")
   }
 
   /**
@@ -219,18 +216,18 @@ export class RateLimiter {
    */
   static getBlockTimeRemaining(key: string): number {
     const storageKey = `rate_limit_${key}`
-    
+
     try {
       const record = this.getAttemptRecord(storageKey)
-      
+
       if (record.blockedUntil) {
         const remaining = record.blockedUntil - Date.now()
         return Math.max(0, remaining)
       }
-      
+
       return 0
     } catch (error) {
-      console.warn('Failed to get block time:', error)
+      console.warn("Failed to get block time:", error)
       return 0
     }
   }
@@ -239,16 +236,16 @@ export class RateLimiter {
    * Format time remaining as human-readable string
    */
   static formatTimeRemaining(milliseconds: number): string {
-    if (milliseconds <= 0) return 'now'
+    if (milliseconds <= 0) return "now"
 
     const minutes = Math.ceil(milliseconds / (60 * 1000))
-    
+
     if (minutes < 60) {
-      return `${minutes} minute${minutes === 1 ? '' : 's'}`
+      return `${minutes} minute${minutes === 1 ? "" : "s"}`
     }
-    
+
     const hours = Math.ceil(minutes / 60)
-    return `${hours} hour${hours === 1 ? '' : 's'}`
+    return `${hours} hour${hours === 1 ? "" : "s"}`
   }
 
   /**
@@ -262,19 +259,17 @@ export class RateLimiter {
   } {
     const storageKey = `rate_limit_${key}`
     const now = Date.now()
-    
+
     try {
       const record = this.getAttemptRecord(storageKey)
       const blocked = record.blockedUntil ? now < record.blockedUntil : false
-      const blockTimeRemaining = blocked && record.blockedUntil 
-        ? record.blockedUntil - now 
-        : 0
-      
+      const blockTimeRemaining = blocked && record.blockedUntil ? record.blockedUntil - now : 0
+
       return {
         attempts: record.count,
         blocked,
         blockTimeRemaining,
-        resetTime: record.firstAttempt 
+        resetTime: record.firstAttempt
           ? new Date(record.firstAttempt + this.DEFAULT_CONFIG.windowMs)
           : null,
       }
@@ -293,11 +288,13 @@ export class RateLimiter {
   private static getAttemptRecord(storageKey: string): AttemptRecord {
     try {
       const stored = storage.getObject(storageKey) as AttemptRecord | null
-      return stored || {
-        count: 0,
-        firstAttempt: Date.now(),
-        lastAttempt: Date.now(),
-      }
+      return (
+        stored || {
+          count: 0,
+          firstAttempt: Date.now(),
+          lastAttempt: Date.now(),
+        }
+      )
     } catch (error) {
       return {
         count: 0,

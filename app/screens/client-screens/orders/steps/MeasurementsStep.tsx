@@ -26,12 +26,12 @@ interface SavedMeasurement {
 
 export const MeasurementsStep: FC = observer(() => {
   const { orderStore, authStore } = useStores()
-  
+
   const [selectedOption, setSelectedOption] = useState<"new" | "existing" | "skip">("new")
   const [savedMeasurements, setSavedMeasurements] = useState<SavedMeasurement[]>([])
   const [selectedMeasurementId, setSelectedMeasurementId] = useState<string>("")
   const [showTutorial, setShowTutorial] = useState(false)
-  
+
   const [newMeasurements, setNewMeasurements] = useState({
     chest: "",
     waist: "",
@@ -109,26 +109,38 @@ export const MeasurementsStep: FC = observer(() => {
       orderStore.setOrderMeasurement(measurementId)
       Alert.alert(
         "Measurements Saved",
-        selectedOption === "skip" 
+        selectedOption === "skip"
           ? "Measurements will be taken during fitting appointment"
-          : "Measurements have been saved successfully."
+          : "Measurements have been saved successfully.",
       )
     }
   }
 
   const handleMeasurementChange = (field: keyof typeof newMeasurements, value: string) => {
-    setNewMeasurements(prev => ({ ...prev, [field]: value }))
+    setNewMeasurements((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }))
+      setErrors((prev) => ({ ...prev, [field]: "" }))
     }
   }
 
   const measurementFields = [
     { key: "chest", label: orderStore.getTranslation("measurementTypes", "chest"), required: true },
     { key: "waist", label: orderStore.getTranslation("measurementTypes", "waist"), required: true },
-    { key: "length", label: orderStore.getTranslation("measurementTypes", "length"), required: true },
-    { key: "shoulder", label: orderStore.getTranslation("measurementTypes", "shoulder"), required: false },
-    { key: "armLength", label: orderStore.getTranslation("measurementTypes", "armLength"), required: false },
+    {
+      key: "length",
+      label: orderStore.getTranslation("measurementTypes", "length"),
+      required: true,
+    },
+    {
+      key: "shoulder",
+      label: orderStore.getTranslation("measurementTypes", "shoulder"),
+      required: false,
+    },
+    {
+      key: "armLength",
+      label: orderStore.getTranslation("measurementTypes", "armLength"),
+      required: false,
+    },
     { key: "neck", label: orderStore.getTranslation("measurementTypes", "neck"), required: false },
   ]
 
@@ -137,7 +149,7 @@ export const MeasurementsStep: FC = observer(() => {
       key={measurement.id}
       style={[
         $measurementCard,
-        selectedMeasurementId === measurement.id && $selectedMeasurementCard
+        selectedMeasurementId === measurement.id && $selectedMeasurementCard,
       ]}
       onPress={() => setSelectedMeasurementId(measurement.id)}
     >
@@ -151,10 +163,11 @@ export const MeasurementsStep: FC = observer(() => {
           </View>
         )}
       </View>
-      
+
       <View style={$measurementDetails}>
         <Text style={$measurementDetail}>
-          Chest: {measurement.chest}cm • Waist: {measurement.waist}cm • Length: {measurement.length}cm
+          Chest: {measurement.chest}cm • Waist: {measurement.waist}cm • Length: {measurement.length}
+          cm
         </Text>
         <Text style={$measurementDate}>
           Created: {new Date(measurement.createdAt).toLocaleDateString()}
@@ -162,10 +175,9 @@ export const MeasurementsStep: FC = observer(() => {
       </View>
 
       <View style={$measurementRadio}>
-        <View style={[
-          $radioButton,
-          selectedMeasurementId === measurement.id && $radioButtonSelected
-        ]}>
+        <View
+          style={[$radioButton, selectedMeasurementId === measurement.id && $radioButtonSelected]}
+        >
           {selectedMeasurementId === measurement.id && <View style={$radioButtonInner} />}
         </View>
       </View>
@@ -175,20 +187,13 @@ export const MeasurementsStep: FC = observer(() => {
   return (
     <ScrollView style={$container} showsVerticalScrollIndicator={false}>
       <View style={$content}>
-        <Text style={$title}>
-          {orderStore.getTranslation("measurements", "en")}
-        </Text>
-        <Text style={$subtitle}>
-          We need your measurements to create the perfect fit
-        </Text>
+        <Text style={$title}>{orderStore.getTranslation("measurements", "en")}</Text>
+        <Text style={$subtitle}>We need your measurements to create the perfect fit</Text>
 
         {/* Measurement Options */}
         <View style={$optionsContainer}>
           <TouchableOpacity
-            style={[
-              $optionCard,
-              selectedOption === "new" && $selectedOptionCard
-            ]}
+            style={[$optionCard, selectedOption === "new" && $selectedOptionCard]}
             onPress={() => setSelectedOption("new")}
           >
             <View style={$optionHeader}>
@@ -202,10 +207,7 @@ export const MeasurementsStep: FC = observer(() => {
 
           {savedMeasurements.length > 0 && (
             <TouchableOpacity
-              style={[
-                $optionCard,
-                selectedOption === "existing" && $selectedOptionCard
-              ]}
+              style={[$optionCard, selectedOption === "existing" && $selectedOptionCard]}
               onPress={() => setSelectedOption("existing")}
             >
               <View style={$optionHeader}>
@@ -219,10 +221,7 @@ export const MeasurementsStep: FC = observer(() => {
           )}
 
           <TouchableOpacity
-            style={[
-              $optionCard,
-              selectedOption === "skip" && $selectedOptionCard
-            ]}
+            style={[$optionCard, selectedOption === "skip" && $selectedOptionCard]}
             onPress={() => setSelectedOption("skip")}
           >
             <View style={$optionHeader}>
@@ -255,13 +254,13 @@ export const MeasurementsStep: FC = observer(() => {
                     label={`${field.label}${field.required ? " *" : ""}`}
                     placeholder="0"
                     value={newMeasurements[field.key as keyof typeof newMeasurements]}
-                    onChangeText={(text) => handleMeasurementChange(field.key as keyof typeof newMeasurements, text)}
+                    onChangeText={(text) =>
+                      handleMeasurementChange(field.key as keyof typeof newMeasurements, text)
+                    }
                     keyboardType="numeric"
                     status={errors[field.key] ? "error" : undefined}
                     helper={errors[field.key]}
-                    RightAccessory={() => (
-                      <Text style={$unitText}>cm</Text>
-                    )}
+                    RightAccessory={() => <Text style={$unitText}>cm</Text>}
                   />
                 </View>
               ))}
@@ -282,9 +281,7 @@ export const MeasurementsStep: FC = observer(() => {
         {selectedOption === "existing" && savedMeasurements.length > 0 && (
           <View style={$section}>
             <Text style={$sectionTitle}>Select Saved Measurements</Text>
-            {errors.selection && (
-              <Text style={$errorText}>{errors.selection}</Text>
-            )}
+            {errors.selection && <Text style={$errorText}>{errors.selection}</Text>}
             {savedMeasurements.map(renderSavedMeasurement)}
           </View>
         )}
@@ -297,7 +294,8 @@ export const MeasurementsStep: FC = observer(() => {
               <View style={$skipTextContainer}>
                 <Text style={$skipTitle}>Fitting Appointment Required</Text>
                 <Text style={$skipDescription}>
-                  A fitting appointment will be scheduled where our tailor will take your measurements professionally.
+                  A fitting appointment will be scheduled where our tailor will take your
+                  measurements professionally.
                 </Text>
               </View>
             </View>

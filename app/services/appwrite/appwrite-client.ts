@@ -271,3 +271,18 @@ export const TEAM_IDS = {
   TAILORS: "tailors",
   CLIENTS: "clients",
 } as const
+
+// Export singleton instances for easy access
+const clientInstance = getAppwriteClient()
+export { clientInstance as appwriteClient }
+export const appwriteAccount = clientInstance.account
+export const appwriteDatabases = clientInstance.databases
+export const appwriteStorage = clientInstance.storage
+export const appwriteFunctions = clientInstance.functions
+
+// Export database ID from configuration
+export const DATABASE_ID = DEFAULT_APPWRITE_CONFIG.databaseId || "stitch-and-wear-db"
+export const STORAGE_ID = DEFAULT_APPWRITE_CONFIG.storageId || "stitch-and-wear-storage"
+
+// Export COLLECTIONS as an alias to COLLECTION_IDS for compatibility
+export const COLLECTIONS = COLLECTION_IDS

@@ -3,11 +3,11 @@
  * Provides secure storage for sensitive authentication data
  */
 
-import Keychain from 'react-native-keychain'
+import Keychain from "react-native-keychain"
 
 export class SecureStorage {
-  private static readonly SERVICE_NAME = 'StitchAndWearTailors'
-  
+  private static readonly SERVICE_NAME = "StitchAndWearTailors"
+
   /**
    * Store authentication tokens securely
    */
@@ -18,19 +18,14 @@ export class SecureStorage {
   }): Promise<boolean> {
     try {
       const tokenData = JSON.stringify(tokens)
-      await Keychain.setInternetCredentials(
-        'auth_tokens',
-        'auth_tokens',
-        tokenData,
-        {
-          service: this.SERVICE_NAME,
-          accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE,
-          authenticatePrompt: 'Authenticate to access your account',
-        }
-      )
+      await Keychain.setInternetCredentials("auth_tokens", "auth_tokens", tokenData, {
+        service: this.SERVICE_NAME,
+        accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE,
+        authenticatePrompt: "Authenticate to access your account",
+      })
       return true
     } catch (error) {
-      console.error('Failed to store auth tokens:', error)
+      console.error("Failed to store auth tokens:", error)
       return false
     }
   }
@@ -44,17 +39,17 @@ export class SecureStorage {
     expiresAt: string
   } | null> {
     try {
-      const credentials = await Keychain.getInternetCredentials('auth_tokens', {
+      const credentials = await Keychain.getInternetCredentials("auth_tokens", {
         service: this.SERVICE_NAME,
-        authenticatePrompt: 'Authenticate to access your account',
+        authenticatePrompt: "Authenticate to access your account",
       })
-      
+
       if (credentials && credentials.password) {
         return JSON.parse(credentials.password)
       }
       return null
     } catch (error) {
-      console.error('Failed to retrieve auth tokens:', error)
+      console.error("Failed to retrieve auth tokens:", error)
       return null
     }
   }
@@ -70,17 +65,17 @@ export class SecureStorage {
       }
 
       await Keychain.setInternetCredentials(
-        'user_credentials',
+        "user_credentials",
         email,
         JSON.stringify({ rememberMe }),
         {
           service: this.SERVICE_NAME,
           accessControl: Keychain.ACCESS_CONTROL.DEVICE_PASSCODE,
-        }
+        },
       )
       return true
     } catch (error) {
-      console.error('Failed to store user credentials:', error)
+      console.error("Failed to store user credentials:", error)
       return false
     }
   }
@@ -90,10 +85,10 @@ export class SecureStorage {
    */
   static async getUserCredentials(): Promise<{ email: string; rememberMe: boolean } | null> {
     try {
-      const credentials = await Keychain.getInternetCredentials('user_credentials', {
+      const credentials = await Keychain.getInternetCredentials("user_credentials", {
         service: this.SERVICE_NAME,
       })
-      
+
       if (credentials && credentials.username) {
         const data = JSON.parse(credentials.password)
         return {
@@ -103,7 +98,7 @@ export class SecureStorage {
       }
       return null
     } catch (error) {
-      console.error('Failed to retrieve user credentials:', error)
+      console.error("Failed to retrieve user credentials:", error)
       return null
     }
   }
@@ -114,18 +109,13 @@ export class SecureStorage {
   static async setUserProfile(profileData: any): Promise<boolean> {
     try {
       const dataString = JSON.stringify(profileData)
-      await Keychain.setInternetCredentials(
-        'user_profile',
-        'user_profile',
-        dataString,
-        {
-          service: this.SERVICE_NAME,
-          accessControl: Keychain.ACCESS_CONTROL.DEVICE_PASSCODE,
-        }
-      )
+      await Keychain.setInternetCredentials("user_profile", "user_profile", dataString, {
+        service: this.SERVICE_NAME,
+        accessControl: Keychain.ACCESS_CONTROL.DEVICE_PASSCODE,
+      })
       return true
     } catch (error) {
-      console.error('Failed to store user profile:', error)
+      console.error("Failed to store user profile:", error)
       return false
     }
   }
@@ -135,16 +125,16 @@ export class SecureStorage {
    */
   static async getUserProfile(): Promise<any | null> {
     try {
-      const credentials = await Keychain.getInternetCredentials('user_profile', {
+      const credentials = await Keychain.getInternetCredentials("user_profile", {
         service: this.SERVICE_NAME,
       })
-      
+
       if (credentials && credentials.password) {
         return JSON.parse(credentials.password)
       }
       return null
     } catch (error) {
-      console.error('Failed to retrieve user profile:', error)
+      console.error("Failed to retrieve user profile:", error)
       return null
     }
   }
@@ -154,12 +144,12 @@ export class SecureStorage {
    */
   static async removeAuthTokens(): Promise<boolean> {
     try {
-      await Keychain.resetInternetCredentials('auth_tokens', {
+      await Keychain.resetInternetCredentials("auth_tokens", {
         service: this.SERVICE_NAME,
       })
       return true
     } catch (error) {
-      console.error('Failed to remove auth tokens:', error)
+      console.error("Failed to remove auth tokens:", error)
       return false
     }
   }
@@ -169,12 +159,12 @@ export class SecureStorage {
    */
   static async removeUserCredentials(): Promise<boolean> {
     try {
-      await Keychain.resetInternetCredentials('user_credentials', {
+      await Keychain.resetInternetCredentials("user_credentials", {
         service: this.SERVICE_NAME,
       })
       return true
     } catch (error) {
-      console.error('Failed to remove user credentials:', error)
+      console.error("Failed to remove user credentials:", error)
       return false
     }
   }
@@ -184,12 +174,12 @@ export class SecureStorage {
    */
   static async removeUserProfile(): Promise<boolean> {
     try {
-      await Keychain.resetInternetCredentials('user_profile', {
+      await Keychain.resetInternetCredentials("user_profile", {
         service: this.SERVICE_NAME,
       })
       return true
     } catch (error) {
-      console.error('Failed to remove user profile:', error)
+      console.error("Failed to remove user profile:", error)
       return false
     }
   }
@@ -206,7 +196,7 @@ export class SecureStorage {
       ])
       return true
     } catch (error) {
-      console.error('Failed to clear secure storage:', error)
+      console.error("Failed to clear secure storage:", error)
       return false
     }
   }
@@ -219,7 +209,7 @@ export class SecureStorage {
       const biometryType = await Keychain.getSupportedBiometryType()
       return biometryType !== null
     } catch (error) {
-      console.error('Failed to check biometric availability:', error)
+      console.error("Failed to check biometric availability:", error)
       return false
     }
   }

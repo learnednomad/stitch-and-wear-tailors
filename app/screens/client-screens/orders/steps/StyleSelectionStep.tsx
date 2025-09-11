@@ -34,7 +34,7 @@ interface StyleVariation {
 
 export const StyleSelectionStep: FC = observer(() => {
   const { orderStore } = useStores()
-  
+
   const [selectedGarmentType, setSelectedGarmentType] = useState<NigerianGarmentType | "">("")
   const [selectedVariation, setSelectedVariation] = useState<string>("")
   const [fitPreference, setFitPreference] = useState<"slim" | "regular" | "loose">("regular")
@@ -48,7 +48,8 @@ export const StyleSelectionStep: FC = observer(() => {
       garmentType: "agbada",
       name: nigerianBusinessConfig.traditionalGarments.agbada.name.en,
       description: nigerianBusinessConfig.traditionalGarments.agbada.description.en,
-      culturalSignificance: nigerianBusinessConfig.traditionalGarments.agbada.culturalSignificance.en,
+      culturalSignificance:
+        nigerianBusinessConfig.traditionalGarments.agbada.culturalSignificance.en,
       complexity: nigerianBusinessConfig.traditionalGarments.agbada.complexityLevel,
       estimatedDays: nigerianBusinessConfig.traditionalGarments.agbada.estimatedDays,
       basePrice: nigerianBusinessConfig.traditionalGarments.agbada.basePrice,
@@ -57,7 +58,12 @@ export const StyleSelectionStep: FC = observer(() => {
           id: "agbada-classic",
           name: "Classic Agbada",
           description: "Traditional flowing design with wide sleeves",
-          features: ["Full flowing cut", "Wide sleeves", "Round neckline", "Traditional embroidery"],
+          features: [
+            "Full flowing cut",
+            "Wide sleeves",
+            "Round neckline",
+            "Traditional embroidery",
+          ],
           priceAdjustment: 0,
         },
         {
@@ -71,7 +77,12 @@ export const StyleSelectionStep: FC = observer(() => {
           id: "agbada-premium",
           name: "Premium Ceremonial",
           description: "Luxurious version for special occasions",
-          features: ["Heavy embroidery", "Gold thread work", "Intricate patterns", "Premium finishing"],
+          features: [
+            "Heavy embroidery",
+            "Gold thread work",
+            "Intricate patterns",
+            "Premium finishing",
+          ],
           priceAdjustment: 25000,
         },
       ],
@@ -80,7 +91,8 @@ export const StyleSelectionStep: FC = observer(() => {
       garmentType: "kaftan",
       name: nigerianBusinessConfig.traditionalGarments.kaftan.name.en,
       description: nigerianBusinessConfig.traditionalGarments.kaftan.description.en,
-      culturalSignificance: nigerianBusinessConfig.traditionalGarments.kaftan.culturalSignificance.en,
+      culturalSignificance:
+        nigerianBusinessConfig.traditionalGarments.kaftan.culturalSignificance.en,
       complexity: nigerianBusinessConfig.traditionalGarments.kaftan.complexityLevel,
       estimatedDays: nigerianBusinessConfig.traditionalGarments.kaftan.estimatedDays,
       basePrice: nigerianBusinessConfig.traditionalGarments.kaftan.basePrice,
@@ -103,7 +115,12 @@ export const StyleSelectionStep: FC = observer(() => {
           id: "kaftan-luxury",
           name: "Luxury Kaftan",
           description: "High-end version with premium details",
-          features: ["Silk lining", "Hand-stitched details", "Custom embroidery", "Premium buttons"],
+          features: [
+            "Silk lining",
+            "Hand-stitched details",
+            "Custom embroidery",
+            "Premium buttons",
+          ],
           priceAdjustment: 10000,
         },
       ],
@@ -121,7 +138,12 @@ export const StyleSelectionStep: FC = observer(() => {
           id: "isi-agu-traditional",
           name: "Traditional Isi Agu",
           description: "Classic lion head patterns",
-          features: ["Lion head motifs", "Red color dominance", "Traditional cut", "Cultural authenticity"],
+          features: [
+            "Lion head motifs",
+            "Red color dominance",
+            "Traditional cut",
+            "Cultural authenticity",
+          ],
           priceAdjustment: 0,
         },
         {
@@ -146,7 +168,12 @@ export const StyleSelectionStep: FC = observer(() => {
           id: "babban-riga-classic",
           name: "Classic Babban Riga",
           description: "Traditional white flowing design",
-          features: ["Full length", "Wide sleeves", "Traditional embroidery", "White or cream color"],
+          features: [
+            "Full length",
+            "Wide sleeves",
+            "Traditional embroidery",
+            "White or cream color",
+          ],
           priceAdjustment: 0,
         },
         {
@@ -228,8 +255,8 @@ export const StyleSelectionStep: FC = observer(() => {
     }
   }, [])
 
-  const selectedStyle = styleOptions.find(s => s.garmentType === selectedGarmentType)
-  const selectedVariationData = selectedStyle?.variations.find(v => v.id === selectedVariation)
+  const selectedStyle = styleOptions.find((s) => s.garmentType === selectedGarmentType)
+  const selectedVariationData = selectedStyle?.variations.find((v) => v.id === selectedVariation)
 
   const validateSelection = () => {
     const newErrors: Record<string, string> = {}
@@ -260,7 +287,7 @@ export const StyleSelectionStep: FC = observer(() => {
       orderStore.setOrderStyleConfig(styleConfig)
       Alert.alert(
         "Style Selected",
-        `${selectedStyle.name} - ${selectedVariationData?.name} has been selected.`
+        `${selectedStyle.name} - ${selectedVariationData?.name} has been selected.`,
       )
     }
   }
@@ -268,14 +295,11 @@ export const StyleSelectionStep: FC = observer(() => {
   const renderStyleCard = (style: StyleOption) => (
     <TouchableOpacity
       key={style.garmentType}
-      style={[
-        $styleCard,
-        selectedGarmentType === style.garmentType && $selectedStyleCard
-      ]}
+      style={[$styleCard, selectedGarmentType === style.garmentType && $selectedStyleCard]}
       onPress={() => {
         setSelectedGarmentType(style.garmentType)
         setSelectedVariation("") // Reset variation when style changes
-        setErrors(prev => ({ ...prev, garmentType: "", variation: "" }))
+        setErrors((prev) => ({ ...prev, garmentType: "", variation: "" }))
       }}
     >
       <View style={$styleHeader}>
@@ -288,7 +312,7 @@ export const StyleSelectionStep: FC = observer(() => {
       </View>
 
       <Text style={$styleDescription}>{style.description}</Text>
-      
+
       <View style={$culturalInfo}>
         <Icon icon="star" size={16} color={colors.palette.tailorGold} />
         <Text style={$culturalText}>{style.culturalSignificance}</Text>
@@ -310,13 +334,10 @@ export const StyleSelectionStep: FC = observer(() => {
   const renderVariationCard = (variation: StyleVariation) => (
     <TouchableOpacity
       key={variation.id}
-      style={[
-        $variationCard,
-        selectedVariation === variation.id && $selectedVariationCard
-      ]}
+      style={[$variationCard, selectedVariation === variation.id && $selectedVariationCard]}
       onPress={() => {
         setSelectedVariation(variation.id)
-        setErrors(prev => ({ ...prev, variation: "" }))
+        setErrors((prev) => ({ ...prev, variation: "" }))
       }}
     >
       <View style={$variationHeader}>
@@ -342,9 +363,7 @@ export const StyleSelectionStep: FC = observer(() => {
   return (
     <ScrollView style={$container} showsVerticalScrollIndicator={false}>
       <View style={$content}>
-        <Text style={$title}>
-          {orderStore.getTranslation("styleSelection", "en")}
-        </Text>
+        <Text style={$title}>{orderStore.getTranslation("styleSelection", "en")}</Text>
         <Text style={$subtitle}>
           Choose the perfect style that reflects your personality and cultural heritage
         </Text>
@@ -352,9 +371,7 @@ export const StyleSelectionStep: FC = observer(() => {
         {/* Garment Type Selection */}
         <View style={$section}>
           <Text style={$sectionTitle}>Select Garment Type</Text>
-          {errors.garmentType && (
-            <Text style={$errorText}>{errors.garmentType}</Text>
-          )}
+          {errors.garmentType && <Text style={$errorText}>{errors.garmentType}</Text>}
           {styleOptions.map(renderStyleCard)}
         </View>
 
@@ -362,9 +379,7 @@ export const StyleSelectionStep: FC = observer(() => {
         {selectedStyle && (
           <View style={$section}>
             <Text style={$sectionTitle}>Choose Style Variation</Text>
-            {errors.variation && (
-              <Text style={$errorText}>{errors.variation}</Text>
-            )}
+            {errors.variation && <Text style={$errorText}>{errors.variation}</Text>}
             {selectedStyle.variations.map(renderVariationCard)}
           </View>
         )}
@@ -375,20 +390,29 @@ export const StyleSelectionStep: FC = observer(() => {
             <Text style={$sectionTitle}>Fit Preference</Text>
             <View style={$fitOptions}>
               {[
-                { value: "slim" as const, label: "Slim Fit", description: "Close-fitting silhouette" },
-                { value: "regular" as const, label: "Regular Fit", description: "Comfortable standard fit" },
-                { value: "loose" as const, label: "Loose Fit", description: "Relaxed comfortable wear" },
+                {
+                  value: "slim" as const,
+                  label: "Slim Fit",
+                  description: "Close-fitting silhouette",
+                },
+                {
+                  value: "regular" as const,
+                  label: "Regular Fit",
+                  description: "Comfortable standard fit",
+                },
+                {
+                  value: "loose" as const,
+                  label: "Loose Fit",
+                  description: "Relaxed comfortable wear",
+                },
               ].map((fit) => (
                 <Button
                   key={fit.value}
                   text={fit.label}
-                  style={[
-                    $fitButton,
-                    fitPreference === fit.value && $selectedFitButton
-                  ]}
+                  style={[$fitButton, fitPreference === fit.value && $selectedFitButton]}
                   textStyle={[
                     $fitButtonText,
-                    fitPreference === fit.value && $selectedFitButtonText
+                    fitPreference === fit.value && $selectedFitButtonText,
                   ]}
                   onPress={() => setFitPreference(fit.value)}
                 />
@@ -412,18 +436,19 @@ export const StyleSelectionStep: FC = observer(() => {
         )}
 
         {/* Cultural Specifications */}
-        {selectedGarmentType && ["agbada", "isi_agu", "babban_riga"].includes(selectedGarmentType) && (
-          <View style={$section}>
-            <TextField
-              label="Cultural Specifications (Optional)"
-              placeholder="Any traditional elements, regional variations, or cultural details to include..."
-              value={culturalSpecifications}
-              onChangeText={setCulturalSpecifications}
-              multiline
-              numberOfLines={3}
-            />
-          </View>
-        )}
+        {selectedGarmentType &&
+          ["agbada", "isi_agu", "babban_riga"].includes(selectedGarmentType) && (
+            <View style={$section}>
+              <TextField
+                label="Cultural Specifications (Optional)"
+                placeholder="Any traditional elements, regional variations, or cultural details to include..."
+                value={culturalSpecifications}
+                onChangeText={setCulturalSpecifications}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+          )}
 
         {/* Style Summary */}
         {selectedStyle && selectedVariationData && (
@@ -432,10 +457,8 @@ export const StyleSelectionStep: FC = observer(() => {
             <View style={$summaryCard}>
               <Text style={$summaryLabel}>{selectedStyle.name}</Text>
               <Text style={$summaryValue}>{selectedVariationData.name}</Text>
-              <Text style={$summaryDescription}>
-                {selectedVariationData.description}
-              </Text>
-              
+              <Text style={$summaryDescription}>{selectedVariationData.description}</Text>
+
               <View style={$summaryPricing}>
                 <View style={$priceRow}>
                   <Text style={$priceLabel}>Base Price:</Text>
@@ -444,13 +467,18 @@ export const StyleSelectionStep: FC = observer(() => {
                 {selectedVariationData.priceAdjustment > 0 && (
                   <View style={$priceRow}>
                     <Text style={$priceLabel}>Style Premium:</Text>
-                    <Text style={$priceValue}>₦{selectedVariationData.priceAdjustment.toLocaleString()}</Text>
+                    <Text style={$priceValue}>
+                      ₦{selectedVariationData.priceAdjustment.toLocaleString()}
+                    </Text>
                   </View>
                 )}
                 <View style={[$priceRow, $totalRow]}>
                   <Text style={$totalLabel}>Style Total:</Text>
                   <Text style={$totalValue}>
-                    ₦{(selectedStyle.basePrice + selectedVariationData.priceAdjustment).toLocaleString()}
+                    ₦
+                    {(
+                      selectedStyle.basePrice + selectedVariationData.priceAdjustment
+                    ).toLocaleString()}
                   </Text>
                 </View>
               </View>

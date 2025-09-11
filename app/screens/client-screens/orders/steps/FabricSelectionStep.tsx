@@ -4,7 +4,15 @@
  */
 
 import React, { FC, useState, useEffect } from "react"
-import { View, ScrollView, ViewStyle, TextStyle, TouchableOpacity, FlatList, Alert } from "react-native"
+import {
+  View,
+  ScrollView,
+  ViewStyle,
+  TextStyle,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+} from "react-native"
 import { observer } from "mobx-react-lite"
 import { Text, TextField, Button, Icon, AutoImage } from "app/components"
 import { colors, spacing } from "app/theme"
@@ -27,7 +35,7 @@ interface FabricOption {
 
 export const FabricSelectionStep: FC = observer(() => {
   const { orderStore } = useStores()
-  
+
   const [selectedFabricId, setSelectedFabricId] = useState<string>("")
   const [quantity, setQuantity] = useState<string>("3")
   const [searchQuery, setSearchQuery] = useState<string>("")
@@ -115,12 +123,30 @@ export const FabricSelectionStep: FC = observer(() => {
 
   const categories = [
     { value: "all" as const, label: "All Fabrics" },
-    { value: "aso_oke" as FabricType, label: orderStore.getTranslation("fabricTypes", "aso_oke") || "Aso Oke" },
-    { value: "adire" as FabricType, label: orderStore.getTranslation("fabricTypes", "adire") || "Adire" },
-    { value: "ankara" as FabricType, label: orderStore.getTranslation("fabricTypes", "ankara") || "Ankara" },
-    { value: "lace" as FabricType, label: orderStore.getTranslation("fabricTypes", "lace") || "Lace" },
-    { value: "cotton" as FabricType, label: orderStore.getTranslation("fabricTypes", "cotton") || "Cotton" },
-    { value: "silk" as FabricType, label: orderStore.getTranslation("fabricTypes", "silk") || "Silk" },
+    {
+      value: "aso_oke" as FabricType,
+      label: orderStore.getTranslation("fabricTypes", "aso_oke") || "Aso Oke",
+    },
+    {
+      value: "adire" as FabricType,
+      label: orderStore.getTranslation("fabricTypes", "adire") || "Adire",
+    },
+    {
+      value: "ankara" as FabricType,
+      label: orderStore.getTranslation("fabricTypes", "ankara") || "Ankara",
+    },
+    {
+      value: "lace" as FabricType,
+      label: orderStore.getTranslation("fabricTypes", "lace") || "Lace",
+    },
+    {
+      value: "cotton" as FabricType,
+      label: orderStore.getTranslation("fabricTypes", "cotton") || "Cotton",
+    },
+    {
+      value: "silk" as FabricType,
+      label: orderStore.getTranslation("fabricTypes", "silk") || "Silk",
+    },
   ]
 
   useEffect(() => {
@@ -128,7 +154,9 @@ export const FabricSelectionStep: FC = observer(() => {
     if (orderStore.orderCreationData?.fabricSelection) {
       const existing = orderStore.orderCreationData.fabricSelection
       // Find matching fabric
-      const fabric = fabricOptions.find(f => f.type === existing.type && f.color === existing.color)
+      const fabric = fabricOptions.find(
+        (f) => f.type === existing.type && f.color === existing.color,
+      )
       if (fabric) {
         setSelectedFabricId(fabric.id)
         setQuantity(existing.quantity.toString())
@@ -136,15 +164,16 @@ export const FabricSelectionStep: FC = observer(() => {
     }
   }, [])
 
-  const filteredFabrics = fabricOptions.filter(fabric => {
+  const filteredFabrics = fabricOptions.filter((fabric) => {
     const matchesCategory = selectedCategory === "all" || fabric.type === selectedCategory
-    const matchesSearch = fabric.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          fabric.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          fabric.color.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch =
+      fabric.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fabric.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fabric.color.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesCategory && matchesSearch
   })
 
-  const selectedFabric = fabricOptions.find(f => f.id === selectedFabricId)
+  const selectedFabric = fabricOptions.find((f) => f.id === selectedFabricId)
   const totalPrice = selectedFabric ? selectedFabric.unitPrice * Number(quantity) : 0
 
   const validateSelection = () => {
@@ -177,13 +206,13 @@ export const FabricSelectionStep: FC = observer(() => {
         totalPrice,
         supplier: selectedFabric.supplier,
         inStock: selectedFabric.inStock,
-        location: orderStore.orderCreationData?.customerInfo?.city || "lagos" as NigerianCity,
+        location: orderStore.orderCreationData?.customerInfo?.city || ("lagos" as NigerianCity),
       }
 
       orderStore.setOrderFabricSelection(fabricSelection)
       Alert.alert(
         "Fabric Selected",
-        `${selectedFabric.name} (${quantity}m) has been added to your order.`
+        `${selectedFabric.name} (${quantity}m) has been added to your order.`,
       )
     }
   }
@@ -193,12 +222,12 @@ export const FabricSelectionStep: FC = observer(() => {
       style={[
         $fabricCard,
         selectedFabricId === item.id && $selectedFabricCard,
-        !item.inStock && $outOfStockCard
+        !item.inStock && $outOfStockCard,
       ]}
       onPress={() => {
         if (item.inStock) {
           setSelectedFabricId(item.id)
-          setErrors(prev => ({ ...prev, fabric: "" }))
+          setErrors((prev) => ({ ...prev, fabric: "" }))
         }
       }}
       disabled={!item.inStock}
@@ -224,7 +253,7 @@ export const FabricSelectionStep: FC = observer(() => {
         <Text style={$fabricDescription} numberOfLines={2}>
           {item.description}
         </Text>
-        
+
         <View style={$fabricDetails}>
           <Text style={$fabricColor}>{item.color}</Text>
           {item.pattern && <Text style={$fabricPattern}>{item.pattern}</Text>}
@@ -266,12 +295,8 @@ export const FabricSelectionStep: FC = observer(() => {
   return (
     <ScrollView style={$container} showsVerticalScrollIndicator={false}>
       <View style={$content}>
-        <Text style={$title}>
-          {orderStore.getTranslation("fabricSelection", "en")}
-        </Text>
-        <Text style={$subtitle}>
-          Choose the perfect fabric for your garment
-        </Text>
+        <Text style={$title}>{orderStore.getTranslation("fabricSelection", "en")}</Text>
+        <Text style={$subtitle}>Choose the perfect fabric for your garment</Text>
 
         {/* Search and Filter */}
         <View style={$searchContainer}>
@@ -279,9 +304,7 @@ export const FabricSelectionStep: FC = observer(() => {
             placeholder="Search fabrics..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            LeftAccessory={() => (
-              <Icon icon="search" size={20} color={colors.palette.threadBlue} />
-            )}
+            LeftAccessory={() => <Icon icon="search" size={20} color={colors.palette.threadBlue} />}
           />
         </View>
 
@@ -295,11 +318,11 @@ export const FabricSelectionStep: FC = observer(() => {
                   text={category.label}
                   style={[
                     $categoryButton,
-                    selectedCategory === category.value && $selectedCategoryButton
+                    selectedCategory === category.value && $selectedCategoryButton,
                   ]}
                   textStyle={[
                     $categoryButtonText,
-                    selectedCategory === category.value && $selectedCategoryButtonText
+                    selectedCategory === category.value && $selectedCategoryButtonText,
                   ]}
                   onPress={() => setSelectedCategory(category.value)}
                 />
@@ -309,10 +332,8 @@ export const FabricSelectionStep: FC = observer(() => {
         </View>
 
         {/* Fabric Grid */}
-        {errors.fabric && (
-          <Text style={$errorText}>{errors.fabric}</Text>
-        )}
-        
+        {errors.fabric && <Text style={$errorText}>{errors.fabric}</Text>}
+
         <FlatList
           data={filteredFabrics}
           renderItem={renderFabricCard}
@@ -342,7 +363,7 @@ export const FabricSelectionStep: FC = observer(() => {
                 onChangeText={(text) => {
                   setQuantity(text)
                   if (errors.quantity) {
-                    setErrors(prev => ({ ...prev, quantity: "" }))
+                    setErrors((prev) => ({ ...prev, quantity: "" }))
                   }
                 }}
                 keyboardType="numeric"

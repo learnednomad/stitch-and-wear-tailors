@@ -14,7 +14,7 @@ import {
 import { Order, OrderStatus, OrderPriority, OrderItem } from "../types"
 import { validateOrder } from "../schemas"
 import { storage } from "../../utils/storage"
-import { 
+import {
   NigerianGarmentType,
   NigerianCity,
   SupportedLanguage,
@@ -28,9 +28,16 @@ import {
   StyleConfig,
   PricingBreakdown,
   OrderStage,
-  OrderProgress as NigerianOrderProgress
+  OrderProgress as NigerianOrderProgress,
 } from "../../types/orders"
 import { orderTranslations, nigerianBusinessConfig } from "../../i18n/nigerian-languages"
+import {
+  appwriteClient,
+  appwriteDatabases,
+  DATABASE_ID,
+  COLLECTIONS,
+} from "../../services/appwrite"
+import { Query, RealtimeResponseEvent, Models } from "appwrite"
 
 /**
  * MST model for Nigerian garment order items
@@ -38,10 +45,27 @@ import { orderTranslations, nigerianBusinessConfig } from "../../i18n/nigerian-l
 const NigerianOrderItemModel = types.model("NigerianOrderItem", {
   id: types.string,
   garmentType: types.enumeration("NigerianGarmentType", [
-    "agbada", "kaftan", "isi_agu", "babban_riga", "ankara_dress", "senator", "traditional", "modern", "custom"
+    "agbada",
+    "kaftan",
+    "isi_agu",
+    "babban_riga",
+    "ankara_dress",
+    "senator",
+    "traditional",
+    "modern",
+    "custom",
   ]),
   fabricType: types.enumeration("FabricType", [
-    "aso_oke", "adire", "ankara", "lace", "cotton", "silk", "linen", "brocade", "george", "custom"
+    "aso_oke",
+    "adire",
+    "ankara",
+    "lace",
+    "cotton",
+    "silk",
+    "linen",
+    "brocade",
+    "george",
+    "custom",
   ]),
   fabricColor: types.string,
   fabricQuantity: types.number, // in meters
@@ -52,7 +76,13 @@ const NigerianOrderItemModel = types.model("NigerianOrderItem", {
   culturalSpecifications: types.maybeNull(types.string),
   notes: types.maybeNull(types.string),
   status: types.enumeration("OrderItemStatus", [
-    "received", "measured", "cutting", "sewing", "finishing", "quality_check", "completed"
+    "received",
+    "measured",
+    "cutting",
+    "sewing",
+    "finishing",
+    "quality_check",
+    "completed",
   ]),
   estimatedDays: types.number,
   actualDays: types.maybeNull(types.number),
@@ -67,10 +97,21 @@ const NigerianOrderItemModel = types.model("NigerianOrderItem", {
  */
 const NigerianOrderProgressModel = types.model("NigerianOrderProgress", {
   currentStage: types.enumeration("OrderStage", [
-    "received", "measured", "cutting", "sewing", "finishing", "quality_check", "completed"
+    "received",
+    "measured",
+    "cutting",
+    "sewing",
+    "finishing",
+    "quality_check",
+    "completed",
   ]),
   status: types.enumeration("OrderStatus", [
-    "pending", "confirmed", "in_progress", "ready", "delivered", "cancelled"
+    "pending",
+    "confirmed",
+    "in_progress",
+    "ready",
+    "delivered",
+    "cancelled",
   ]),
   percentage: types.number,
   estimatedCompletion: types.maybeNull(types.string),
@@ -78,7 +119,13 @@ const NigerianOrderProgressModel = types.model("NigerianOrderProgress", {
   stageProgress: types.array(
     types.model("StageProgress", {
       stage: types.enumeration("OrderStage", [
-        "received", "measured", "cutting", "sewing", "finishing", "quality_check", "completed"
+        "received",
+        "measured",
+        "cutting",
+        "sewing",
+        "finishing",
+        "quality_check",
+        "completed",
       ]),
       status: types.enumeration("StageStatus", ["pending", "in_progress", "completed"]),
       startedAt: types.maybeNull(types.string),
@@ -104,7 +151,15 @@ const NigerianOrderModel = types.model("NigerianOrder", {
   // Nigerian order specifics
   type: types.enumeration("OrderType", ["custom", "alteration", "repair"]),
   garmentType: types.enumeration("NigerianGarmentType", [
-    "agbada", "kaftan", "isi_agu", "babban_riga", "ankara_dress", "senator", "traditional", "modern", "custom"
+    "agbada",
+    "kaftan",
+    "isi_agu",
+    "babban_riga",
+    "ankara_dress",
+    "senator",
+    "traditional",
+    "modern",
+    "custom",
   ]),
   city: types.enumeration("NigerianCity", ["lagos", "abuja", "kano"]),
   customerLanguage: types.enumeration("SupportedLanguage", ["en", "yo", "ha", "ig"]),
@@ -112,7 +167,12 @@ const NigerianOrderModel = types.model("NigerianOrder", {
   // Order details
   items: types.array(NigerianOrderItemModel),
   status: types.enumeration("OrderStatus", [
-    "pending", "confirmed", "in_progress", "ready", "delivered", "cancelled"
+    "pending",
+    "confirmed",
+    "in_progress",
+    "ready",
+    "delivered",
+    "cancelled",
   ]),
   priority: types.enumeration("OrderPriority", ["low", "normal", "high", "urgent"]),
 
@@ -131,7 +191,16 @@ const NigerianOrderModel = types.model("NigerianOrder", {
   // Fabric selection
   fabricSelection: types.model("FabricSelection", {
     type: types.enumeration("FabricType", [
-      "aso_oke", "adire", "ankara", "lace", "cotton", "silk", "linen", "brocade", "george", "custom"
+      "aso_oke",
+      "adire",
+      "ankara",
+      "lace",
+      "cotton",
+      "silk",
+      "linen",
+      "brocade",
+      "george",
+      "custom",
     ]),
     color: types.string,
     pattern: types.maybeNull(types.string),
@@ -167,7 +236,11 @@ const NigerianOrderModel = types.model("NigerianOrder", {
 
   // Payment method
   paymentMethod: types.enumeration("PaymentMethod", [
-    "bank_transfer", "mobile_money", "cash", "card", "pos"
+    "bank_transfer",
+    "mobile_money",
+    "cash",
+    "card",
+    "pos",
   ]),
 
   // Dates
@@ -200,7 +273,10 @@ const NigerianOrderModel = types.model("NigerianOrder", {
 /**
  * Collection model for Nigerian orders
  */
-const NigerianOrdersCollectionModel = createCollectionModel("NigerianOrdersCollection", NigerianOrderModel)
+const NigerianOrdersCollectionModel = createCollectionModel(
+  "NigerianOrdersCollection",
+  NigerianOrderModel,
+)
 
 /**
  * Search model for orders
@@ -208,7 +284,7 @@ const NigerianOrdersCollectionModel = createCollectionModel("NigerianOrdersColle
 const OrderSearchModel = createSearchModel()
 
 /**
- * Main Nigerian OrderStore model
+ * Main Nigerian OrderStore model with Appwrite integration
  */
 export const OrderStoreModel = types
   .model("NigerianOrderStore", {
@@ -220,6 +296,9 @@ export const OrderStoreModel = types
 
     // Draft order for creation
     draftOrder: types.maybeNull(NigerianOrderModel),
+
+    // Realtime subscription reference
+    realtimeUnsubscribe: types.maybeNull(types.frozen()),
 
     // Order creation workflow state
     orderCreationStep: types.optional(types.number, 0), // 0-5: CustomerInfo, Measurements, Fabric, Style, Pricing, Confirmation
@@ -234,39 +313,56 @@ export const OrderStoreModel = types
             address: types.string,
             city: types.enumeration("NigerianCity", ["lagos", "abuja", "kano"]),
             preferredLanguage: types.enumeration("SupportedLanguage", ["en", "yo", "ha", "ig"]),
-          })
+          }),
         ),
         measurementId: types.maybeNull(types.string),
         fabricSelection: types.maybeNull(
           types.model("FabricSelection", {
             type: types.enumeration("FabricType", [
-              "aso_oke", "adire", "ankara", "lace", "cotton", "silk", "linen", "brocade", "george", "custom"
+              "aso_oke",
+              "adire",
+              "ankara",
+              "lace",
+              "cotton",
+              "silk",
+              "linen",
+              "brocade",
+              "george",
+              "custom",
             ]),
             color: types.string,
             quantity: types.number,
             unitPrice: types.number,
             totalPrice: types.number,
-          })
+          }),
         ),
         styleConfig: types.maybeNull(
           types.model("StyleConfig", {
             garmentType: types.enumeration("NigerianGarmentType", [
-              "agbada", "kaftan", "isi_agu", "babban_riga", "ankara_dress", "senator", "traditional", "modern", "custom"
+              "agbada",
+              "kaftan",
+              "isi_agu",
+              "babban_riga",
+              "ankara_dress",
+              "senator",
+              "traditional",
+              "modern",
+              "custom",
             ]),
             fitPreference: types.enumeration("FitPreference", ["slim", "regular", "loose"]),
             designNotes: types.maybeNull(types.string),
             culturalSpecifications: types.maybeNull(types.string),
-          })
+          }),
         ),
         orderType: types.enumeration("OrderType", ["custom", "alteration", "repair"]),
         priority: types.enumeration("OrderPriority", ["low", "normal", "high", "urgent"]),
-      })
+      }),
     ),
 
     // Current language for UI
     currentLanguage: types.optional(
       types.enumeration("SupportedLanguage", ["en", "yo", "ha", "ig"]),
-      "en"
+      "en",
     ),
 
     // Search and filtering
@@ -401,23 +497,56 @@ export const OrderStoreModel = types
       /**
        * Set style configuration for order
        */
-      setOrderStyleConfig(styleConfig: StyleConfig) {
+      setOrderStyleConfig(styleConfig: any) {
         if (!self.orderCreationData) return
         self.orderCreationData.styleConfig = {
           garmentType: styleConfig.garmentType,
           fitPreference: styleConfig.fitPreference,
           designNotes: styleConfig.designNotes,
           culturalSpecifications: styleConfig.culturalSpecifications,
+          embroideryStyle: styleConfig.embroideryStyle,
+          neckStyle: styleConfig.neckStyle,
+          matching: styleConfig.matching,
+          priority: styleConfig.priority,
+          specialInstructions: styleConfig.specialInstructions,
+          estimatedDays: styleConfig.estimatedDays,
+          basePrice: styleConfig.basePrice,
+          fabricRequirement: styleConfig.fabricRequirement,
+        }
+      },
+
+      /**
+       * Set pricing for order
+       */
+      setOrderPricing(pricing: any) {
+        if (!self.orderCreationData) return
+        self.orderCreationData.pricing = {
+          basePrice: pricing.basePrice,
+          fabricCost: pricing.fabricCost,
+          embellishmentCharge: pricing.embellishmentCharge,
+          priorityCharge: pricing.priorityCharge,
+          accessoriesCharge: pricing.accessoriesCharge,
+          subtotal: pricing.subtotal,
+          tax: pricing.tax,
+          totalAmount: pricing.totalAmount,
+          deposit: pricing.deposit,
+          balance: pricing.balance,
+          paymentMethod: pricing.paymentMethod,
+          paymentStatus: pricing.paymentStatus,
         }
       },
 
       /**
        * Calculate Nigerian pricing based on city and garment type
        */
-      calculateNigerianPricing(garmentType: NigerianGarmentType, city: NigerianCity, isRush: boolean = false): PricingBreakdown {
+      calculateNigerianPricing(
+        garmentType: NigerianGarmentType,
+        city: NigerianCity,
+        isRush: boolean = false,
+      ): PricingBreakdown {
         const garmentConfig = nigerianBusinessConfig.traditionalGarments[garmentType]
         const cityConfig = nigerianBusinessConfig.cities[city]
-        
+
         if (!garmentConfig || !cityConfig) {
           throw new Error(`Configuration not found for ${garmentType} in ${city}`)
         }
@@ -455,16 +584,18 @@ export const OrderStoreModel = types
         const garmentType = self.orderCreationData.styleConfig.garmentType
         const city = self.orderCreationData.customerInfo.city
         const isRush = self.orderCreationData.priority === "urgent"
-        
+
         // Calculate pricing
         const pricing = self.calculateNigerianPricing(garmentType, city, isRush)
-        
+
         // Calculate estimated delivery
         const garmentConfig = nigerianBusinessConfig.traditionalGarments[garmentType]
         const estimatedDays = garmentConfig?.estimatedDays || 7
         const rushMultiplier = isRush ? 0.5 : 1
         const actualDays = Math.ceil(estimatedDays * rushMultiplier)
-        const estimatedDeliveryDate = new Date(Date.now() + actualDays * 24 * 60 * 60 * 1000).toISOString()
+        const estimatedDeliveryDate = new Date(
+          Date.now() + actualDays * 24 * 60 * 60 * 1000,
+        ).toISOString()
 
         self.draftOrder = NigerianOrderModel.create({
           id: generateId(),
@@ -546,7 +677,8 @@ export const OrderStoreModel = types
           culturalSpecifications: itemData.culturalSpecifications || null,
           notes: itemData.notes || null,
           status: "received",
-          estimatedDays: nigerianBusinessConfig.traditionalGarments[itemData.garmentType]?.estimatedDays || 7,
+          estimatedDays:
+            nigerianBusinessConfig.traditionalGarments[itemData.garmentType]?.estimatedDays || 7,
           actualDays: null,
           tailorId: null,
           qualityScore: null,
@@ -585,7 +717,13 @@ export const OrderStoreModel = types
       /**
        * Update Nigerian order stage progress
        */
-      updateNigerianOrderStage(orderId: string, stage: OrderStage, tailorId?: string, notes?: string, qualityScore?: number) {
+      updateNigerianOrderStage(
+        orderId: string,
+        stage: OrderStage,
+        tailorId?: string,
+        notes?: string,
+        qualityScore?: number,
+      ) {
         const order = self.orders.findById(orderId)
         if (!order) return
 
@@ -648,10 +786,10 @@ export const OrderStoreModel = types
       getTranslation(key: string, subKey: string): string {
         const translations = (orderTranslations as any)[key]
         if (!translations) return subKey
-        
+
         const translation = translations[subKey]
         if (!translation) return subKey
-        
+
         return translation[self.currentLanguage] || translation.en || subKey
       },
 
@@ -685,7 +823,6 @@ export const OrderStoreModel = types
         }
       },
 
-
       /**
        * Assign tailor to Nigerian order
        */
@@ -715,10 +852,61 @@ export const OrderStoreModel = types
       updateStatistics(stats: Partial<typeof self.statistics>) {
         Object.assign(self.statistics, stats, { lastUpdated: createTimestamp() })
       },
+
+      /**
+       * Initialize Appwrite realtime subscription for orders
+       */
+      initializeRealtime(userId: string) {
+        // Unsubscribe from previous subscription if exists
+        if (self.realtimeUnsubscribe) {
+          ;(self.realtimeUnsubscribe as () => void)()
+        }
+
+        // Subscribe to orders collection changes
+        const channel = `databases.${DATABASE_ID}.collections.${COLLECTIONS.ORDERS}.documents`
+
+        const unsubscribe = appwriteClient.subscribe(
+          channel,
+          (response: RealtimeResponseEvent<any>) => {
+            const payload = response.payload
+
+            // Filter for user's orders or tailor's orders
+            if (payload.userId === userId || payload.tailorId === userId) {
+              if (response.events.includes("databases.*.collections.*.documents.*.create")) {
+                // Add new order
+                self.orders.addItem(NigerianOrderModel.create(payload))
+              } else if (response.events.includes("databases.*.collections.*.documents.*.update")) {
+                // Update existing order
+                const existingOrder = self.orders.findById(payload.$id)
+                if (existingOrder) {
+                  Object.assign(existingOrder, payload)
+                } else {
+                  self.orders.addItem(NigerianOrderModel.create(payload))
+                }
+              } else if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
+                // Remove deleted order
+                self.orders.removeItem(payload.$id)
+              }
+            }
+          },
+        )
+
+        self.realtimeUnsubscribe = unsubscribe
+      },
+
+      /**
+       * Cleanup realtime subscription
+       */
+      cleanupRealtime() {
+        if (self.realtimeUnsubscribe) {
+          ;(self.realtimeUnsubscribe as () => void)()
+          self.realtimeUnsubscribe = null
+        }
+      },
     }
   })
   .actions((self) => {
-    // Async actions
+    // Async actions with Appwrite integration
     const fetchOrders = createAsyncAction(
       self,
       async (
@@ -733,28 +921,56 @@ export const OrderStoreModel = types
           dateTo?: string
         } = {},
       ) => {
-        const queryParams = new URLSearchParams()
-        Object.entries(params).forEach(([key, value]) => {
-          if (value) queryParams.set(key, value.toString())
-        })
+        // Build Appwrite queries
+        const queries: string[] = []
 
-        // TODO: Replace with actual API call when backend is ready
-        // For now, return mock data for development
+        if (params.status) {
+          queries.push(Query.equal("status", params.status))
+        }
+        if (params.clientId) {
+          queries.push(Query.equal("userId", params.clientId))
+        }
+        if (params.tailorId) {
+          queries.push(Query.equal("tailorId", params.tailorId))
+        }
+        if (params.priority) {
+          queries.push(Query.equal("priority", params.priority))
+        }
+        if (params.search) {
+          queries.push(Query.search("customerInfo.firstName", params.search))
+        }
+        if (params.dateFrom) {
+          queries.push(Query.greaterThanEqual("orderDate", params.dateFrom))
+        }
+        if (params.dateTo) {
+          queries.push(Query.lessThanEqual("orderDate", params.dateTo))
+        }
+
+        // Add pagination
+        const limit = 25
+        const offset = ((params.page || 1) - 1) * limit
+        queries.push(Query.limit(limit))
+        queries.push(Query.offset(offset))
+        queries.push(Query.orderDesc("$createdAt"))
+
         try {
-          const response = await fetch(`/api/orders?${queryParams}`, {
-            headers: { "Content-Type": "application/json" },
-          })
+          const response = await appwriteDatabases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.ORDERS,
+            queries,
+          )
 
-          if (!response.ok) {
-            throw new Error("API not available")
-          }
-
-          return response.json()
-        } catch (error) {
-          // Return mock data for development when API is not available
-          console.log("API not available, returning mock data for development")
           return {
-            orders: [], // Empty orders array for now
+            orders: response.documents,
+            hasMore: response.total > offset + limit,
+            total: response.total,
+            page: params.page || 1,
+          }
+        } catch (error) {
+          console.error("Failed to fetch orders from Appwrite:", error)
+          // Return empty result on error
+          return {
+            orders: [],
             hasMore: false,
             total: 0,
             page: 1,
@@ -767,31 +983,19 @@ export const OrderStoreModel = types
     const createNigerianOrder = createAsyncAction(
       self,
       async (orderData: any) => {
-        // TODO: Replace with Appwrite API call when backend is ready
         try {
-          const response = await fetch("/api/nigerian-orders", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(orderData),
-          })
+          // Create order document in Appwrite
+          const response = await appwriteDatabases.createDocument(
+            DATABASE_ID,
+            COLLECTIONS.ORDERS,
+            generateId(),
+            orderData,
+          )
 
-          if (!response.ok) {
-            throw new Error("API not available")
-          }
-
-          return response.json()
+          return response
         } catch (error) {
-          // Return mock success response for development when API is not available
-          console.log("API not available, returning mock success for development")
-          return {
-            success: true,
-            order: {
-              id: `mock-order-${Date.now()}`,
-              ...orderData,
-              status: "pending",
-              createdAt: new Date().toISOString(),
-            },
-          }
+          console.error("Failed to create order in Appwrite:", error)
+          throw error
         }
       },
       { errorPrefix: "Failed to create Nigerian order" },
@@ -800,18 +1004,20 @@ export const OrderStoreModel = types
     const updateNigerianOrder = createAsyncAction(
       self,
       async (orderId: string, updates: any) => {
-        // TODO: Replace with Appwrite API call
-        const response = await fetch(`/api/nigerian-orders/${orderId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updates),
-        })
+        try {
+          // Update order document in Appwrite
+          const response = await appwriteDatabases.updateDocument(
+            DATABASE_ID,
+            COLLECTIONS.ORDERS,
+            orderId,
+            updates,
+          )
 
-        if (!response.ok) {
-          throw new Error("Failed to update Nigerian order")
+          return response
+        } catch (error) {
+          console.error("Failed to update order in Appwrite:", error)
+          throw error
         }
-
-        return response.json()
       },
       { errorPrefix: "Failed to update Nigerian order" },
     )
@@ -819,20 +1025,69 @@ export const OrderStoreModel = types
     const fetchOrderStatistics = createAsyncAction(
       self,
       async (params: { period?: string; clientId?: string; tailorId?: string } = {}) => {
-        const queryParams = new URLSearchParams()
-        Object.entries(params).forEach(([key, value]) => {
-          if (value) queryParams.set(key, value)
-        })
+        try {
+          // Build queries for statistics
+          const queries: string[] = []
 
-        const response = await fetch(`/api/orders/statistics?${queryParams}`, {
-          headers: { "Content-Type": "application/json" },
-        })
+          if (params.clientId) {
+            queries.push(Query.equal("userId", params.clientId))
+          }
+          if (params.tailorId) {
+            queries.push(Query.equal("tailorId", params.tailorId))
+          }
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch statistics")
+          // Fetch all orders for statistics calculation
+          const ordersResponse = await appwriteDatabases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.ORDERS,
+            queries,
+          )
+
+          const orders = ordersResponse.documents
+
+          // Calculate statistics
+          const totalOrders = orders.length
+          const pendingOrders = orders.filter((o: any) => o.status === "pending").length
+          const inProgressOrders = orders.filter((o: any) => o.status === "in_progress").length
+          const completedOrders = orders.filter((o: any) => o.status === "delivered").length
+
+          const revenue = orders
+            .filter((o: any) => o.status === "delivered")
+            .reduce((sum: number, o: any) => sum + (o.pricing?.totalPrice || 0), 0)
+
+          const averageOrderValue = totalOrders > 0 ? revenue / totalOrders : 0
+
+          // Calculate orders by garment type
+          const ordersByGarmentType: Record<string, number> = {}
+          orders.forEach((o: any) => {
+            if (o.garmentType) {
+              ordersByGarmentType[o.garmentType] = (ordersByGarmentType[o.garmentType] || 0) + 1
+            }
+          })
+
+          // Calculate orders by city
+          const ordersByCity: Record<string, number> = {}
+          orders.forEach((o: any) => {
+            if (o.city) {
+              ordersByCity[o.city] = (ordersByCity[o.city] || 0) + 1
+            }
+          })
+
+          return {
+            totalOrders,
+            pendingOrders,
+            inProgressOrders,
+            completedOrders,
+            revenue,
+            averageOrderValue,
+            ordersByGarmentType,
+            ordersByCity,
+            lastUpdated: new Date().toISOString(),
+          }
+        } catch (error) {
+          console.error("Failed to fetch statistics from Appwrite:", error)
+          throw error
         }
-
-        return response.json()
       },
       { errorPrefix: "Failed to load statistics" },
     )
@@ -850,13 +1105,17 @@ export const OrderStoreModel = types
             garmentType: params.garmentType || undefined,
             language: self.currentLanguage,
           }
-          
+
           const result = yield fetchOrders(nigerianParams)
 
           if (reset) {
-            self.orders.setItems(result.orders.map((order: any) => NigerianOrderModel.create(order)))
+            self.orders.setItems(
+              result.orders.map((order: any) => NigerianOrderModel.create(order)),
+            )
           } else {
-            self.orders.addItems(result.orders.map((order: any) => NigerianOrderModel.create(order)))
+            self.orders.addItems(
+              result.orders.map((order: any) => NigerianOrderModel.create(order)),
+            )
           }
 
           self.orders.setHasMore(result.hasMore)
@@ -871,11 +1130,13 @@ export const OrderStoreModel = types
        */
       loadNigerianOrder: flow(function* (orderId: string) {
         try {
-          // TODO: Replace with Appwrite API call
-          const response = yield fetch(`/api/nigerian-orders/${orderId}`)
-          if (!response.ok) throw new Error("Failed to fetch Nigerian order")
+          // Fetch order from Appwrite
+          const order = yield appwriteDatabases.getDocument(
+            DATABASE_ID,
+            COLLECTIONS.ORDERS,
+            orderId,
+          )
 
-          const order = yield response.json()
           self.setCurrentOrder(order)
           return order
         } catch (error) {
@@ -984,12 +1245,60 @@ export const OrderStoreModel = types
        */
       loadUserMeasurements: flow(function* (userId: string) {
         try {
-          // TODO: Replace with Appwrite API call
-          const response = yield fetch(`/api/measurements?userId=${userId}`)
-          if (!response.ok) throw new Error("Failed to fetch measurements")
+          // Fetch measurements from Appwrite
+          const response = yield appwriteDatabases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.MEASUREMENTS,
+            [Query.equal("userId", userId), Query.orderDesc("$createdAt"), Query.limit(10)],
+          )
 
-          const measurements = yield response.json()
-          return measurements
+          return response.documents
+        } catch (error) {
+          self.setError(error.message)
+          throw error
+        }
+      }),
+
+      /**
+       * Delete order from Appwrite
+       */
+      deleteOrder: flow(function* (orderId: string) {
+        try {
+          yield appwriteDatabases.deleteDocument(DATABASE_ID, COLLECTIONS.ORDERS, orderId)
+
+          // Remove from local store
+          self.orders.removeItem(orderId)
+
+          if (self.currentOrder?.id === orderId) {
+            self.currentOrder = null
+          }
+        } catch (error) {
+          self.setError(error.message)
+          throw error
+        }
+      }),
+
+      /**
+       * Create order message
+       */
+      createOrderMessage: flow(function* (orderId: string, message: string, senderId: string) {
+        try {
+          const messageData = {
+            orderId,
+            senderId,
+            message,
+            timestamp: new Date().toISOString(),
+            isRead: false,
+          }
+
+          const response = yield appwriteDatabases.createDocument(
+            DATABASE_ID,
+            COLLECTIONS.MESSAGES,
+            generateId(),
+            messageData,
+          )
+
+          return response
         } catch (error) {
           self.setError(error.message)
           throw error
@@ -998,6 +1307,13 @@ export const OrderStoreModel = types
     }
   })
   .views((self) => ({
+    /**
+     * Get order by ID
+     */
+    getOrderById(orderId: string) {
+      return self.orders.findById(orderId)
+    },
+
     /**
      * Get Nigerian orders by status
      */
@@ -1115,9 +1431,11 @@ export const OrderStoreModel = types
      * Get Nigerian orders requiring attention
      */
     get nigerianOrdersRequiringAttention() {
-      return [...self.urgentNigerianOrders, ...self.overdueNigerianOrders, ...self.ordersReadyForDelivery].filter(
-        (order, index, arr) => arr.findIndex((o) => o.id === order.id) === index,
-      )
+      return [
+        ...self.urgentNigerianOrders,
+        ...self.overdueNigerianOrders,
+        ...self.ordersReadyForDelivery,
+      ].filter((order, index, arr) => arr.findIndex((o) => o.id === order.id) === index)
     },
 
     /**

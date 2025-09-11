@@ -3,19 +3,19 @@ const palette = {
   deepCharcoal: "#2C2E33",
   warmIvory: "#FAF7F2",
   tailorGold: "#D4A574",
-  threadBlue: "#4A6B8C", 
+  threadBlue: "#4A6B8C",
   blushPink: "#E8D5D0",
   sageGreen: "#8B9D83",
-  
+
   // Functional Colors
   alertRed: "#C85450",
   successGreen: "#6B8E6B",
   warningAmber: "#E8B04B",
-  
+
   // Neutral scale (based on brand colors)
   neutral100: "#FFFFFF",
   neutral200: "#FAF7F2", // warmIvory
-  neutral300: "#E8D5D0", // blushPink  
+  neutral300: "#E8D5D0", // blushPink
   neutral400: "#D4A574", // tailorGold
   neutral500: "#8B9D83", // sageGreen
   neutral600: "#4A6B8C", // threadBlue

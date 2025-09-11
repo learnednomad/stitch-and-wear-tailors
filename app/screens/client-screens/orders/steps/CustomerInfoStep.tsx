@@ -13,7 +13,7 @@ import { NigerianCity, SupportedLanguage } from "@/types/orders"
 
 export const CustomerInfoStep: FC = observer(() => {
   const { orderStore, authStore } = useStores()
-  
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -29,7 +29,7 @@ export const CustomerInfoStep: FC = observer(() => {
   useEffect(() => {
     // Pre-fill with user data if available
     if (authStore.user) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         firstName: authStore.user?.firstName || "",
         lastName: authStore.user?.lastName || "",
@@ -81,18 +81,15 @@ export const CustomerInfoStep: FC = observer(() => {
   const handleSave = () => {
     if (validateForm()) {
       orderStore.setOrderCustomerInfo(formData)
-      Alert.alert(
-        "Information Saved",
-        "Customer information has been saved successfully."
-      )
+      Alert.alert("Information Saved", "Customer information has been saved successfully.")
     }
   }
 
   const handleFieldChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }))
+      setErrors((prev) => ({ ...prev, [field]: "" }))
     }
   }
 
@@ -112,12 +109,8 @@ export const CustomerInfoStep: FC = observer(() => {
   return (
     <ScrollView style={$container} showsVerticalScrollIndicator={false}>
       <View style={$content}>
-        <Text style={$title}>
-          {orderStore.getTranslation("customerInfo", "en")}
-        </Text>
-        <Text style={$subtitle}>
-          Please provide your contact information for this order
-        </Text>
+        <Text style={$title}>{orderStore.getTranslation("customerInfo", "en")}</Text>
+        <Text style={$subtitle}>Please provide your contact information for this order</Text>
 
         {/* Name Fields */}
         <View style={$row}>
@@ -184,14 +177,8 @@ export const CustomerInfoStep: FC = observer(() => {
               <Button
                 key={city.value}
                 text={city.label}
-                style={[
-                  $optionButton,
-                  formData.city === city.value && $selectedOption
-                ]}
-                textStyle={[
-                  $optionText,
-                  formData.city === city.value && $selectedOptionText
-                ]}
+                style={[$optionButton, formData.city === city.value && $selectedOption]}
+                textStyle={[$optionText, formData.city === city.value && $selectedOptionText]}
                 onPress={() => handleFieldChange("city", city.value)}
               />
             ))}
@@ -208,11 +195,11 @@ export const CustomerInfoStep: FC = observer(() => {
                 text={lang.label}
                 style={[
                   $optionButton,
-                  formData.preferredLanguage === lang.value && $selectedOption
+                  formData.preferredLanguage === lang.value && $selectedOption,
                 ]}
                 textStyle={[
                   $optionText,
-                  formData.preferredLanguage === lang.value && $selectedOptionText
+                  formData.preferredLanguage === lang.value && $selectedOptionText,
                 ]}
                 onPress={() => {
                   handleFieldChange("preferredLanguage", lang.value)

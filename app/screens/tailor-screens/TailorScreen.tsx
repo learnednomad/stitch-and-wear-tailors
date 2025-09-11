@@ -418,7 +418,9 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
             <Text style={$greetingText} accessibilityLabel={greeting}>
               {greeting}
             </Text>
-            <Text style={$welcomeText}>Welcome back to your atelier - crafting Nigerian excellence</Text>
+            <Text style={$welcomeText}>
+              Welcome back to your atelier - crafting Nigerian excellence
+            </Text>
           </View>
           <TouchableOpacity
             style={$notificationIcon}

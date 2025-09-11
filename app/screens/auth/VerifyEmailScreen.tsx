@@ -64,32 +64,22 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
       const result = await authAdapter.getCurrentUser()
 
       if (result.success && result.data?.emailVerification) {
-        // Update user verification status
-        if (authStore.user) {
-          authStore.setUser({
-            ...authStore.user,
-            emailVerified: true,
-          })
-        }
-
-        Alert.alert("Email Verified!", "Your email has been successfully verified.", [
-          {
-            text: "Continue",
-            onPress: () => {
-              // Navigate based on user role
-              if (authStore.user?.role === "tailor") {
-                navigation.navigate("TailorTab" as any)
-              } else {
-                navigation.navigate("ClientTab" as any)
-              }
-            },
-          },
-        ])
-      } else {
         Alert.alert(
-          "Not Verified Yet",
-          "Please check your email and click the verification link.",
+          "Email Verified!",
+          "Your email has been successfully verified. Please sign in to continue.",
+          [
+            {
+              text: "Sign In",
+              onPress: () => {
+                // Clear any existing auth state and navigate to sign in
+                authStore.clearAuth()
+                navigation.navigate("SignIn" as any)
+              },
+            },
+          ],
         )
+      } else {
+        Alert.alert("Not Verified Yet", "Please check your email and click the verification link.")
       }
     } catch (error: any) {
       Alert.alert("Error", error.message || "Failed to check verification status")
@@ -119,19 +109,13 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
         {/* Header */}
         <View style={$header}>
           <Text preset="heading" text="Verify Your Email" style={$title} />
-          <Text
-            text={`We've sent a verification link to ${userEmail}`}
-            style={$subtitle}
-          />
+          <Text text={`We've sent a verification link to ${userEmail}`} style={$subtitle} />
         </View>
 
         {/* Email Icon */}
         <View style={$iconContainer}>
           <View style={[$emailIcon, { backgroundColor: theme.colors.palette.primary100 }]}>
-            <Text
-              text="📧"
-              style={$emailIconText}
-            />
+            <Text text="📧" style={$emailIconText} />
           </View>
         </View>
 
@@ -158,17 +142,12 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
           style={$resendButton}
         >
           <Text
-            text={
-              canResend
-                ? "Resend verification email"
-                : `Resend in ${countdown} seconds`
-            }
+            text={canResend ? "Resend verification email" : `Resend in ${countdown} seconds`}
             style={[
               $resendText,
               {
-                color: canResend && !isLoading
-                  ? theme.colors.palette.primary600
-                  : theme.colors.textDim,
+                color:
+                  canResend && !isLoading ? theme.colors.palette.primary600 : theme.colors.textDim,
               },
             ]}
           />

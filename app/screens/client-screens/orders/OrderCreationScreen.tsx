@@ -94,8 +94,15 @@ export const OrderCreationScreen: FC<OrderCreationScreenProps> = observer(() => 
 
   const getStepTitle = () => {
     return orderStore.getTranslation(
-      ["customerInfo", "measurements", "fabricSelection", "styleSelection", "pricing", "confirmation"][currentStep] as any,
-      "en"
+      [
+        "customerInfo",
+        "measurements",
+        "fabricSelection",
+        "styleSelection",
+        "pricing",
+        "confirmation",
+      ][currentStep] as any,
+      "en",
     )
   }
 
@@ -108,31 +115,25 @@ export const OrderCreationScreen: FC<OrderCreationScreenProps> = observer(() => 
     >
       {/* Header */}
       <View style={$header}>
-        <Button
-          style={$backButton}
-          onPress={handleBack}
-          accessibilityLabel="Go back"
-        >
+        <Button style={$backButton} onPress={handleBack} accessibilityLabel="Go back">
           <Icon icon="back" size={24} color={colors.palette.deepCharcoal} />
         </Button>
-        
+
         <View style={$headerCenter}>
-          <Text style={$headerTitle}>
-            {orderStore.getTranslation("actions", "create")} Order
-          </Text>
+          <Text style={$headerTitle}>{orderStore.getTranslation("actions", "create")} Order</Text>
           <Text style={$headerSubtitle}>
             Step {currentStep + 1} of {steps.length}: {getStepTitle()}
           </Text>
         </View>
-        
+
         <View style={$headerSpacer} />
       </View>
 
       {/* Progress Indicator */}
       <View style={$progressContainer}>
         <View style={$progressBar}>
-          <View 
-            style={[$progressFill, { width: `${((currentStep + 1) / steps.length) * 100}%` }]} 
+          <View
+            style={[$progressFill, { width: `${((currentStep + 1) / steps.length) * 100}%` }]}
           />
         </View>
         <Text style={$progressText}>
@@ -141,9 +142,7 @@ export const OrderCreationScreen: FC<OrderCreationScreenProps> = observer(() => 
       </View>
 
       {/* Step Content */}
-      <View style={$content}>
-        {CurrentStepComponent && <CurrentStepComponent />}
-      </View>
+      <View style={$content}>{CurrentStepComponent && <CurrentStepComponent />}</View>
 
       {/* Navigation Footer */}
       <View style={[$footer, $bottomContainerInsets]}>
@@ -156,7 +155,7 @@ export const OrderCreationScreen: FC<OrderCreationScreenProps> = observer(() => 
               onPress={handleBack}
             />
           )}
-          
+
           {currentStep < steps.length - 1 ? (
             <Button
               text={orderStore.getTranslation("actions", "next")}

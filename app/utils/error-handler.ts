@@ -18,170 +18,171 @@ export class ErrorHandler {
    */
   private static appwriteErrorMap: Record<string, AuthError> = {
     // Authentication errors
-    '401': {
-      code: 'INVALID_CREDENTIALS',
-      message: 'Invalid credentials',
-      userMessage: 'The email or password you entered is incorrect.',
+    "401": {
+      code: "INVALID_CREDENTIALS",
+      message: "Invalid credentials",
+      userMessage: "The email or password you entered is incorrect.",
       actionable: true,
-      suggestion: 'Please check your email and password and try again.',
-      retryable: true
+      suggestion: "Please check your email and password and try again.",
+      retryable: true,
     },
-    'user_invalid_credentials': {
-      code: 'INVALID_CREDENTIALS',
-      message: 'Invalid credentials',
-      userMessage: 'The email or password you entered is incorrect.',
+    "user_invalid_credentials": {
+      code: "INVALID_CREDENTIALS",
+      message: "Invalid credentials",
+      userMessage: "The email or password you entered is incorrect.",
       actionable: true,
-      suggestion: 'Please check your email and password and try again.',
-      retryable: true
+      suggestion: "Please check your email and password and try again.",
+      retryable: true,
     },
-    'user_email_already_exists': {
-      code: 'EMAIL_EXISTS',
-      message: 'Email already exists',
-      userMessage: 'An account with this email already exists.',
+    "user_email_already_exists": {
+      code: "EMAIL_EXISTS",
+      message: "Email already exists",
+      userMessage: "An account with this email already exists.",
       actionable: true,
-      suggestion: 'Try signing in instead, or use a different email address.',
-      retryable: false
+      suggestion: "Try signing in instead, or use a different email address.",
+      retryable: false,
     },
-    'user_password_mismatch': {
-      code: 'PASSWORD_MISMATCH',
-      message: 'Password mismatch',
-      userMessage: 'The current password you entered is incorrect.',
+    "user_password_mismatch": {
+      code: "PASSWORD_MISMATCH",
+      message: "Password mismatch",
+      userMessage: "The current password you entered is incorrect.",
       actionable: true,
-      suggestion: 'Please enter your current password correctly.',
-      retryable: true
+      suggestion: "Please enter your current password correctly.",
+      retryable: true,
     },
-    'user_invalid_token': {
-      code: 'INVALID_TOKEN',
-      message: 'Invalid token',
-      userMessage: 'Your session has expired.',
+    "user_invalid_token": {
+      code: "INVALID_TOKEN",
+      message: "Invalid token",
+      userMessage: "Your session has expired.",
       actionable: true,
-      suggestion: 'Please sign in again to continue.',
-      retryable: false
+      suggestion: "Please sign in again to continue.",
+      retryable: false,
     },
-    'user_not_found': {
-      code: 'USER_NOT_FOUND',
-      message: 'User not found',
-      userMessage: 'No account found with this email address.',
+    "user_not_found": {
+      code: "USER_NOT_FOUND",
+      message: "User not found",
+      userMessage: "No account found with this email address.",
       actionable: true,
-      suggestion: 'Please check your email or create a new account.',
-      retryable: false
+      suggestion: "Please check your email or create a new account.",
+      retryable: false,
     },
-    'user_blocked': {
-      code: 'USER_BLOCKED',
-      message: 'User blocked',
-      userMessage: 'Your account has been temporarily blocked.',
+    "user_blocked": {
+      code: "USER_BLOCKED",
+      message: "User blocked",
+      userMessage: "Your account has been temporarily blocked.",
       actionable: true,
-      suggestion: 'Please contact support for assistance.',
-      retryable: false
+      suggestion: "Please contact support for assistance.",
+      retryable: false,
     },
-    'user_email_not_whitelisted': {
-      code: 'EMAIL_NOT_WHITELISTED',
-      message: 'Email not whitelisted',
-      userMessage: 'This email domain is not allowed.',
+    "user_email_not_whitelisted": {
+      code: "EMAIL_NOT_WHITELISTED",
+      message: "Email not whitelisted",
+      userMessage: "This email domain is not allowed.",
       actionable: true,
-      suggestion: 'Please use a different email address or contact support.',
-      retryable: false
+      suggestion: "Please use a different email address or contact support.",
+      retryable: false,
     },
-    'user_password_recently_used': {
-      code: 'PASSWORD_RECENTLY_USED',
-      message: 'Password recently used',
-      userMessage: 'You cannot use a recently used password.',
+    "user_password_recently_used": {
+      code: "PASSWORD_RECENTLY_USED",
+      message: "Password recently used",
+      userMessage: "You cannot use a recently used password.",
       actionable: true,
-      suggestion: 'Please choose a different password.',
-      retryable: true
+      suggestion: "Please choose a different password.",
+      retryable: true,
     },
-    'password_personal_data': {
-      code: 'PASSWORD_PERSONAL_DATA',
-      message: 'Password contains personal data',
-      userMessage: 'Your password cannot contain personal information.',
+    "password_personal_data": {
+      code: "PASSWORD_PERSONAL_DATA",
+      message: "Password contains personal data",
+      userMessage: "Your password cannot contain personal information.",
       actionable: true,
-      suggestion: 'Choose a password that doesn\'t include your name, email, or other personal details.',
-      retryable: true
+      suggestion:
+        "Choose a password that doesn't include your name, email, or other personal details.",
+      retryable: true,
     },
-    'password_history': {
-      code: 'PASSWORD_HISTORY',
-      message: 'Password in history',
-      userMessage: 'You cannot reuse a previous password.',
+    "password_history": {
+      code: "PASSWORD_HISTORY",
+      message: "Password in history",
+      userMessage: "You cannot reuse a previous password.",
       actionable: true,
-      suggestion: 'Please choose a new password you haven\'t used before.',
-      retryable: true
+      suggestion: "Please choose a new password you haven't used before.",
+      retryable: true,
     },
-    
+
     // Network errors
-    'network_request_failed': {
-      code: 'NETWORK_ERROR',
-      message: 'Network request failed',
-      userMessage: 'Unable to connect to our servers.',
+    "network_request_failed": {
+      code: "NETWORK_ERROR",
+      message: "Network request failed",
+      userMessage: "Unable to connect to our servers.",
       actionable: true,
-      suggestion: 'Please check your internet connection and try again.',
-      retryable: true
+      suggestion: "Please check your internet connection and try again.",
+      retryable: true,
     },
-    'timeout': {
-      code: 'TIMEOUT',
-      message: 'Request timeout',
-      userMessage: 'The request took too long to complete.',
+    "timeout": {
+      code: "TIMEOUT",
+      message: "Request timeout",
+      userMessage: "The request took too long to complete.",
       actionable: true,
-      suggestion: 'Please check your connection and try again.',
-      retryable: true
+      suggestion: "Please check your connection and try again.",
+      retryable: true,
     },
-    
+
     // Server errors
-    '500': {
-      code: 'SERVER_ERROR',
-      message: 'Internal server error',
-      userMessage: 'Something went wrong on our end.',
+    "500": {
+      code: "SERVER_ERROR",
+      message: "Internal server error",
+      userMessage: "Something went wrong on our end.",
       actionable: false,
-      suggestion: 'Please try again in a few minutes.',
-      retryable: true
+      suggestion: "Please try again in a few minutes.",
+      retryable: true,
     },
-    '503': {
-      code: 'SERVICE_UNAVAILABLE',
-      message: 'Service unavailable',
-      userMessage: 'Our service is temporarily unavailable.',
+    "503": {
+      code: "SERVICE_UNAVAILABLE",
+      message: "Service unavailable",
+      userMessage: "Our service is temporarily unavailable.",
       actionable: false,
-      suggestion: 'Please try again in a few minutes.',
-      retryable: true
+      suggestion: "Please try again in a few minutes.",
+      retryable: true,
     },
-    
+
     // Rate limiting
-    'general_rate_limit_exceeded': {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Rate limit exceeded',
-      userMessage: 'Too many attempts. Please wait before trying again.',
+    "general_rate_limit_exceeded": {
+      code: "RATE_LIMIT_EXCEEDED",
+      message: "Rate limit exceeded",
+      userMessage: "Too many attempts. Please wait before trying again.",
       actionable: true,
-      suggestion: 'Wait a few minutes before your next attempt.',
-      retryable: true
+      suggestion: "Wait a few minutes before your next attempt.",
+      retryable: true,
     },
-    
+
     // Email verification
-    'user_email_not_confirmed': {
-      code: 'EMAIL_NOT_VERIFIED',
-      message: 'Email not verified',
-      userMessage: 'Please verify your email address before signing in.',
+    "user_email_not_confirmed": {
+      code: "EMAIL_NOT_VERIFIED",
+      message: "Email not verified",
+      userMessage: "Please verify your email address before signing in.",
       actionable: true,
-      suggestion: 'Check your email for a verification link.',
-      retryable: false
+      suggestion: "Check your email for a verification link.",
+      retryable: false,
     },
-    
+
     // Two-factor authentication
-    'user_phone_not_verified': {
-      code: 'PHONE_NOT_VERIFIED',
-      message: 'Phone not verified',
-      userMessage: 'Please verify your phone number.',
+    "user_phone_not_verified": {
+      code: "PHONE_NOT_VERIFIED",
+      message: "Phone not verified",
+      userMessage: "Please verify your phone number.",
       actionable: true,
-      suggestion: 'Check your SMS for a verification code.',
-      retryable: false
+      suggestion: "Check your SMS for a verification code.",
+      retryable: false,
     },
-    
+
     // General errors
-    'general_unknown': {
-      code: 'UNKNOWN_ERROR',
-      message: 'Unknown error',
-      userMessage: 'An unexpected error occurred.',
+    "general_unknown": {
+      code: "UNKNOWN_ERROR",
+      message: "Unknown error",
+      userMessage: "An unexpected error occurred.",
       actionable: false,
-      suggestion: 'Please try again or contact support if the problem persists.',
-      retryable: true
-    }
+      suggestion: "Please try again or contact support if the problem persists.",
+      retryable: true,
+    },
   }
 
   /**
@@ -189,7 +190,7 @@ export class ErrorHandler {
    */
   static parseAuthError(error: any): AuthError {
     // Handle string errors
-    if (typeof error === 'string') {
+    if (typeof error === "string") {
       return this.getErrorByMessage(error)
     }
 
@@ -223,7 +224,7 @@ export class ErrorHandler {
     }
 
     // Default unknown error
-    return this.appwriteErrorMap['general_unknown']
+    return this.appwriteErrorMap["general_unknown"]
   }
 
   /**
@@ -233,47 +234,53 @@ export class ErrorHandler {
     const lowerMessage = message.toLowerCase()
 
     // Network-related errors
-    if (lowerMessage.includes('network') || lowerMessage.includes('connection')) {
-      return this.appwriteErrorMap['network_request_failed']
+    if (lowerMessage.includes("network") || lowerMessage.includes("connection")) {
+      return this.appwriteErrorMap["network_request_failed"]
     }
 
     // Authentication-related errors
-    if (lowerMessage.includes('invalid credentials') || lowerMessage.includes('invalid email or password')) {
-      return this.appwriteErrorMap['user_invalid_credentials']
+    if (
+      lowerMessage.includes("invalid credentials") ||
+      lowerMessage.includes("invalid email or password")
+    ) {
+      return this.appwriteErrorMap["user_invalid_credentials"]
     }
 
-    if (lowerMessage.includes('email already exists') || lowerMessage.includes('email taken')) {
-      return this.appwriteErrorMap['user_email_already_exists']
+    if (lowerMessage.includes("email already exists") || lowerMessage.includes("email taken")) {
+      return this.appwriteErrorMap["user_email_already_exists"]
     }
 
-    if (lowerMessage.includes('user not found') || lowerMessage.includes('no user found')) {
-      return this.appwriteErrorMap['user_not_found']
+    if (lowerMessage.includes("user not found") || lowerMessage.includes("no user found")) {
+      return this.appwriteErrorMap["user_not_found"]
     }
 
-    if (lowerMessage.includes('session expired') || lowerMessage.includes('token expired')) {
-      return this.appwriteErrorMap['user_invalid_token']
+    if (lowerMessage.includes("session expired") || lowerMessage.includes("token expired")) {
+      return this.appwriteErrorMap["user_invalid_token"]
     }
 
-    if (lowerMessage.includes('rate limit') || lowerMessage.includes('too many requests')) {
-      return this.appwriteErrorMap['general_rate_limit_exceeded']
+    if (lowerMessage.includes("rate limit") || lowerMessage.includes("too many requests")) {
+      return this.appwriteErrorMap["general_rate_limit_exceeded"]
     }
 
-    if (lowerMessage.includes('timeout')) {
-      return this.appwriteErrorMap['timeout']
+    if (lowerMessage.includes("timeout")) {
+      return this.appwriteErrorMap["timeout"]
     }
 
-    if (lowerMessage.includes('email not verified') || lowerMessage.includes('email not confirmed')) {
-      return this.appwriteErrorMap['user_email_not_confirmed']
+    if (
+      lowerMessage.includes("email not verified") ||
+      lowerMessage.includes("email not confirmed")
+    ) {
+      return this.appwriteErrorMap["user_email_not_confirmed"]
     }
 
     // Default to unknown error
     return {
-      code: 'UNKNOWN_ERROR',
+      code: "UNKNOWN_ERROR",
       message: message,
-      userMessage: 'An unexpected error occurred.',
+      userMessage: "An unexpected error occurred.",
       actionable: false,
-      suggestion: 'Please try again or contact support if the problem persists.',
-      retryable: true
+      suggestion: "Please try again or contact support if the problem persists.",
+      retryable: true,
     }
   }
 
@@ -282,11 +289,11 @@ export class ErrorHandler {
    */
   static formatErrorMessage(error: any, includeActions: boolean = true): string {
     const authError = this.parseAuthError(error)
-    
+
     if (includeActions && authError.suggestion) {
       return `${authError.userMessage} ${authError.suggestion}`
     }
-    
+
     return authError.userMessage
   }
 
@@ -311,34 +318,37 @@ export class ErrorHandler {
    */
   static getErrorCategory(error: any): string {
     const authError = this.parseAuthError(error)
-    
-    if (authError.code.includes('NETWORK') || authError.code.includes('TIMEOUT')) {
-      return 'NETWORK'
+
+    if (authError.code.includes("NETWORK") || authError.code.includes("TIMEOUT")) {
+      return "NETWORK"
     }
-    
-    if (authError.code.includes('CREDENTIALS') || authError.code.includes('PASSWORD')) {
-      return 'AUTHENTICATION'
+
+    if (authError.code.includes("CREDENTIALS") || authError.code.includes("PASSWORD")) {
+      return "AUTHENTICATION"
     }
-    
-    if (authError.code.includes('EMAIL') || authError.code.includes('VERIFICATION')) {
-      return 'VERIFICATION'
+
+    if (authError.code.includes("EMAIL") || authError.code.includes("VERIFICATION")) {
+      return "VERIFICATION"
     }
-    
-    if (authError.code.includes('RATE_LIMIT')) {
-      return 'RATE_LIMITING'
+
+    if (authError.code.includes("RATE_LIMIT")) {
+      return "RATE_LIMITING"
     }
-    
-    if (authError.code.includes('SERVER') || authError.code.includes('SERVICE')) {
-      return 'SERVER'
+
+    if (authError.code.includes("SERVER") || authError.code.includes("SERVICE")) {
+      return "SERVER"
     }
-    
-    return 'UNKNOWN'
+
+    return "UNKNOWN"
   }
 
   /**
    * Create detailed error object for logging
    */
-  static createLogError(error: any, context: Record<string, any> = {}): {
+  static createLogError(
+    error: any,
+    context: Record<string, any> = {},
+  ): {
     code: string
     message: string
     userMessage: string
@@ -348,7 +358,7 @@ export class ErrorHandler {
     timestamp: string
   } {
     const authError = this.parseAuthError(error)
-    
+
     return {
       code: authError.code,
       message: authError.message,
@@ -356,7 +366,7 @@ export class ErrorHandler {
       category: this.getErrorCategory(error),
       retryable: authError.retryable,
       context,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     }
   }
 }

@@ -14,7 +14,7 @@ import { useNavigation } from "@react-navigation/native"
 export const ConfirmationStep: FC = observer(() => {
   const { orderStore, authStore } = useStores()
   const navigation = useNavigation()
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
 
@@ -26,9 +26,7 @@ export const ConfirmationStep: FC = observer(() => {
       Alert.alert(
         "Incomplete Order",
         "Some order information is missing. Please go back and complete all steps.",
-        [
-          { text: "OK", onPress: () => orderStore.orderCreationStep = 0 }
-        ]
+        [{ text: "OK", onPress: () => (orderStore.orderCreationStep = 0) }],
       )
     }
   }, [])
@@ -49,10 +47,10 @@ export const ConfirmationStep: FC = observer(() => {
     try {
       // Create the draft order using OrderStore
       orderStore.createNigerianDraftOrder()
-      
+
       // Submit the order
       const createdOrder = await orderStore.submitNigerianDraftOrder()
-      
+
       Alert.alert(
         "Order Submitted Successfully!",
         `Your order #${createdOrder?.orderNumber} has been created. You will receive a confirmation email shortly.`,
@@ -61,23 +59,22 @@ export const ConfirmationStep: FC = observer(() => {
             text: "View Order",
             onPress: () => {
               navigation.navigate("OrderDetail" as never, { orderId: createdOrder?.id })
-            }
+            },
           },
           {
             text: "Create Another",
             onPress: () => {
               orderStore.clearDraftOrder()
               orderStore.startOrderCreation()
-            }
-          }
-        ]
+            },
+          },
+        ],
       )
-      
     } catch (error) {
       console.error("Failed to submit order:", error)
       Alert.alert(
         "Submission Failed",
-        "There was an error submitting your order. Please try again."
+        "There was an error submitting your order. Please try again.",
       )
     } finally {
       setIsSubmitting(false)
@@ -86,25 +83,30 @@ export const ConfirmationStep: FC = observer(() => {
 
   const getEstimatedDelivery = () => {
     if (!orderData?.styleConfig) return "N/A"
-    
+
     const garmentConfig = orderStore.getGarmentConfig(orderData.styleConfig.garmentType)
     if (!garmentConfig) return "N/A"
-    
+
     const baseDays = garmentConfig.estimatedDays
-    const priorityMultiplier = orderData.priority === "urgent" ? 0.5 : 
-                              orderData.priority === "high" ? 0.7 : 
-                              orderData.priority === "normal" ? 0.85 : 1.0
-    
+    const priorityMultiplier =
+      orderData.priority === "urgent"
+        ? 0.5
+        : orderData.priority === "high"
+          ? 0.7
+          : orderData.priority === "normal"
+            ? 0.85
+            : 1.0
+
     const adjustedDays = Math.ceil(baseDays * priorityMultiplier)
-    
+
     const deliveryDate = new Date()
     deliveryDate.setDate(deliveryDate.getDate() + adjustedDays)
-    
-    return deliveryDate.toLocaleDateString('en-NG', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+
+    return deliveryDate.toLocaleDateString("en-NG", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     })
   }
 
@@ -117,12 +119,12 @@ export const ConfirmationStep: FC = observer(() => {
       const pricing = orderStore.calculateNigerianPricing(
         orderData.styleConfig.garmentType,
         orderData.customerInfo.city,
-        orderData.priority === "urgent"
+        orderData.priority === "urgent",
       )
-      
+
       const cityConfig = orderStore.getCityConfig(orderData.customerInfo.city)
       const deliveryFee = cityConfig.deliveryFee
-      
+
       return pricing.totalPrice + deliveryFee
     } catch {
       return 0
@@ -135,9 +137,7 @@ export const ConfirmationStep: FC = observer(() => {
         <View style={$errorState}>
           <Icon icon="alert-circle" size={48} color={colors.palette.alertRed} />
           <Text style={$errorTitle}>Order Data Missing</Text>
-          <Text style={$errorDescription}>
-            Please go back and complete all order steps.
-          </Text>
+          <Text style={$errorDescription}>Please go back and complete all order steps.</Text>
         </View>
       </View>
     )
@@ -146,17 +146,13 @@ export const ConfirmationStep: FC = observer(() => {
   return (
     <ScrollView style={$container} showsVerticalScrollIndicator={false}>
       <View style={$content}>
-        <Text style={$title}>
-          {orderStore.getTranslation("confirmation", "en")}
-        </Text>
-        <Text style={$subtitle}>
-          Review your order details before final submission
-        </Text>
+        <Text style={$title}>{orderStore.getTranslation("confirmation", "en")}</Text>
+        <Text style={$subtitle}>Review your order details before final submission</Text>
 
         {/* Order Summary */}
         <View style={$summarySection}>
           <Text style={$sectionTitle}>Order Summary</Text>
-          
+
           <View style={$summaryCard}>
             <View style={$summaryHeader}>
               <Text style={$summaryOrderType}>
@@ -164,7 +160,8 @@ export const ConfirmationStep: FC = observer(() => {
               </Text>
               <View style={$priorityBadge}>
                 <Text style={$priorityText}>
-                  {orderData.priority.charAt(0).toUpperCase() + orderData.priority.slice(1)} Priority
+                  {orderData.priority.charAt(0).toUpperCase() + orderData.priority.slice(1)}{" "}
+                  Priority
                 </Text>
               </View>
             </View>
@@ -174,7 +171,7 @@ export const ConfirmationStep: FC = observer(() => {
         {/* Customer Information */}
         <View style={$section}>
           <Text style={$sectionTitle}>Customer Information</Text>
-          
+
           <View style={$infoCard}>
             <View style={$infoRow}>
               <Text style={$infoLabel}>Name:</Text>
@@ -182,25 +179,25 @@ export const ConfirmationStep: FC = observer(() => {
                 {orderData.customerInfo?.firstName} {orderData.customerInfo?.lastName}
               </Text>
             </View>
-            
+
             <View style={$infoRow}>
               <Text style={$infoLabel}>Email:</Text>
               <Text style={$infoValue}>{orderData.customerInfo?.email}</Text>
             </View>
-            
+
             <View style={$infoRow}>
               <Text style={$infoLabel}>Phone:</Text>
               <Text style={$infoValue}>{orderData.customerInfo?.phone}</Text>
             </View>
-            
+
             <View style={$infoRow}>
               <Text style={$infoLabel}>City:</Text>
               <Text style={$infoValue}>
-                {orderData.customerInfo?.city && 
-                 orderStore.getTranslation("cities", orderData.customerInfo.city)}
+                {orderData.customerInfo?.city &&
+                  orderStore.getTranslation("cities", orderData.customerInfo.city)}
               </Text>
             </View>
-            
+
             <View style={$infoRow}>
               <Text style={$infoLabel}>Language:</Text>
               <Text style={$infoValue}>
@@ -216,31 +213,32 @@ export const ConfirmationStep: FC = observer(() => {
         {/* Garment Details */}
         <View style={$section}>
           <Text style={$sectionTitle}>Garment Details</Text>
-          
+
           <View style={$infoCard}>
             <View style={$infoRow}>
               <Text style={$infoLabel}>Style:</Text>
               <Text style={$infoValue}>
-                {orderData.styleConfig?.garmentType && 
-                 orderStore.getTranslation("garments", orderData.styleConfig.garmentType)}
+                {orderData.styleConfig?.garmentType &&
+                  orderStore.getTranslation("garments", orderData.styleConfig.garmentType)}
               </Text>
             </View>
-            
+
             <View style={$infoRow}>
               <Text style={$infoLabel}>Fit:</Text>
               <Text style={$infoValue}>
-                {orderData.styleConfig?.fitPreference?.charAt(0).toUpperCase() + 
-                 orderData.styleConfig?.fitPreference?.slice(1)} Fit
+                {orderData.styleConfig?.fitPreference?.charAt(0).toUpperCase() +
+                  orderData.styleConfig?.fitPreference?.slice(1)}{" "}
+                Fit
               </Text>
             </View>
-            
+
             {orderData.styleConfig?.designNotes && (
               <View style={$infoRow}>
                 <Text style={$infoLabel}>Design Notes:</Text>
                 <Text style={$infoValue}>{orderData.styleConfig.designNotes}</Text>
               </View>
             )}
-            
+
             {orderData.styleConfig?.culturalSpecifications && (
               <View style={$infoRow}>
                 <Text style={$infoLabel}>Cultural Details:</Text>
@@ -253,28 +251,32 @@ export const ConfirmationStep: FC = observer(() => {
         {/* Fabric Details */}
         <View style={$section}>
           <Text style={$sectionTitle}>Fabric Selection</Text>
-          
+
           <View style={$infoCard}>
             <View style={$infoRow}>
               <Text style={$infoLabel}>Type:</Text>
               <Text style={$infoValue}>
-                {orderData.fabricSelection?.type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                {orderData.fabricSelection?.type
+                  ?.replace(/_/g, " ")
+                  .replace(/\b\w/g, (l) => l.toUpperCase())}
               </Text>
             </View>
-            
+
             <View style={$infoRow}>
               <Text style={$infoLabel}>Color:</Text>
               <Text style={$infoValue}>{orderData.fabricSelection?.color}</Text>
             </View>
-            
+
             <View style={$infoRow}>
               <Text style={$infoLabel}>Quantity:</Text>
               <Text style={$infoValue}>{orderData.fabricSelection?.quantity} meters</Text>
             </View>
-            
+
             <View style={$infoRow}>
               <Text style={$infoLabel}>Cost:</Text>
-              <Text style={$infoValue}>₦{orderData.fabricSelection?.totalPrice.toLocaleString()}</Text>
+              <Text style={$infoValue}>
+                ₦{orderData.fabricSelection?.totalPrice.toLocaleString()}
+              </Text>
             </View>
           </View>
         </View>
@@ -282,7 +284,7 @@ export const ConfirmationStep: FC = observer(() => {
         {/* Measurements */}
         <View style={$section}>
           <Text style={$sectionTitle}>Measurements</Text>
-          
+
           <View style={$infoCard}>
             {orderData.measurementId ? (
               <View style={$measurementStatus}>
@@ -305,13 +307,13 @@ export const ConfirmationStep: FC = observer(() => {
         {/* Delivery Information */}
         <View style={$section}>
           <Text style={$sectionTitle}>Delivery Information</Text>
-          
+
           <View style={$infoCard}>
             <View style={$infoRow}>
               <Text style={$infoLabel}>Estimated Delivery:</Text>
               <Text style={$infoValue}>{getEstimatedDelivery()}</Text>
             </View>
-            
+
             <View style={$infoRow}>
               <Text style={$infoLabel}>Address:</Text>
               <Text style={$infoValue}>{orderData.customerInfo?.address}</Text>
@@ -322,22 +324,26 @@ export const ConfirmationStep: FC = observer(() => {
         {/* Pricing Summary */}
         <View style={$section}>
           <Text style={$sectionTitle}>Total Cost</Text>
-          
+
           <View style={$pricingCard}>
             <View style={$totalRow}>
               <Text style={$totalLabel}>Total Amount</Text>
               <Text style={$totalValue}>₦{calculateTotalPrice().toLocaleString()}</Text>
             </View>
-            
+
             <View style={$paymentInfo}>
               <Text style={$paymentTitle}>Payment Schedule</Text>
               <View style={$paymentRow}>
                 <Text style={$paymentLabel}>Deposit (50%)</Text>
-                <Text style={$paymentAmount}>₦{(calculateTotalPrice() * 0.5).toLocaleString()}</Text>
+                <Text style={$paymentAmount}>
+                  ₦{(calculateTotalPrice() * 0.5).toLocaleString()}
+                </Text>
               </View>
               <View style={$paymentRow}>
                 <Text style={$paymentLabel}>Balance (50%)</Text>
-                <Text style={$paymentAmount}>₦{(calculateTotalPrice() * 0.5).toLocaleString()}</Text>
+                <Text style={$paymentAmount}>
+                  ₦{(calculateTotalPrice() * 0.5).toLocaleString()}
+                </Text>
               </View>
             </View>
           </View>
@@ -346,24 +352,20 @@ export const ConfirmationStep: FC = observer(() => {
         {/* Terms and Conditions */}
         <View style={$section}>
           <View style={$termsContainer}>
-            <Button
-              text=""
-              style={$checkbox}
-              onPress={() => setTermsAccepted(!termsAccepted)}
-            >
+            <Button text="" style={$checkbox} onPress={() => setTermsAccepted(!termsAccepted)}>
               <View style={[$checkboxBox, termsAccepted && $checkboxChecked]}>
                 {termsAccepted && (
                   <Icon icon="checkmark" size={16} color={colors.palette.warmIvory} />
                 )}
               </View>
             </Button>
-            
+
             <View style={$termsText}>
               <Text style={$termsTitle}>Terms and Conditions</Text>
               <Text style={$termsDescription}>
-                I agree to the terms and conditions, payment schedule, and 
-                understand that a 50% deposit is required to begin work. 
-                I acknowledge the estimated delivery date and fitting requirements.
+                I agree to the terms and conditions, payment schedule, and understand that a 50%
+                deposit is required to begin work. I acknowledge the estimated delivery date and
+                fitting requirements.
               </Text>
             </View>
           </View>

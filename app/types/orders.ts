@@ -10,24 +10,24 @@ export type SupportedLanguage = "en" | "yo" | "ha" | "ig"
 export type NigerianCity = "lagos" | "abuja" | "kano"
 
 // Traditional Nigerian Garments
-export type NigerianGarmentType = 
-  | "agbada"           // Yoruba traditional flowing robe
-  | "kaftan"           // Common across Nigeria
-  | "isi_agu"          // Igbo traditional shirt
-  | "babban_riga"      // Hausa traditional robe
-  | "ankara_dress"     // Modern Nigerian fashion
-  | "senator"          // Modern Nigerian formal wear
-  | "traditional"      // General traditional wear
-  | "modern"           // Modern designs
-  | "custom"           // Custom designs
+export type NigerianGarmentType =
+  | "agbada" // Yoruba traditional flowing robe
+  | "kaftan" // Common across Nigeria
+  | "isi_agu" // Igbo traditional shirt
+  | "babban_riga" // Hausa traditional robe
+  | "ankara_dress" // Modern Nigerian fashion
+  | "senator" // Modern Nigerian formal wear
+  | "traditional" // General traditional wear
+  | "modern" // Modern designs
+  | "custom" // Custom designs
 
 // Order Types
 export type OrderType = "custom" | "alteration" | "repair"
 
 // Order Status
-export type OrderStatus = 
+export type OrderStatus =
   | "pending"
-  | "confirmed" 
+  | "confirmed"
   | "in_progress"
   | "ready"
   | "delivered"
@@ -37,24 +37,24 @@ export type OrderStatus =
 export type OrderPriority = "low" | "normal" | "high" | "urgent"
 
 // Payment Methods (Nigerian context)
-export type PaymentMethod = 
-  | "bank_transfer"    // Most common in Nigeria
-  | "mobile_money"     // OPay, PalmPay
+export type PaymentMethod =
+  | "bank_transfer" // Most common in Nigeria
+  | "mobile_money" // OPay, PalmPay
   | "cash"
   | "card"
-  | "pos"              // Point of Sale
+  | "pos" // Point of Sale
 
 // Fabric Types (Nigerian context)
 export type FabricType =
-  | "aso_oke"          // Yoruba traditional fabric
-  | "adire"            // Yoruba tie-dye
-  | "ankara"           // Wax print
-  | "lace"             // Popular for events
+  | "aso_oke" // Yoruba traditional fabric
+  | "adire" // Yoruba tie-dye
+  | "ankara" // Wax print
+  | "lace" // Popular for events
   | "cotton"
   | "silk"
   | "linen"
   | "brocade"
-  | "george"           // Wrapper fabric
+  | "george" // Wrapper fabric
   | "custom"
 
 // Measurement Types
@@ -158,7 +158,7 @@ export interface OrderProgress {
   notes?: string
 }
 
-export type OrderStage = 
+export type OrderStage =
   | "received"
   | "measured"
   | "cutting"
@@ -211,15 +211,18 @@ export interface OrderFilters {
 // Multi-language Content
 export interface MultiLanguageContent {
   en: string
-  yo?: string  // Yoruba
-  ha?: string  // Hausa
-  ig?: string  // Igbo
+  yo?: string // Yoruba
+  ha?: string // Hausa
+  ig?: string // Igbo
 }
 
 // Measurement Tutorial Step
 export interface MeasurementTutorialStep {
   id: string
-  measurementType: keyof Pick<MeasurementData, 'chest' | 'waist' | 'length' | 'shoulder' | 'armLength' | 'neck'>
+  measurementType: keyof Pick<
+    MeasurementData,
+    "chest" | "waist" | "length" | "shoulder" | "armLength" | "neck"
+  >
   title: MultiLanguageContent
   instructions: MultiLanguageContent
   visualAid: string // Image/video URL

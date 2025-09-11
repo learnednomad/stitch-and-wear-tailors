@@ -10,7 +10,8 @@ export interface EmailValidationResult {
 }
 
 // Comprehensive email regex pattern (RFC 5322 compliant)
-const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
 
 // Common email providers for suggestions
 const COMMON_PROVIDERS = [
@@ -73,7 +74,7 @@ export function validateEmail(email: string): EmailValidationResult {
   // Basic format validation
   if (!EMAIL_REGEX.test(trimmedEmail)) {
     result.errors.push("Please enter a valid email address")
-    
+
     // Provide specific format hints
     if (!trimmedEmail.includes("@")) {
       result.errors.push("Email must contain @ symbol")
@@ -82,19 +83,19 @@ export function validateEmail(email: string): EmailValidationResult {
     } else if (!trimmedEmail.includes(".")) {
       result.errors.push("Email must contain a domain (e.g., .com)")
     }
-    
+
     return result
   }
 
   // Extract domain for further validation
   const [localPart, domain] = trimmedEmail.split("@")
-  
+
   // Validate local part (before @)
   if (localPart.length === 0) {
     result.errors.push("Email cannot start with @")
     return result
   }
-  
+
   if (localPart.length > 64) {
     result.errors.push("Email address is too long before @")
     return result
@@ -131,7 +132,7 @@ export function validateEmail(email: string): EmailValidationResult {
   // Advanced domain validation
   const domainParts = domain.split(".")
   const tld = domainParts[domainParts.length - 1]
-  
+
   if (tld.length < 2) {
     result.errors.push("Domain extension must be at least 2 characters")
     return result
@@ -180,7 +181,9 @@ function calculateEditDistance(a: string, b: string): number {
   if (a.length === 0) return b.length
   if (b.length === 0) return a.length
 
-  const matrix = Array(a.length + 1).fill(null).map(() => Array(b.length + 1).fill(null))
+  const matrix = Array(a.length + 1)
+    .fill(null)
+    .map(() => Array(b.length + 1).fill(null))
 
   for (let i = 0; i <= a.length; i++) matrix[i][0] = i
   for (let j = 0; j <= b.length; j++) matrix[0][j] = j
@@ -189,9 +192,9 @@ function calculateEditDistance(a: string, b: string): number {
     for (let j = 1; j <= b.length; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1
       matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,      // deletion
-        matrix[i][j - 1] + 1,      // insertion
-        matrix[i - 1][j - 1] + cost // substitution
+        matrix[i - 1][j] + 1, // deletion
+        matrix[i][j - 1] + 1, // insertion
+        matrix[i - 1][j - 1] + cost, // substitution
       )
     }
   }

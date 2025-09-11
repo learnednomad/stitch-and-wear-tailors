@@ -79,7 +79,7 @@ export const AuthStoreModel = types
     lastActivity: types.maybeNull(types.string),
     sessionTimeout: types.optional(types.number, 30 * 60 * 1000), // 30 minutes
 
-    // Remember me functionality  
+    // Remember me functionality
     rememberUser: types.optional(types.boolean, false),
   })
   .postProcessSnapshot((snapshot) => {
@@ -134,10 +134,10 @@ export const AuthStoreModel = types
         self.user = AuthUserModel.create(validatedUser)
         self.status = "authenticated"
         updateLastActivity()
-        
+
         // Store user data securely using keychain
         if (self.rememberUser) {
-          SecureStorage.setUserProfile(validatedUser).catch(error => {
+          SecureStorage.setUserProfile(validatedUser).catch((error) => {
             console.warn("Failed to store user data securely:", error)
             // Fallback to regular storage
             storage.set("auth.user", validatedUser)
@@ -153,14 +153,14 @@ export const AuthStoreModel = types
           ...sessionData,
           issuedAt: createTimestamp(),
         })
-        
+
         // Store session data securely using keychain
         if (self.rememberUser) {
           SecureStorage.setAuthTokens({
             accessToken: sessionData.accessToken,
             refreshToken: sessionData.refreshToken,
             expiresAt: sessionData.expiresAt,
-          }).catch(error => {
+          }).catch((error) => {
             console.warn("Failed to store session data securely:", error)
             // Fallback to regular storage
             storage.set("auth.session", {
@@ -180,9 +180,9 @@ export const AuthStoreModel = types
         self.status = "unauthenticated"
         self.error = null
         self.lastActivity = null
-        
+
         // Clear persisted data from both secure and regular storage
-        SecureStorage.clearAll().catch(error => {
+        SecureStorage.clearAll().catch((error) => {
           console.warn("Failed to clear secure storage:", error)
         })
         storage.remove("auth.user")
@@ -220,20 +220,20 @@ export const AuthStoreModel = types
        */
       setRememberUser(remember: boolean) {
         self.rememberUser = remember
-        
+
         // Persist remember preference
         storage.set("auth.rememberUser", remember)
-        
+
         // Store user credentials securely for auto-fill
         if (self.user?.email) {
-          SecureStorage.setUserCredentials(self.user.email, remember).catch(error => {
+          SecureStorage.setUserCredentials(self.user.email, remember).catch((error) => {
             console.warn("Failed to store user credentials securely:", error)
           })
         }
-        
+
         // If remember is disabled, clear persisted data
         if (!remember) {
-          SecureStorage.clearAll().catch(error => {
+          SecureStorage.clearAll().catch((error) => {
             console.warn("Failed to clear secure storage:", error)
           })
           storage.remove("auth.user")
@@ -282,7 +282,7 @@ export const AuthStoreModel = types
           },
           session: {
             accessToken: result.data.session.$id,
-            refreshToken: result.data.session.$id,
+            refreshToken: result.data.session.secret || result.data.session.$id,
             expiresAt: result.data.session.expire,
           },
         }
@@ -335,10 +335,10 @@ export const AuthStoreModel = types
       async () => {
         console.log("🔄 AuthStore.refreshSession: Starting session refresh...")
         const authAdapter = getAppwriteAuthAdapter()
-        
+
         // For Appwrite, we need to get the current session to refresh it
         const result = await authAdapter.getCurrentUser()
-        
+
         if (!result.success) {
           console.error("🔄 AuthStore.refreshSession: Failed to get current user:", result.message)
           throw new Error(result.message || "Session refresh failed")
@@ -350,7 +350,7 @@ export const AuthStoreModel = types
             accessToken: "current", // Appwrite uses "current" for active session
             refreshToken: "current",
             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-          }
+          },
         }
       },
       { errorPrefix: "Session refresh failed", showLoading: false },
@@ -384,8 +384,50 @@ export const AuthStoreModel = types
       signUp: flow(function* (userData: any) {
         try {
           const result = yield signUp(userData)
-          self.setUser(result.user)
-          self.setSession(result.session)
+          // Don't automatically set user and session for unverified accounts
+          // Just return the result so the UI can handle verification flow
+          return result
+        } catch (error) {
+          throw error
+        }
+      }),
+
+      /**
+       * Send email verification
+       */
+      sendEmailVerification: flow(function* () {
+        try {
+          const authAdapter = getAppwriteAuthAdapter()
+          const result = yield authAdapter.sendEmailVerification()
+
+          if (!result.success) {
+            throw new Error(result.message || "Failed to send verification email")
+          }
+
+          return result
+        } catch (error) {
+          throw error
+        }
+      }),
+
+      /**
+       * Verify email with token
+       */
+      verifyEmail: flow(function* (userId: string, secret: string) {
+        try {
+          const authAdapter = getAppwriteAuthAdapter()
+          const result = yield authAdapter.verifyEmail(userId, secret)
+
+          if (!result.success) {
+            throw new Error(result.message || "Email verification failed")
+          }
+
+          // Update user's email verification status
+          if (self.user) {
+            self.user.emailVerified = true
+            self.user.updatedAt = createTimestamp()
+          }
+
           return result
         } catch (error) {
           throw error
@@ -419,37 +461,54 @@ export const AuthStoreModel = types
         console.log("🔍 AuthStore.checkAuthStatus: Starting...")
         self.setStatus("checking")
         self.setLoading(true)
-        
+
         try {
-          console.log("🔍 AuthStore.checkAuthStatus: Restoring from storage...")
-          // First, try to restore from persistent storage
-          yield self.restoreFromStorage()
-          
-          if (!self.session.accessToken) {
-            console.log("🔍 AuthStore.checkAuthStatus: No access token found")
+          // Check if remember me is enabled
+          const rememberUser = storage.getBoolean("auth.rememberUser")
+          console.log("🔍 AuthStore.checkAuthStatus: Remember user:", rememberUser)
+
+          if (!rememberUser) {
+            console.log("🔍 AuthStore.checkAuthStatus: Remember me disabled, showing login")
             self.setStatus("unauthenticated")
+            self.setLoading(false)
             return
           }
 
-          console.log("🔍 AuthStore.checkAuthStatus: Access token found, checking expiration...")
-          // Check if token is expired
-          if (self.session.expiresAt && new Date(self.session.expiresAt) <= new Date()) {
-            console.log("🔍 AuthStore.checkAuthStatus: Token expired, attempting refresh...")
-            try {
-              yield self.refreshSession()
-              console.log("🔍 AuthStore.checkAuthStatus: Token refresh successful")
-            } catch (refreshError) {
-              console.error("🔍 AuthStore.checkAuthStatus: Token refresh failed:", refreshError)
-              // If refresh fails, clear auth and show as unauthenticated
-              self.clearAuth()
-              self.setStatus("unauthenticated")
-              return
-            }
+          console.log("🔍 AuthStore.checkAuthStatus: Restoring from storage...")
+          // Try to restore from persistent storage
+          yield self.restoreFromStorage()
+
+          if (!self.session.accessToken) {
+            console.log("🔍 AuthStore.checkAuthStatus: No access token found")
+            self.setStatus("unauthenticated")
+            self.setLoading(false)
+            return
           }
 
-          console.log("🔍 AuthStore.checkAuthStatus: Authentication successful")
-          self.setStatus("authenticated")
-          self.updateLastActivity()
+          console.log(
+            "🔍 AuthStore.checkAuthStatus: Access token found, verifying with Appwrite...",
+          )
+
+          // Verify the session with Appwrite
+          const authAdapter = getAppwriteAuthAdapter()
+          try {
+            const userResult = yield authAdapter.getCurrentUser()
+
+            if (userResult.success && userResult.data) {
+              console.log("🔍 AuthStore.checkAuthStatus: Session verified successfully")
+              self.setStatus("authenticated")
+              self.updateLastActivity()
+            } else {
+              console.log("🔍 AuthStore.checkAuthStatus: Session invalid, clearing auth")
+              self.clearAuth()
+              self.setStatus("unauthenticated")
+            }
+          } catch (verifyError) {
+            console.log("🔍 AuthStore.checkAuthStatus: Session verification failed:", verifyError)
+            // Session is invalid, clear everything
+            self.clearAuth()
+            self.setStatus("unauthenticated")
+          }
         } catch (error) {
           console.error("🔍 AuthStore.checkAuthStatus: Error occurred:", error)
           self.setStatus("unauthenticated")
@@ -466,62 +525,71 @@ export const AuthStoreModel = types
       restoreFromStorage: flow(function* () {
         try {
           console.log("🔄 AuthStore.restoreFromStorage: Starting...")
-          
+
           // Check if user enabled remember me
           const rememberUser = storage.getBoolean("auth.rememberUser")
           if (!rememberUser) {
             console.log("🔄 AuthStore.restoreFromStorage: Remember me disabled")
             return
           }
-          
+
           self.setRememberUser(true)
-          
+
           // Try to restore from secure storage first
           const [secureTokens, secureProfile, secureCredentials] = yield Promise.all([
             SecureStorage.getAuthTokens(),
             SecureStorage.getUserProfile(),
-            SecureStorage.getUserCredentials()
+            SecureStorage.getUserCredentials(),
           ])
-          
+
           console.log("🔄 AuthStore.restoreFromStorage: Secure storage results:", {
             hasTokens: !!secureTokens,
             hasProfile: !!secureProfile,
-            hasCredentials: !!secureCredentials
+            hasCredentials: !!secureCredentials,
           })
-          
+
           // Restore user data (try secure storage first, fallback to regular storage)
           let userData = secureProfile
           if (!userData) {
             const storedUser = storage.getObject("auth.user")
             if (storedUser) {
               userData = storedUser
-              console.log("🔄 AuthStore.restoreFromStorage: Using fallback user data from regular storage")
+              console.log(
+                "🔄 AuthStore.restoreFromStorage: Using fallback user data from regular storage",
+              )
             }
           }
-          
+
           if (userData) {
             self.setUser(userData as User)
             console.log("🔄 AuthStore.restoreFromStorage: User data restored")
           }
-          
+
           // Restore session data (try secure storage first, fallback to regular storage)
           let sessionData = secureTokens
           if (!sessionData) {
             const storedSession = storage.getObject("auth.session")
             if (storedSession) {
               sessionData = storedSession
-              console.log("🔄 AuthStore.restoreFromStorage: Using fallback session data from regular storage")
+              console.log(
+                "🔄 AuthStore.restoreFromStorage: Using fallback session data from regular storage",
+              )
             }
           }
-          
+
           if (sessionData) {
-            self.setSession(sessionData as { accessToken: string; refreshToken: string; expiresAt: string })
+            self.setSession(
+              sessionData as { accessToken: string; refreshToken: string; expiresAt: string },
+            )
             console.log("🔄 AuthStore.restoreFromStorage: Session data restored")
           }
-          
+
           console.log("🔄 AuthStore.restoreFromStorage: Completed successfully")
         } catch (error) {
-          console.warn("🔄 AuthStore.restoreFromStorage: Failed to restore auth from storage:", error)
+          console.warn(
+            "🔄 AuthStore.restoreFromStorage: Failed to restore auth from storage:",
+            error,
+          )
           // Clear corrupted data
           self.clearAuth()
         }

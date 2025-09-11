@@ -1,5 +1,13 @@
 import React, { FC, useEffect, useState, useCallback } from "react"
-import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle, ImageStyle, RefreshControl } from "react-native"
+import {
+  View,
+  FlatList,
+  TouchableOpacity,
+  ViewStyle,
+  TextStyle,
+  ImageStyle,
+  RefreshControl,
+} from "react-native"
 import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
 import { Button, Screen, Icon, AutoImage, Text, ThemeToggle, IconTypes } from "app/components"
@@ -8,7 +16,6 @@ import { useAppTheme } from "app/utils/useAppTheme"
 import { colors, spacing } from "app/theme"
 import { useStores } from "app/models"
 import { useNavigation } from "@react-navigation/native"
-
 
 interface ClientPortalScreenProps extends AppStackScreenProps<"Home"> {}
 
@@ -31,7 +38,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
     orderStore,
     measurementStore,
     appointmentStore,
-    notificationStore
+    notificationStore,
   } = useStores()
 
   // Get user data from stores
@@ -157,12 +164,15 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
         </View>
       </View>
       <Text style={$orderTitle}>
-        {item.items?.[0]?.garmentType ?
-          (orderStore.getTranslation ? orderStore.getTranslation("garments", item.items[0].garmentType) : item.items[0].garmentType) || item.items[0].garmentType :
-          "Custom Order"
-        }
+        {item.items?.[0]?.garmentType
+          ? (orderStore.getTranslation
+              ? orderStore.getTranslation("garments", item.items[0].garmentType)
+              : item.items[0].garmentType) || item.items[0].garmentType
+          : "Custom Order"}
       </Text>
-      <Text style={$orderText}>Due: {item.estimatedDeliveryDate ? formatDate(item.estimatedDeliveryDate) : "TBD"}</Text>
+      <Text style={$orderText}>
+        Due: {item.estimatedDeliveryDate ? formatDate(item.estimatedDeliveryDate) : "TBD"}
+      </Text>
       <Text style={$orderText}>Total: {formatCurrency(item.pricing?.totalPrice || 0)}</Text>
     </TouchableOpacity>
   )
@@ -265,7 +275,9 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
         <View style={$welcomeCard}>
           <View style={$welcomeCardGradient}>
             <Text style={$welcomeTitle}>Kaabo! Welcome Back!</Text>
-            <Text style={$welcomeSubtitle}>Your luxury garments are being crafted with excellence</Text>
+            <Text style={$welcomeSubtitle}>
+              Your luxury garments are being crafted with excellence
+            </Text>
             <View style={$welcomeMetrics}>
               <View style={$metricItem}>
                 <Text style={$metricNumber}>{orderStats?.inProgressOrders || 0}</Text>
@@ -379,7 +391,9 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
                   <Text style={$measurementValue}>{item.measurements?.length || 0} cm</Text>
                 </View>
               </View>
-              <Text style={$measurementDate}>Measured on {item.createdAt ? formatDate(item.createdAt) : "Unknown"}</Text>
+              <Text style={$measurementDate}>
+                Measured on {item.createdAt ? formatDate(item.createdAt) : "Unknown"}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>

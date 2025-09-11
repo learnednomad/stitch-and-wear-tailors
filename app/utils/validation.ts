@@ -3,7 +3,7 @@
  * Provides validation for authentication and user data
  */
 
-import validator from 'validator'
+import validator from "validator"
 
 export interface ValidationResult {
   isValid: boolean
@@ -25,7 +25,7 @@ export class ValidationUtils {
     if (!email || !email.trim()) {
       return {
         isValid: false,
-        error: 'Email address is required'
+        error: "Email address is required",
       }
     }
 
@@ -34,38 +34,38 @@ export class ValidationUtils {
     if (!validator.isEmail(trimmedEmail)) {
       return {
         isValid: false,
-        error: 'Please enter a valid email address'
+        error: "Please enter a valid email address",
       }
     }
 
     if (trimmedEmail.length > 254) {
       return {
         isValid: false,
-        error: 'Email address is too long'
+        error: "Email address is too long",
       }
     }
 
     // Additional email security checks
     const warnings: string[] = []
-    
+
     // Check for common typos in popular domains
     const commonDomainTypos = {
-      'gmail.co': 'gmail.com',
-      'gmail.cm': 'gmail.com',
-      'gmial.com': 'gmail.com',
-      'yahooo.com': 'yahoo.com',
-      'yahoo.co': 'yahoo.com',
-      'hotmial.com': 'hotmail.com',
+      "gmail.co": "gmail.com",
+      "gmail.cm": "gmail.com",
+      "gmial.com": "gmail.com",
+      "yahooo.com": "yahoo.com",
+      "yahoo.co": "yahoo.com",
+      "hotmial.com": "hotmail.com",
     }
 
-    const domain = trimmedEmail.split('@')[1]
+    const domain = trimmedEmail.split("@")[1]
     if (commonDomainTypos[domain]) {
       warnings.push(`Did you mean ${trimmedEmail.replace(domain, commonDomainTypos[domain])}?`)
     }
 
     return {
       isValid: true,
-      warnings: warnings.length > 0 ? warnings : undefined
+      warnings: warnings.length > 0 ? warnings : undefined,
     }
   }
 
@@ -76,12 +76,12 @@ export class ValidationUtils {
     if (!password) {
       return {
         isValid: false,
-        error: 'Password is required',
+        error: "Password is required",
         strength: {
           score: 0,
-          feedback: ['Password is required'],
-          isStrong: false
-        }
+          feedback: ["Password is required"],
+          isStrong: false,
+        },
       }
     }
 
@@ -92,7 +92,7 @@ export class ValidationUtils {
       return {
         isValid: false,
         error: `Password must be at least ${minLength} characters long`,
-        strength
+        strength,
       }
     }
 
@@ -100,8 +100,8 @@ export class ValidationUtils {
     if (this.isCommonPassword(password)) {
       return {
         isValid: false,
-        error: 'This password is too common. Please choose a more unique password.',
-        strength
+        error: "This password is too common. Please choose a more unique password.",
+        strength,
       }
     }
 
@@ -109,14 +109,14 @@ export class ValidationUtils {
     if (strength.score < 3) {
       return {
         isValid: false,
-        error: 'Password is too weak. Please follow the strength requirements.',
-        strength
+        error: "Password is too weak. Please follow the strength requirements.",
+        strength,
       }
     }
 
     return {
       isValid: true,
-      strength
+      strength,
     }
   }
 
@@ -128,22 +128,22 @@ export class ValidationUtils {
     const feedback: string[] = []
 
     if (password.length >= 8) score += 1
-    else feedback.push('Use at least 8 characters')
+    else feedback.push("Use at least 8 characters")
 
     if (password.length >= 12) score += 1
-    else if (score > 0) feedback.push('Use 12+ characters for better security')
+    else if (score > 0) feedback.push("Use 12+ characters for better security")
 
     if (/[a-z]/.test(password)) score += 1
-    else feedback.push('Add lowercase letters')
+    else feedback.push("Add lowercase letters")
 
     if (/[A-Z]/.test(password)) score += 1
-    else feedback.push('Add uppercase letters')
+    else feedback.push("Add uppercase letters")
 
     if (/[0-9]/.test(password)) score += 1
-    else feedback.push('Add numbers')
+    else feedback.push("Add numbers")
 
     if (/[^A-Za-z0-9]/.test(password)) score += 1
-    else feedback.push('Add special characters')
+    else feedback.push("Add special characters")
 
     // Bonus for length
     if (password.length >= 16) score += 1
@@ -151,20 +151,20 @@ export class ValidationUtils {
     // Penalty for patterns
     if (/(.)\1{2,}/.test(password)) {
       score -= 1
-      feedback.push('Avoid repeated characters')
+      feedback.push("Avoid repeated characters")
     }
 
     if (/123|abc|qwe|asd|zxc/i.test(password)) {
       score -= 1
-      feedback.push('Avoid common patterns')
+      feedback.push("Avoid common patterns")
     }
 
     score = Math.max(0, Math.min(5, score))
 
     return {
       score,
-      feedback: feedback.length > 0 ? feedback : ['Strong password!'],
-      isStrong: score >= 4
+      feedback: feedback.length > 0 ? feedback : ["Strong password!"],
+      isStrong: score >= 4,
     }
   }
 
@@ -173,10 +173,25 @@ export class ValidationUtils {
    */
   static isCommonPassword(password: string): boolean {
     const commonPasswords = [
-      'password', '123456', '123456789', 'qwerty', 'abc123', 
-      'password123', 'admin', 'letmein', 'welcome', 'monkey',
-      'login', 'master', 'hello', 'guest', 'admin123',
-      '12345678', '1234567890', 'password1', 'qwertyuiop'
+      "password",
+      "123456",
+      "123456789",
+      "qwerty",
+      "abc123",
+      "password123",
+      "admin",
+      "letmein",
+      "welcome",
+      "monkey",
+      "login",
+      "master",
+      "hello",
+      "guest",
+      "admin123",
+      "12345678",
+      "1234567890",
+      "password1",
+      "qwertyuiop",
     ]
 
     return commonPasswords.includes(password.toLowerCase())
@@ -185,11 +200,11 @@ export class ValidationUtils {
   /**
    * Validate name (first name, last name)
    */
-  static validateName(name: string, fieldName: string = 'Name'): ValidationResult {
+  static validateName(name: string, fieldName: string = "Name"): ValidationResult {
     if (!name || !name.trim()) {
       return {
         isValid: false,
-        error: `${fieldName} is required`
+        error: `${fieldName} is required`,
       }
     }
 
@@ -198,21 +213,21 @@ export class ValidationUtils {
     if (trimmedName.length < 2) {
       return {
         isValid: false,
-        error: `${fieldName} must be at least 2 characters long`
+        error: `${fieldName} must be at least 2 characters long`,
       }
     }
 
     if (trimmedName.length > 50) {
       return {
         isValid: false,
-        error: `${fieldName} must be less than 50 characters`
+        error: `${fieldName} must be less than 50 characters`,
       }
     }
 
     if (!/^[a-zA-Z\s'-]+$/.test(trimmedName)) {
       return {
         isValid: false,
-        error: `${fieldName} can only contain letters, spaces, hyphens, and apostrophes`
+        error: `${fieldName} can only contain letters, spaces, hyphens, and apostrophes`,
       }
     }
 
@@ -226,26 +241,26 @@ export class ValidationUtils {
     if (!phone || !phone.trim()) {
       return {
         isValid: false,
-        error: 'Phone number is required'
+        error: "Phone number is required",
       }
     }
 
-    const cleanPhone = phone.replace(/\D/g, '')
+    const cleanPhone = phone.replace(/\D/g, "")
 
     if (cleanPhone.length < 10 || cleanPhone.length > 15) {
       return {
         isValid: false,
-        error: 'Please enter a valid phone number'
+        error: "Please enter a valid phone number",
       }
     }
 
     // Nigerian phone number validation
-    if (cleanPhone.startsWith('234') || cleanPhone.startsWith('0')) {
+    if (cleanPhone.startsWith("234") || cleanPhone.startsWith("0")) {
       const nigerianPattern = /^(234|0)[789][01]\d{8}$/
       if (!nigerianPattern.test(cleanPhone)) {
         return {
           isValid: false,
-          error: 'Please enter a valid Nigerian phone number'
+          error: "Please enter a valid Nigerian phone number",
         }
       }
     }
@@ -257,13 +272,13 @@ export class ValidationUtils {
    * Sanitize input to prevent XSS
    */
   static sanitizeInput(input: string): string {
-    if (!input) return ''
-    
+    if (!input) return ""
+
     return input
       .trim()
-      .replace(/[<>]/g, '') // Remove potential HTML tags
-      .replace(/javascript:/gi, '') // Remove javascript: protocol
-      .replace(/on\w+=/gi, '') // Remove event handlers
+      .replace(/[<>]/g, "") // Remove potential HTML tags
+      .replace(/javascript:/gi, "") // Remove javascript: protocol
+      .replace(/on\w+=/gi, "") // Remove event handlers
   }
 
   /**
@@ -273,14 +288,14 @@ export class ValidationUtils {
     if (!confirmPassword || !confirmPassword.trim()) {
       return {
         isValid: false,
-        error: 'Please confirm your password'
+        error: "Please confirm your password",
       }
     }
 
     if (password !== confirmPassword) {
       return {
         isValid: false,
-        error: 'Passwords do not match'
+        error: "Passwords do not match",
       }
     }
 
@@ -302,13 +317,13 @@ export class ValidationUtils {
     const warnings: Record<string, string[]> = {}
 
     // Validate first name
-    const firstNameResult = this.validateName(data.firstName, 'First name')
+    const firstNameResult = this.validateName(data.firstName, "First name")
     if (!firstNameResult.isValid) {
       errors.firstName = firstNameResult.error!
     }
 
     // Validate last name
-    const lastNameResult = this.validateName(data.lastName, 'Last name')
+    const lastNameResult = this.validateName(data.lastName, "Last name")
     if (!lastNameResult.isValid) {
       errors.lastName = lastNameResult.error!
     }
@@ -344,34 +359,34 @@ export class ValidationUtils {
     return {
       isValid: Object.keys(errors).length === 0,
       errors,
-      warnings: Object.keys(warnings).length > 0 ? warnings : undefined
+      warnings: Object.keys(warnings).length > 0 ? warnings : undefined,
     }
   }
 
   /**
    * Validate login form
    */
-  static validateLoginForm(data: {
-    email: string
-    password: string
-  }): { isValid: boolean; errors: Record<string, string> } {
+  static validateLoginForm(data: { email: string; password: string }): {
+    isValid: boolean
+    errors: Record<string, string>
+  } {
     const errors: Record<string, string> = {}
 
     // Basic email validation for login (less strict)
     if (!data.email || !data.email.trim()) {
-      errors.email = 'Email address is required'
+      errors.email = "Email address is required"
     } else if (!validator.isEmail(data.email.trim())) {
-      errors.email = 'Please enter a valid email address'
+      errors.email = "Please enter a valid email address"
     }
 
     // Basic password validation for login
     if (!data.password || !data.password.trim()) {
-      errors.password = 'Password is required'
+      errors.password = "Password is required"
     }
 
     return {
       isValid: Object.keys(errors).length === 0,
-      errors
+      errors,
     }
   }
 }

@@ -19,6 +19,8 @@ interface AuthContextType {
   signUp: (userData: any) => Promise<void>
   signOut: () => Promise<void>
   checkAuthStatus: () => Promise<void>
+  sendEmailVerification: () => Promise<void>
+  verifyEmail: (userId: string, secret: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -32,7 +34,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
 
   // Check authentication status on app start
   useEffect(() => {
-    authStore.checkAuthStatus()
+    // Small delay to ensure the component is fully mounted
+    const timer = setTimeout(() => {
+      authStore.checkAuthStatus()
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [])
 
   const checkAuthStatus = async () => {
@@ -72,14 +79,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
     await authStore.signOut()
   }
 
+  const sendEmailVerification = async () => {
+    try {
+      const result = await authStore.sendEmailVerification()
+      return result
+    } catch (error) {
+      throw error
+    }
+  }
+
+  const verifyEmail = async (userId: string, secret: string) => {
+    try {
+      const result = await authStore.verifyEmail(userId, secret)
+      return result
+    } catch (error) {
+      throw error
+    }
+  }
+
   const contextValue: AuthContextType = {
     isAuthenticated: authStore.isAuthenticated,
-    isLoading: authStore.isLoading || authStore.status === "checking",
+    isLoading: authStore.status === "checking" || authStore.isLoading,
     user: authStore.user,
     signIn,
     signUp,
     signOut,
     checkAuthStatus,
+    sendEmailVerification,
+    verifyEmail,
   }
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>

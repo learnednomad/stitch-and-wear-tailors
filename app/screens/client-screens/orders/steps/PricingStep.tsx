@@ -24,7 +24,7 @@ interface PricingBreakdown {
 
 export const PricingStep: FC = observer(() => {
   const { orderStore } = useStores()
-  
+
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("bank_transfer")
   const [selectedPriority, setSelectedPriority] = useState<OrderPriority>("normal")
   const [pricing, setPricing] = useState<PricingBreakdown | null>(null)
@@ -110,11 +110,15 @@ export const PricingStep: FC = observer(() => {
 
   const calculatePricing = async () => {
     setIsCalculating(true)
-    
+
     try {
       const { orderCreationData } = orderStore
-      
-      if (!orderCreationData?.styleConfig || !orderCreationData?.fabricSelection || !orderCreationData?.customerInfo) {
+
+      if (
+        !orderCreationData?.styleConfig ||
+        !orderCreationData?.fabricSelection ||
+        !orderCreationData?.customerInfo
+      ) {
         throw new Error("Missing required order data")
       }
 
@@ -122,24 +126,24 @@ export const PricingStep: FC = observer(() => {
       const garmentType = orderCreationData.styleConfig.garmentType
       const city = orderCreationData.customerInfo.city
       const isRush = selectedPriority === "urgent"
-      
+
       const calculatedPricing = orderStore.calculateNigerianPricing(garmentType, city, isRush)
-      
+
       // Add delivery fee based on city
       const cityConfig = orderStore.getCityConfig(city)
       const deliveryFee = cityConfig.deliveryFee
-      
+
       // Add processing fee for payment method
-      const selectedPayment = paymentMethods.find(p => p.method === selectedPaymentMethod)
+      const selectedPayment = paymentMethods.find((p) => p.method === selectedPaymentMethod)
       const processingFee = selectedPayment?.processingFee || 0
-      
+
       // Apply priority multiplier
-      const priorityOption = priorityOptions.find(p => p.priority === selectedPriority)
+      const priorityOption = priorityOptions.find((p) => p.priority === selectedPriority)
       const priorityMultiplier = priorityOption?.multiplier || 1.0
-      
+
       const adjustedTotalPrice = calculatedPricing.totalPrice * priorityMultiplier
       const finalTotal = adjustedTotalPrice + deliveryFee + processingFee
-      
+
       const pricingBreakdown: PricingBreakdown = {
         basePrice: calculatedPricing.basePrice,
         fabricCost: calculatedPricing.fabricCost,
@@ -150,9 +154,8 @@ export const PricingStep: FC = observer(() => {
         depositRequired: finalTotal * 0.5, // 50% deposit
         balanceAmount: finalTotal * 0.5,
       }
-      
+
       setPricing(pricingBreakdown)
-      
     } catch (error) {
       console.error("Failed to calculate pricing:", error)
       Alert.alert("Error", "Failed to calculate pricing. Please check your order details.")
@@ -165,64 +168,60 @@ export const PricingStep: FC = observer(() => {
     if (pricing && orderStore.orderCreationData) {
       // Update order priority
       orderStore.orderCreationData.priority = selectedPriority
-      
+
       Alert.alert(
         "Pricing Confirmed",
         `Total: ₦${pricing.totalPrice.toLocaleString()}\nDeposit Required: ₦${pricing.depositRequired.toLocaleString()}`,
         [
-          { text: "OK", onPress: () => {
-            // This will allow progression to next step
-          }}
-        ]
+          {
+            text: "OK",
+            onPress: () => {
+              // This will allow progression to next step
+            },
+          },
+        ],
       )
     }
   }
 
   const getEstimatedDelivery = () => {
     if (!orderStore.orderCreationData?.styleConfig) return "N/A"
-    
-    const garmentConfig = orderStore.getGarmentConfig(orderStore.orderCreationData.styleConfig.garmentType)
+
+    const garmentConfig = orderStore.getGarmentConfig(
+      orderStore.orderCreationData.styleConfig.garmentType,
+    )
     if (!garmentConfig) return "N/A"
-    
+
     const baseDays = garmentConfig.estimatedDays
-    const priorityOption = priorityOptions.find(p => p.priority === selectedPriority)
+    const priorityOption = priorityOptions.find((p) => p.priority === selectedPriority)
     const adjustedDays = Math.ceil(baseDays / (priorityOption?.multiplier || 1.0))
-    
+
     const deliveryDate = new Date()
     deliveryDate.setDate(deliveryDate.getDate() + adjustedDays)
-    
-    return deliveryDate.toLocaleDateString('en-NG', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+
+    return deliveryDate.toLocaleDateString("en-NG", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     })
   }
 
   return (
     <ScrollView style={$container} showsVerticalScrollIndicator={false}>
       <View style={$content}>
-        <Text style={$title}>
-          {orderStore.getTranslation("pricing", "en")}
-        </Text>
-        <Text style={$subtitle}>
-          Review pricing and select payment preferences
-        </Text>
+        <Text style={$title}>{orderStore.getTranslation("pricing", "en")}</Text>
+        <Text style={$subtitle}>Review pricing and select payment preferences</Text>
 
         {/* Priority Selection */}
         <View style={$section}>
           <Text style={$sectionTitle}>Delivery Priority</Text>
-          <Text style={$sectionDescription}>
-            Choose your preferred delivery timeline
-          </Text>
-          
+          <Text style={$sectionDescription}>Choose your preferred delivery timeline</Text>
+
           {priorityOptions.map((option) => (
             <TouchableOpacity
               key={option.priority}
-              style={[
-                $priorityCard,
-                selectedPriority === option.priority && $selectedPriorityCard
-              ]}
+              style={[$priorityCard, selectedPriority === option.priority && $selectedPriorityCard]}
               onPress={() => setSelectedPriority(option.priority)}
             >
               <View style={$priorityContent}>
@@ -246,17 +245,15 @@ export const PricingStep: FC = observer(() => {
         {/* Payment Method Selection */}
         <View style={$section}>
           <Text style={$sectionTitle}>Payment Method</Text>
-          <Text style={$sectionDescription}>
-            Choose your preferred payment option
-          </Text>
-          
+          <Text style={$sectionDescription}>Choose your preferred payment option</Text>
+
           {paymentMethods.map((method) => (
             <TouchableOpacity
               key={method.method}
               style={[
                 $paymentCard,
                 selectedPaymentMethod === method.method && $selectedPaymentCard,
-                !method.available && $disabledPaymentCard
+                !method.available && $disabledPaymentCard,
               ]}
               onPress={() => method.available && setSelectedPaymentMethod(method.method)}
               disabled={!method.available}
@@ -267,12 +264,15 @@ export const PricingStep: FC = observer(() => {
                   <Text style={$paymentName}>{method.name}</Text>
                   <Text style={$paymentDescription}>{method.description}</Text>
                   {method.processingFee > 0 && (
-                    <Text style={$processingFee}>
-                      Processing fee: ₦{method.processingFee}
-                    </Text>
+                    <Text style={$processingFee}>Processing fee: ₦{method.processingFee}</Text>
                   )}
                 </View>
-                <View style={[$radioButton, selectedPaymentMethod === method.method && $radioButtonSelected]}>
+                <View
+                  style={[
+                    $radioButton,
+                    selectedPaymentMethod === method.method && $radioButtonSelected,
+                  ]}
+                >
                   {selectedPaymentMethod === method.method && <View style={$radioButtonInner} />}
                 </View>
               </View>
@@ -284,44 +284,48 @@ export const PricingStep: FC = observer(() => {
         {pricing && (
           <View style={$section}>
             <Text style={$sectionTitle}>Pricing Breakdown</Text>
-            
+
             <View style={$pricingCard}>
               <View style={$pricingRow}>
                 <Text style={$pricingLabel}>Base Garment Price</Text>
                 <Text style={$pricingValue}>₦{pricing.basePrice.toLocaleString()}</Text>
               </View>
-              
+
               <View style={$pricingRow}>
                 <Text style={$pricingLabel}>Fabric Cost</Text>
                 <Text style={$pricingValue}>₦{pricing.fabricCost.toLocaleString()}</Text>
               </View>
-              
+
               <View style={$pricingRow}>
                 <Text style={$pricingLabel}>Complexity Adjustment</Text>
                 <Text style={$pricingValue}>×{pricing.complexityMultiplier.toFixed(1)}</Text>
               </View>
-              
+
               {pricing.urgencyFee > 0 && (
                 <View style={$pricingRow}>
                   <Text style={$pricingLabel}>Rush Fee</Text>
                   <Text style={$pricingValue}>₦{pricing.urgencyFee.toLocaleString()}</Text>
                 </View>
               )}
-              
+
               <View style={$pricingRow}>
                 <Text style={$pricingLabel}>Delivery Fee</Text>
                 <Text style={$pricingValue}>₦{pricing.deliveryFee.toLocaleString()}</Text>
               </View>
 
-              {paymentMethods.find(p => p.method === selectedPaymentMethod)?.processingFee! > 0 && (
+              {paymentMethods.find((p) => p.method === selectedPaymentMethod)?.processingFee! >
+                0 && (
                 <View style={$pricingRow}>
                   <Text style={$pricingLabel}>Processing Fee</Text>
                   <Text style={$pricingValue}>
-                    ₦{paymentMethods.find(p => p.method === selectedPaymentMethod)?.processingFee?.toLocaleString()}
+                    ₦
+                    {paymentMethods
+                      .find((p) => p.method === selectedPaymentMethod)
+                      ?.processingFee?.toLocaleString()}
                   </Text>
                 </View>
               )}
-              
+
               <View style={[$pricingRow, $totalRow]}>
                 <Text style={$totalLabel}>Total Amount</Text>
                 <Text style={$totalValue}>₦{pricing.totalPrice.toLocaleString()}</Text>
@@ -331,7 +335,7 @@ export const PricingStep: FC = observer(() => {
             {/* Payment Schedule */}
             <View style={$paymentSchedule}>
               <Text style={$scheduleTitle}>Payment Schedule</Text>
-              
+
               <View style={$scheduleItem}>
                 <View style={$scheduleInfo}>
                   <Text style={$scheduleLabel}>Deposit Required (50%)</Text>
@@ -339,7 +343,7 @@ export const PricingStep: FC = observer(() => {
                 </View>
                 <Text style={$scheduleAmount}>₦{pricing.depositRequired.toLocaleString()}</Text>
               </View>
-              
+
               <View style={$scheduleItem}>
                 <View style={$scheduleInfo}>
                   <Text style={$scheduleLabel}>Balance Payment (50%)</Text>
@@ -354,7 +358,7 @@ export const PricingStep: FC = observer(() => {
         {/* Delivery Information */}
         <View style={$section}>
           <Text style={$sectionTitle}>Delivery Information</Text>
-          
+
           <View style={$deliveryInfo}>
             <View style={$deliveryItem}>
               <Icon icon="calendar" size={20} color={colors.palette.threadBlue} />
@@ -363,14 +367,17 @@ export const PricingStep: FC = observer(() => {
                 <Text style={$deliveryValue}>{getEstimatedDelivery()}</Text>
               </View>
             </View>
-            
+
             <View style={$deliveryItem}>
               <Icon icon="location" size={20} color={colors.palette.threadBlue} />
               <View style={$deliveryText}>
                 <Text style={$deliveryLabel}>Delivery Location</Text>
                 <Text style={$deliveryValue}>
-                  {orderStore.orderCreationData?.customerInfo?.city && 
-                   orderStore.getTranslation("cities", orderStore.orderCreationData.customerInfo.city)}
+                  {orderStore.orderCreationData?.customerInfo?.city &&
+                    orderStore.getTranslation(
+                      "cities",
+                      orderStore.orderCreationData.customerInfo.city,
+                    )}
                 </Text>
               </View>
             </View>
@@ -383,10 +390,8 @@ export const PricingStep: FC = observer(() => {
           <View style={$termsText}>
             <Text style={$termsTitle}>Payment Terms</Text>
             <Text style={$termsDescription}>
-              • 50% deposit required to begin work{'\n'}
-              • Balance due upon completion{'\n'}
-              • Prices valid for 30 days{'\n'}
-              • Alterations included in first fitting
+              • 50% deposit required to begin work{"\n"}• Balance due upon completion{"\n"}• Prices
+              valid for 30 days{"\n"}• Alterations included in first fitting
             </Text>
           </View>
         </View>

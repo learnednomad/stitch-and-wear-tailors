@@ -1,78 +1,110 @@
 import { FC, useState, useEffect } from "react"
 import { observer } from "mobx-react-lite"
-import { ViewStyle, View, Alert, TouchableOpacity, TextStyle } from "react-native"
+import { ViewStyle, View, Alert } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
-import { Screen, Text, TextField, Button, Icon } from "@/components"
+import { Screen } from "@/components"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
-import { getAppwriteAuthAdapter } from "@/services/appwrite/appwrite-auth-adapter"
+import AuthService from "@/services/auth/AuthService"
 import { spacing, colors } from "@/theme"
 import { ValidationUtils } from "@/utils/validation"
 import { ErrorHandler } from "@/utils/error-handler"
 import { RateLimiter } from "@/utils/rate-limiter"
+import { PremiumSignInForm } from "@/components/PremiumSignInForm"
+import { BiometricService } from "@/services/biometric/BiometricService"
 
 interface SignInScreenProps extends AppStackScreenProps<"SignIn"> {}
 
 export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScreen() {
   const { authStore } = useStores()
   const navigation = useNavigation()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [rememberMe, setRememberMe] = useState(authStore.rememberUser)
-  const [currentTab, setCurrentTab] = useState<"login" | "register">("login")
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
-  const [rateLimitError, setRateLimitError] = useState<string>("")
-  const [showPassword, setShowPassword] = useState(false)
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (email: string, password: string, biometric = false) => {
     // Clear previous errors
-    setFormErrors({})
-    setRateLimitError("")
     authStore.clearError()
 
-    // Validate form input
-    const validation = ValidationUtils.validateLoginForm({ email, password })
-    if (!validation.isValid) {
-      setFormErrors(validation.errors)
-      return
+    // Validate form input (skip validation for biometric auth)
+    if (!biometric) {
+      const validation = ValidationUtils.validateLoginForm({ email, password })
+      if (!validation.isValid) {
+        Alert.alert("Invalid Input", Object.values(validation.errors)[0])
+        return
+      }
     }
 
     const trimmedEmail = email.trim().toLowerCase()
 
-    // Check rate limiting
-    const rateLimitResult = RateLimiter.checkLoginAttempts(trimmedEmail)
-    if (!rateLimitResult.allowed) {
-      const timeRemaining = RateLimiter.formatTimeRemaining(
-        RateLimiter.getBlockTimeRemaining(`login_${trimmedEmail}`)
-      )
-      setRateLimitError(`Too many failed attempts. Try again in ${timeRemaining}.`)
-      return
+    // Check rate limiting (skip for biometric auth)
+    if (!biometric) {
+      const rateLimitResult = RateLimiter.checkLoginAttempts(trimmedEmail)
+      if (!rateLimitResult.allowed) {
+        const timeRemaining = RateLimiter.formatTimeRemaining(
+          RateLimiter.getBlockTimeRemaining(`login_${trimmedEmail}`),
+        )
+        Alert.alert("Rate Limited", `Too many failed attempts. Try again in ${timeRemaining}.`)
+        return
+      }
     }
 
     setIsLoading(true)
     authStore.setLoading(true)
 
-    // Set remember user preference before signing in
-    authStore.setRememberUser(rememberMe)
-
     try {
-      const authAdapter = getAppwriteAuthAdapter()
-      const result = await authAdapter.login(trimmedEmail, password)
+      // Use the new AuthService
+      const result = await AuthService.login({
+        email: trimmedEmail,
+        password,
+        rememberMe: true,
+      })
 
       if (result.success && result.data) {
         // Reset rate limiting on successful login
-        RateLimiter.resetLoginAttempts(trimmedEmail)
+        if (!biometric) {
+          RateLimiter.resetLoginAttempts(trimmedEmail)
+        }
+
+        // Check if email verification is required
+        if (result.requiresVerification) {
+          Alert.alert(
+            "Email Not Verified",
+            "Please verify your email before signing in. Check your inbox for the verification link.",
+            [
+              {
+                text: "Resend Verification",
+                onPress: async () => {
+                  const verifyResult = await AuthService.resendVerificationEmail(
+                    result.data!.user.$id,
+                  )
+                  if (verifyResult.success) {
+                    Alert.alert("Verification Sent", "Please check your email.")
+                  }
+                  navigation.navigate("VerifyEmail" as never)
+                },
+              },
+              {
+                text: "OK",
+                style: "cancel",
+                onPress: () => navigation.navigate("VerifyEmail" as never),
+              },
+            ],
+          )
+          return
+        }
+
+        // Get user profile from database
+        const profile = await AuthService.getUserProfile(result.data.user.$id)
 
         const userData = {
           id: result.data.user.$id,
           email: result.data.user.email,
-          role: "client" as const,
-          status: "active" as const,
+          role: profile?.userType || ("client" as const),
+          status: profile?.status || ("active" as const),
           profile: {
-            firstName: result.data.user.name.split(" ")[0] || "",
-            lastName: result.data.user.name.split(" ").slice(1).join(" ") || "",
-            phone: result.data.user.phone || "",
+            firstName: profile?.firstName || result.data.user.name.split(" ")[0] || "",
+            lastName:
+              profile?.lastName || result.data.user.name.split(" ").slice(1).join(" ") || "",
+            phone: profile?.phone || result.data.user.phone || "",
             avatar: "",
           },
           preferences: {
@@ -93,10 +125,15 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
 
         authStore.setUser(userData)
         authStore.setSession({
-          accessToken: result.data.session.$id,
-          refreshToken: result.data.session.$id,
+          accessToken: result.data.accessToken,
+          refreshToken: result.data.refreshToken,
           expiresAt: result.data.session.expire,
         })
+
+        // Setup biometric keys for future authentication
+        if (biometric) {
+          await BiometricService.setupBiometricKeys()
+        }
 
         const userRole = userData.role
         if (userRole === "tailor") {
@@ -106,22 +143,36 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
         }
       } else {
         // Record failed login attempt
-        RateLimiter.recordFailedLogin(trimmedEmail)
-        
-        const friendlyError = ErrorHandler.formatErrorMessage(result)
-        authStore.setError(friendlyError)
-        
-        Alert.alert("Sign In Failed", friendlyError)
+        if (!biometric) {
+          RateLimiter.recordFailedLogin(trimmedEmail)
+        }
+
+        // Handle specific error cases
+        let errorMessage = result.error || "Login failed"
+
+        // Check for specific error types
+        if (errorMessage.includes("rate limit") || errorMessage.includes("too many")) {
+          errorMessage = "Too many login attempts. Please try again later."
+        } else if (errorMessage.includes("invalid") || errorMessage.includes("incorrect")) {
+          errorMessage = "Invalid email or password. Please check your credentials and try again."
+        } else if (errorMessage.includes("disabled") || errorMessage.includes("suspended")) {
+          errorMessage = "Your account has been suspended. Please contact support."
+        }
+
+        authStore.setError(errorMessage)
+        Alert.alert("Sign In Failed", errorMessage)
       }
     } catch (error: any) {
       console.error("Sign in error:", error)
-      
+
       // Record failed login attempt
-      RateLimiter.recordFailedLogin(trimmedEmail)
-      
+      if (!biometric) {
+        RateLimiter.recordFailedLogin(trimmedEmail)
+      }
+
       const friendlyError = ErrorHandler.formatErrorMessage(error)
       authStore.setError(friendlyError)
-      
+
       Alert.alert("Error", friendlyError)
     } finally {
       setIsLoading(false)
@@ -133,324 +184,62 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
     navigation.navigate("SignUp" as never)
   }
 
-  const handleFacebookLogin = () => {
-    Alert.alert("Facebook Login", "Facebook login not implemented yet")
-  }
+  const handleBiometricAuth = async () => {
+    try {
+      // Check if user has stored credentials for biometric auth
+      const hasRecentAuth = await BiometricService.hasRecentAuth(30) // 30 minutes timeout
 
-  const handleGoogleLogin = () => {
-    Alert.alert("Google Login", "Google login not implemented yet")
+      if (hasRecentAuth) {
+        // User has recent auth, directly authenticate
+        const result = await BiometricService.quickAuth("Access your tailoring profile")
+
+        if (result) {
+          // For demo purposes, we'll use stored credentials or navigate to main app
+          // In production, you'd retrieve stored encrypted credentials
+          Alert.alert("Biometric Success", "Welcome back! Biometric authentication successful.")
+
+          // Navigate to appropriate screen based on user role
+          const userRole = authStore.user?.role || "client"
+          if (userRole === "tailor") {
+            navigation.navigate("TailorTab" as never)
+          } else {
+            navigation.navigate("ClientTab" as never)
+          }
+        }
+      } else {
+        Alert.alert(
+          "Biometric Setup Required",
+          "Please sign in with your email and password first to enable biometric authentication.",
+          [{ text: "OK" }],
+        )
+      }
+    } catch (error) {
+      console.error("Biometric authentication error:", error)
+      Alert.alert(
+        "Authentication Error",
+        "Failed to authenticate with biometrics. Please try again.",
+      )
+    }
   }
 
   const handleForgotPassword = () => {
-    Alert.alert("Forgot Password", "Forgot password not implemented yet")
+    navigation.navigate("ForgotPassword" as never)
   }
 
   return (
     <Screen
-      preset="auto"
-      backgroundColor="#f7fafc"
-      contentContainerStyle={$contentContainer}
+      preset="scroll"
+      backgroundColor="#ffffff"
       safeAreaEdges={["top", "bottom"]}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={$tabContainer}>
-        <TouchableOpacity
-          style={[$tab, currentTab === "login" && $activeTab]}
-          onPress={() => setCurrentTab("login")}
-        >
-          <Text text="Login" style={[$tabText, currentTab === "login" && $activeTabText]} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[$tab, currentTab === "register" && $activeTab]}
-          onPress={() => {
-            setCurrentTab("register")
-            handleSignUp()
-          }}
-        >
-          <Text text="Register" style={[$tabText, currentTab === "register" && $activeTabText]} />
-        </TouchableOpacity>
-      </View>
-
-      <Text preset="heading" text="Welcome to Stitch & Wear" style={$title} />
-      <Text
-        text="Nigeria's premier luxury tailoring experience awaits you"
-        style={$subtitle}
-      />
-
-      {(authStore.error || rateLimitError) && (
-        <View style={$errorContainer}>
-          <Text text={authStore.error || rateLimitError} style={$errorText} />
-        </View>
-      )}
-
-      <TextField
-        value={email}
-        onChangeText={(text) => {
-          setEmail(text)
-          // Clear email error when user starts typing
-          if (formErrors.email) {
-            setFormErrors(prev => ({ ...prev, email: "" }))
-          }
-        }}
-        label="Email"
-        placeholder="john.doe@gmail.com"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-        style={[$textField, formErrors.email && $textFieldError]}
-        status={formErrors.email ? "error" : undefined}
-        helper={formErrors.email}
-      />
-
-      <TextField
-        value={password}
-        onChangeText={(text) => {
-          setPassword(text)
-          // Clear password error when user starts typing
-          if (formErrors.password) {
-            setFormErrors(prev => ({ ...prev, password: "" }))
-          }
-        }}
-        label="Password"
-        placeholder="Type your password"
-        secureTextEntry={!showPassword}
-        style={[$textField, formErrors.password && $textFieldError]}
-        status={formErrors.password ? "error" : undefined}
-        helper={formErrors.password}
-        RightAccessory={() => (
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Icon 
-              icon={showPassword ? "hidden" : "view"} 
-              size={22} 
-              style={$passwordIcon} 
-            />
-          </TouchableOpacity>
-        )}
-      />
-
-      <View style={$rememberForgotContainer}>
-        <TouchableOpacity style={$rememberMeContainer} onPress={() => setRememberMe(!rememberMe)}>
-          <View style={[$checkbox, rememberMe && $checkboxChecked]}>
-            {rememberMe && <Text text="✓" style={$checkmark} />}
-          </View>
-          <Text text="Remember me" style={$rememberMeText} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleForgotPassword}>
-          <Text text="Forgot password?" style={$forgotPasswordText} />
-        </TouchableOpacity>
-      </View>
-
-      <Button
-        text={isLoading ? "Signing In..." : "Login"}
-        onPress={handleSignIn}
-        disabled={isLoading || authStore.isLoading}
-        style={$loginButton}
-      />
-
-      <View style={$orContainer}>
-        <View style={$orLine} />
-        <Text text="OR" style={$orText} />
-        <View style={$orLine} />
-      </View>
-
-      <Button
-        text="Login with Facebook"
-        onPress={handleFacebookLogin}
-        style={$socialButton}
-        textStyle={$socialButtonText}
-        LeftAccessory={() => <Icon icon="facebook" size={20} style={$socialIcon} />}
-      />
-
-      <Button
-        text="Login with Google"
-        onPress={handleGoogleLogin}
-        style={$socialButton}
-        textStyle={$socialButtonText}
-        LeftAccessory={() => <Icon icon="google" size={20} style={$socialIcon} />}
+      <PremiumSignInForm
+        onSignIn={handleSignIn}
+        onForgotPassword={handleForgotPassword}
+        onSignUp={handleSignUp}
+        onBiometricAuth={handleBiometricAuth}
+        isLoading={isLoading || authStore.isLoading}
       />
     </Screen>
   )
 })
-
-const $contentContainer: ViewStyle = {
-  flexGrow: 1,
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.lg,
-}
-
-const $tabContainer: ViewStyle = {
-  flexDirection: "row",
-  marginBottom: spacing.xl,
-  backgroundColor: "#e2e8f0",
-  borderRadius: 12,
-  padding: 6,
-}
-
-const $tab: ViewStyle = {
-  flex: 1,
-  paddingVertical: spacing.md,
-  paddingHorizontal: spacing.lg,
-  borderRadius: 6,
-  alignItems: "center",
-}
-
-const $activeTab: ViewStyle = {
-  backgroundColor: "#ffffff",
-  elevation: 3,
-  shadowColor: "#2B5D2F",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.15,
-  shadowRadius: 4,
-}
-
-const $tabText: TextStyle = {
-  fontSize: 14,
-  color: "#666666",
-  fontWeight: "500",
-}
-
-const $activeTabText: TextStyle = {
-  color: "#333333",
-  fontWeight: "600",
-}
-
-const $title: TextStyle = {
-  marginBottom: spacing.sm,
-  textAlign: "center",
-  fontSize: 28,
-  fontWeight: "700",
-  color: "#1a202c",
-  letterSpacing: 0.5,
-}
-
-const $subtitle: TextStyle = {
-  marginBottom: spacing.xl,
-  textAlign: "center",
-  fontSize: 16,
-  color: "#4a5568",
-  lineHeight: 22,
-  fontWeight: "400",
-}
-
-const $errorContainer: ViewStyle = {
-  backgroundColor: "#fee2e2",
-  borderRadius: 8,
-  padding: spacing.md,
-  marginBottom: spacing.lg,
-  borderLeftWidth: 4,
-  borderLeftColor: "#dc2626",
-}
-
-const $errorText: TextStyle = {
-  color: "#dc2626",
-  fontSize: 14,
-  lineHeight: 20,
-  fontWeight: "500",
-}
-
-const $textFieldError: ViewStyle = {
-  borderColor: "#dc2626",
-  borderWidth: 1,
-}
-
-const $textField: ViewStyle = {
-  marginBottom: spacing.lg,
-}
-
-const $passwordIcon: ViewStyle = {
-  tintColor: "#999999",
-}
-
-const $rememberForgotContainer: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xl,
-}
-
-const $rememberMeContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $checkbox: ViewStyle = {
-  width: 20,
-  height: 20,
-  borderWidth: 1,
-  borderColor: "#cccccc",
-  borderRadius: 4,
-  marginRight: spacing.sm,
-  alignItems: "center",
-  justifyContent: "center",
-}
-
-const $checkboxChecked: ViewStyle = {
-  backgroundColor: "#007AFF",
-  borderColor: "#007AFF",
-}
-
-const $checkmark: TextStyle = {
-  color: "#ffffff",
-  fontSize: 12,
-  fontWeight: "bold",
-}
-
-const $rememberMeText: TextStyle = {
-  fontSize: 14,
-  color: "#666666",
-}
-
-const $forgotPasswordText: TextStyle = {
-  fontSize: 14,
-  color: "#007AFF",
-  textDecorationLine: "underline",
-}
-
-const $loginButton: ViewStyle = {
-  marginBottom: spacing.lg,
-  backgroundColor: "#2B5D2F",
-  borderRadius: 12,
-  paddingVertical: spacing.md,
-  shadowColor: "#2B5D2F",
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.3,
-  shadowRadius: 8,
-  elevation: 6,
-}
-
-const $orContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginVertical: spacing.lg,
-}
-
-const $orLine: ViewStyle = {
-  flex: 1,
-  height: 1,
-  backgroundColor: "#e0e0e0",
-}
-
-const $orText: TextStyle = {
-  marginHorizontal: spacing.md,
-  fontSize: 14,
-  color: "#666666",
-  fontWeight: "500",
-}
-
-const $socialButton: ViewStyle = {
-  marginBottom: spacing.md,
-  backgroundColor: "#ffffff",
-  borderWidth: 1,
-  borderColor: "#e0e0e0",
-  borderRadius: 8,
-}
-
-const $socialButtonText: TextStyle = {
-  color: "#333333",
-  fontSize: 16,
-  fontWeight: "500",
-}
-
-const $socialIcon: ViewStyle = {
-  marginRight: spacing.sm,
-}
