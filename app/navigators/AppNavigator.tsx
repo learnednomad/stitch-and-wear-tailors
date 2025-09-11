@@ -4,7 +4,11 @@
  * Generally speaking, it will contain an auth flow (registration, login, forgot password)
  * and a "main" flow which the user will use once logged in.
  */
-import { NavigationContainer, NavigatorScreenParams } from "@react-navigation/native"
+import {
+  NavigationContainer,
+  NavigatorScreenParams,
+  LinkingOptions,
+} from "@react-navigation/native"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
 import { observer } from "mobx-react-lite"
 import * as Screens from "@/screens"
@@ -16,6 +20,7 @@ import { TabNavigator, TabParamList } from "@/navigators/ClientTabsNavigator"
 import { TailorTabNavigator, TailorTabParamList } from "@/navigators/TailorTabsNavigator"
 import { useAuth } from "@/contexts/AuthContext"
 import { Text, View } from "react-native"
+import * as Linking from "expo-linking"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -69,6 +74,13 @@ export type AppStackParamList = {
   VerifyEmail: undefined
   ClientNotifications: undefined
   TailorNotifications: undefined
+  // Enhanced Authentication Screens
+  TwoFactorSetup: undefined
+  BiometricSetup: undefined
+  SocialLinking: undefined
+  SecuritySettings: undefined
+  ForgotPassword: undefined
+  ResetPassword: { userId: string; secret: string }
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
 
@@ -124,64 +136,89 @@ const AppStack = observer(function AppStack() {
 
   return (
     <Stack.Navigator
-      initialRouteName={getInitialRouteName()}
-      screenOptions={{
-        headerShown: false,
-        navigationBarColor: colors.background,
-        contentStyle: {
-          backgroundColor: colors.background,
-        },
-      }}
-    >
-      {/* Authentication Screens - Always available */}
-      <Stack.Screen name="SignIn" component={Screens.SignInScreen} />
-      <Stack.Screen name="SignUp" component={Screens.SignUpScreen} />
-      <Stack.Screen name="VerifyEmail" component={Screens.VerifyEmailScreen} />
+        initialRouteName={getInitialRouteName()}
+        screenOptions={{
+          headerShown: false,
+          navigationBarColor: colors.background,
+          contentStyle: {
+            backgroundColor: colors.background,
+          },
+        }}
+      >
+        {/* Authentication Screens - Always available */}
+        <Stack.Screen name="SignIn" component={Screens.SignInScreen} />
+        <Stack.Screen name="SignUp" component={Screens.SignUpScreen} />
+        <Stack.Screen name="VerifyEmail" component={Screens.VerifyEmailScreen} />
+        <Stack.Screen name="ForgotPassword" component={Screens.ForgotPasswordScreen} />
+        <Stack.Screen name="ResetPassword" component={Screens.ResetPasswordScreen} />
 
-      {/* Protected Screens - Only available when authenticated */}
-      {isAuthenticated && (
-        <>
-          <Stack.Screen name="ClientTab" component={TabNavigator} />
-          <Stack.Screen name="TailorTab" component={TailorTabNavigator} />
-        </>
-      )}
-      {/* Modal/Overlay Screens - Available when authenticated */}
-      {isAuthenticated && (
-        <>
-          <Stack.Screen name="Home" component={Screens.HomeScreen} />
-          <Stack.Screen name="Orders" component={Screens.OrdersScreen} />
-          <Stack.Screen name="OrderDetail" component={Screens.OrderDetailScreen} />
-          <Stack.Screen name="NewOrder" component={Screens.NewOrderScreen} />
-          <Stack.Screen name="Measurement" component={Screens.MeasurementScreen} />
-          <Stack.Screen name="OrderHistory" component={Screens.OrderHistoryScreen} />
-          <Stack.Screen name="OrderTracking" component={Screens.OrderTrackingScreen} />
-          <Stack.Screen name="Payment" component={Screens.PaymentScreen} />
-          <Stack.Screen name="Tailor" component={Screens.TailorScreen} />
-          <Stack.Screen name="TailorOrder" component={Screens.TailorOrderScreen} />
-          <Stack.Screen name="Measurment" component={Screens.MeasurmentScreen} />
-          <Stack.Screen name="AddMeasurment" component={Screens.AddMeasurmentScreen} />
-          <Stack.Screen name="EditMeasurment" component={Screens.EditMeasurmentScreen} />
-          <Stack.Screen name="DeleteMeasurment" component={Screens.DeleteMeasurmentScreen} />
-          <Stack.Screen name="Invoices" component={Screens.InvoicesScreen} />
-          <Stack.Screen name="FabricSearch" component={Screens.FabricSearchScreen} />
-          <Stack.Screen name="BookFitting" component={Screens.BookFittingScreen} />
-          <Stack.Screen name="Styles" component={Screens.StylesScreen} />
-          <Stack.Screen name="Catalog" component={Screens.CatalogScreen} />
-          <Stack.Screen name="Settings" component={Screens.SettingsScreen} />
-          <Stack.Screen name="Analytics" component={Screens.AnalyticsScreen} />
-          <Stack.Screen name="Onboarding" component={Screens.OnboardingScreen} />
-          <Stack.Screen name="VerifyOtp" component={Screens.VerifyOtpScreen} />
-          <Stack.Screen name="ClientNotifications" component={Screens.ClientNotificationsScreen} />
-          <Stack.Screen name="TailorNotifications" component={Screens.TailorNotificationsScreen} />
-        </>
-      )}
-      {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
-    </Stack.Navigator>
+        {/* Protected Screens - Only available when authenticated */}
+        {isAuthenticated && (
+          <>
+            <Stack.Screen name="ClientTab" component={TabNavigator} />
+            <Stack.Screen name="TailorTab" component={TailorTabNavigator} />
+          </>
+        )}
+        {/* Modal/Overlay Screens - Available when authenticated */}
+        {isAuthenticated && (
+          <>
+            <Stack.Screen name="Home" component={Screens.HomeScreen} />
+            <Stack.Screen name="Orders" component={Screens.OrdersScreen} />
+            <Stack.Screen name="OrderDetail" component={Screens.OrderDetailScreen} />
+            <Stack.Screen name="NewOrder" component={Screens.NewOrderScreen} />
+            <Stack.Screen name="Measurement" component={Screens.MeasurementScreen} />
+            <Stack.Screen name="OrderHistory" component={Screens.OrderHistoryScreen} />
+            <Stack.Screen name="OrderTracking" component={Screens.OrderTrackingScreen} />
+            <Stack.Screen name="Payment" component={Screens.PaymentScreen} />
+            <Stack.Screen name="Tailor" component={Screens.TailorScreen} />
+            <Stack.Screen name="TailorOrder" component={Screens.TailorOrderScreen} />
+            <Stack.Screen name="Measurment" component={Screens.MeasurmentScreen} />
+            <Stack.Screen name="AddMeasurment" component={Screens.AddMeasurmentScreen} />
+            <Stack.Screen name="EditMeasurment" component={Screens.EditMeasurmentScreen} />
+            <Stack.Screen name="DeleteMeasurment" component={Screens.DeleteMeasurmentScreen} />
+            <Stack.Screen name="Invoices" component={Screens.InvoicesScreen} />
+            <Stack.Screen name="FabricSearch" component={Screens.FabricSearchScreen} />
+            <Stack.Screen name="BookFitting" component={Screens.BookFittingScreen} />
+            <Stack.Screen name="Styles" component={Screens.StylesScreen} />
+            <Stack.Screen name="Catalog" component={Screens.CatalogScreen} />
+            <Stack.Screen name="Settings" component={Screens.SettingsScreen} />
+            <Stack.Screen name="Analytics" component={Screens.AnalyticsScreen} />
+            <Stack.Screen name="Onboarding" component={Screens.OnboardingScreen} />
+            <Stack.Screen name="VerifyOtp" component={Screens.VerifyOtpScreen} />
+            <Stack.Screen
+              name="ClientNotifications"
+              component={Screens.ClientNotificationsScreen}
+            />
+            <Stack.Screen
+              name="TailorNotifications"
+              component={Screens.TailorNotificationsScreen}
+            />
+          </>
+        )}
+        {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
+      </Stack.Navigator>
   )
 })
 
 export interface NavigationProps
   extends Partial<ComponentProps<typeof NavigationContainer<AppStackParamList>>> {}
+
+// Deep linking configuration
+const linking: LinkingOptions<AppStackParamList> = {
+  prefixes: [Linking.createURL("/"), "stitchandwear://", "https://stitchandwear.com"],
+  config: {
+    screens: {
+      ResetPassword: {
+        path: "reset-password",
+        parse: {
+          userId: (userId: string) => userId,
+          secret: (secret: string) => secret,
+        },
+      },
+      // Add other deep link configurations here
+    },
+  },
+}
 
 export const AppNavigator = observer(function AppNavigator(props: NavigationProps) {
   const { themeScheme, navigationTheme, setThemeContextOverride, ThemeProvider } =
@@ -191,7 +228,7 @@ export const AppNavigator = observer(function AppNavigator(props: NavigationProp
 
   return (
     <ThemeProvider value={{ themeScheme, setThemeContextOverride }}>
-      <NavigationContainer ref={navigationRef} theme={navigationTheme} {...props}>
+      <NavigationContainer ref={navigationRef} theme={navigationTheme} linking={linking} {...props}>
         <Screens.ErrorBoundary catchErrors={Config.catchErrors}>
           <AppStack />
         </Screens.ErrorBoundary>
