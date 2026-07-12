@@ -20,4 +20,20 @@ config.transformer.getTransformOptions = async () => ({
 // such as Firebase that use the extension cjs.
 config.resolver.sourceExts.push("cjs")
 
+// Native-only packages get web shims (they call requireNativeComponent,
+// which crashes react-native-web).
+const path = require("path")
+const WEB_SHIMS = {
+  "react-native-linear-gradient": path.resolve(__dirname, "app/shims/linear-gradient.web.tsx"),
+}
+const defaultResolveRequest = config.resolver.resolveRequest
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (platform === "web" && WEB_SHIMS[moduleName]) {
+    return { filePath: WEB_SHIMS[moduleName], type: "sourceFile" }
+  }
+  return defaultResolveRequest
+    ? defaultResolveRequest(context, moduleName, platform)
+    : context.resolveRequest(context, moduleName, platform)
+}
+
 module.exports = config
