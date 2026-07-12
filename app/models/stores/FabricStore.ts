@@ -3,7 +3,7 @@
  * Manages fabric catalog, inventory, search, filtering, and wishlist functionality
  */
 
-import { types, flow, Instance, SnapshotOut } from "mobx-state-tree"
+import { types, flow, Instance, SnapshotIn, SnapshotOut } from "mobx-state-tree"
 import {
   createAsyncAction,
   createCollectionModel,
@@ -11,7 +11,7 @@ import {
   generateId,
   createTimestamp,
 } from "../mst"
-import { Fabric, FabricCategory, FabricColor } from "../types"
+import { Fabric, FabricCategory } from "../types"
 import { validateFabric } from "../schemas"
 
 /**
@@ -299,11 +299,43 @@ export const FabricStoreModel = types
       self.lastFetched = timestamp
     }
 
+    /**
+     * Check and create low stock alerts
+     * (hoisted so sibling actions in this block can call it directly)
+     */
+    const checkLowStockAlert = (fabric: any) => {
+      const existingAlert = self.lowStockAlerts.find((alert) => alert.fabricId === fabric.id)
+
+      if (fabric.inventory.availableQuantity <= fabric.inventory.reorderLevel) {
+        const alertLevel = fabric.inventory.availableQuantity === 0 ? "critical" : "warning"
+
+        if (!existingAlert) {
+          self.lowStockAlerts.push({
+            fabricId: fabric.id,
+            fabricName: fabric.name,
+            currentStock: fabric.inventory.availableQuantity,
+            reorderLevel: fabric.inventory.reorderLevel,
+            alertLevel,
+            createdAt: createTimestamp(),
+          })
+        } else {
+          // Update existing alert
+          existingAlert.currentStock = fabric.inventory.availableQuantity
+          existingAlert.alertLevel = alertLevel
+        }
+      } else if (existingAlert) {
+        // Remove alert if stock is above reorder level
+        const index = self.lowStockAlerts.indexOf(existingAlert)
+        self.lowStockAlerts.splice(index, 1)
+      }
+    }
+
     return {
       setLoading,
       setError,
       clearError,
       setLastFetched,
+      checkLowStockAlert,
 
       /**
        * Set current fabric
@@ -311,7 +343,9 @@ export const FabricStoreModel = types
       setCurrentFabric(fabric: Fabric | null) {
         if (fabric) {
           const validatedFabric = validateFabric(fabric)
-          self.currentFabric = FabricModel.create(validatedFabric)
+          self.currentFabric = FabricModel.create(
+            validatedFabric as unknown as SnapshotIn<typeof FabricModel>,
+          )
         } else {
           self.currentFabric = null
         }
@@ -362,7 +396,7 @@ export const FabricStoreModel = types
           }
 
           // Check for low stock alerts
-          self.checkLowStockAlert(fabric)
+          checkLowStockAlert(fabric)
         }
       },
 
@@ -403,36 +437,6 @@ export const FabricStoreModel = types
           return true
         }
         return false
-      },
-
-      /**
-       * Check and create low stock alerts
-       */
-      checkLowStockAlert(fabric: any) {
-        const existingAlert = self.lowStockAlerts.find((alert) => alert.fabricId === fabric.id)
-
-        if (fabric.inventory.availableQuantity <= fabric.inventory.reorderLevel) {
-          const alertLevel = fabric.inventory.availableQuantity === 0 ? "critical" : "warning"
-
-          if (!existingAlert) {
-            self.lowStockAlerts.push({
-              fabricId: fabric.id,
-              fabricName: fabric.name,
-              currentStock: fabric.inventory.availableQuantity,
-              reorderLevel: fabric.inventory.reorderLevel,
-              alertLevel,
-              createdAt: createTimestamp(),
-            })
-          } else {
-            // Update existing alert
-            existingAlert.currentStock = fabric.inventory.availableQuantity
-            existingAlert.alertLevel = alertLevel
-          }
-        } else if (existingAlert) {
-          // Remove alert if stock is above reorder level
-          const index = self.lowStockAlerts.indexOf(existingAlert)
-          self.lowStockAlerts.splice(index, 1)
-        }
       },
 
       /**
@@ -596,7 +600,7 @@ export const FabricStoreModel = types
       searchFabrics: flow(function* (query: string, filters: any = {}) {
         self.search.setQuery(query)
         Object.entries(filters).forEach(([key, value]) => {
-          self.search.setFilter(key, value)
+          self.search.setFilter(key, value as string | number | boolean)
         })
 
         try {

@@ -15,11 +15,16 @@ export interface UserProfile {
 }
 
 export interface UserAddress {
+  id?: string
+  type?: "home" | "work" | "billing" | "shipping"
   street: string
   city: string
   state: string
   zipCode: string
   country: string
+  isDefault?: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface UserPreferences {
@@ -31,6 +36,8 @@ export interface UserPreferences {
   language: string
   timezone: string
   currency: string
+  theme?: "light" | "dark" | "auto"
+  measurementUnit?: "metric" | "imperial"
 }
 
 export interface User {

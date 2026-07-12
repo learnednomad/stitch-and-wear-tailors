@@ -1,13 +1,38 @@
-import React, { FC, useEffect, useState } from "react"
-import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle, Alert } from "react-native"
+import React, { FC, useCallback, useEffect, useState } from "react"
+import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle, Alert, Modal } from "react-native"
 import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon, Text, StatusUpdateSheet } from "app/components"
+import { Button, Screen, Icon, Text, TextField, StatusUpdateSheet } from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "app/theme"
-import { useNavigation } from "@react-navigation/native"
+import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
 import { orderApi } from "@/services/api/order-api"
+import { messageApi } from "@/services/api/message-api"
+
+/** Cancellation reason presets (ORD-011) */
+const CANCEL_REASONS = [
+  "Changed my mind",
+  "Found another tailor",
+  "Timeline too long",
+  "Other",
+] as const
+
+/** Domain garment type → NewOrderScreen catalog style id (for reorder) */
+const GARMENT_TO_STYLE_ID: Record<string, string> = {
+  kaftan: "kaftan-1",
+  agbada: "agbada-1",
+  modern: "shirt-1",
+  ankara_dress: "dress-1",
+}
+
+/** Domain fabric type → NewOrderScreen catalog fabric id (for reorder) */
+const FABRIC_TYPE_TO_ID: Record<string, string> = {
+  ankara: "ankara-1",
+  silk: "silk-1",
+  lace: "lace-1",
+  cotton: "cotton-1",
+}
 
 /** Derive the current PocketBase status from the mapped domain order */
 const domainToCurrentPBStatus = (order: {
@@ -62,9 +87,27 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
   const [isLoading, setIsLoading] = useState(true)
   const [isStatusSheetVisible, setIsStatusSheetVisible] = useState(false)
   const [isActing, setIsActing] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false)
+  const [cancelReason, setCancelReason] = useState<string | null>(null)
+  const [cancelDetail, setCancelDetail] = useState("")
 
   // Extract order ID from route params
   const { orderId } = route?.params || { orderId: "" }
+
+  // Refresh the chat unread badge whenever the screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!orderId) return undefined
+      let cancelled = false
+      messageApi.unreadCountForOrder(orderId).then((result) => {
+        if (!cancelled && result.success) setUnreadCount(result.data)
+      })
+      return () => {
+        cancelled = true
+      }
+    }, [orderId]),
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -101,6 +144,12 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
     (!order.tailorId || order.tailorId === viewerId)
   const canUpdateStatus =
     isAssignedTailor && ["confirmed", "in_progress", "ready"].includes(order?.status ?? "")
+  // Chat is available once both parties are on the order
+  const canMessage = !!order?.tailorId && !!order?.userId
+  // Customers can cancel while the order is pending/confirmed (PB pending/accepted)
+  const canCancel = !isTailorViewer && ["pending", "confirmed"].includes(order?.status ?? "")
+  // Customers can reorder a finished (delivered/cancelled) order
+  const canReorder = !isTailorViewer && ["delivered", "cancelled"].includes(order?.status ?? "")
 
   const reloadOrder = async () => {
     if (orderId) await orderStore.loadNigerianOrder(orderId)
@@ -150,6 +199,49 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
     } else {
       Alert.alert("Error", result.message || "Failed to update status")
     }
+  }
+
+  const handleOpenChat = () => {
+    if (!order) return
+    ;(navigation as any).navigate("OrderChat", { orderId: order.id })
+  }
+
+  const closeCancelModal = () => {
+    setIsCancelModalVisible(false)
+    setCancelReason(null)
+    setCancelDetail("")
+  }
+
+  const handleConfirmCancel = async () => {
+    if (!order || !cancelReason) return
+    const detail = cancelDetail.trim()
+    if (cancelReason === "Other" && !detail) {
+      Alert.alert("Reason Required", "Please tell us why you are cancelling this order.")
+      return
+    }
+    const reason =
+      cancelReason === "Other" ? detail : detail ? `${cancelReason} — ${detail}` : cancelReason
+    setIsActing(true)
+    const result = await orderApi.cancelOrder(order.id, reason)
+    setIsActing(false)
+    if (result.success) {
+      closeCancelModal()
+      await reloadOrder()
+      Alert.alert("Order Cancelled", "Your order has been cancelled.")
+    } else {
+      Alert.alert("Error", result.message || "Failed to cancel order")
+    }
+  }
+
+  const handleReorder = () => {
+    if (!order) return
+    // Hydrate the creation workflow from this order, then jump into the
+    // routed creation path with the matching catalog selections pre-picked
+    orderStore.startReorderFrom(order)
+    ;(navigation as any).navigate("NewOrder", {
+      reorderStyleId: GARMENT_TO_STYLE_ID[order.garmentType],
+      reorderFabricId: FABRIC_TYPE_TO_ID[order.fabricSelection.type],
+    })
   }
 
   const formatDate = (dateString?: string | null) => {
@@ -387,10 +479,25 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
         <View style={$section}>
           <Text style={$sectionTitle}>Need Help?</Text>
           <View style={$contactActions}>
-            <TouchableOpacity style={$contactButton}>
-              <Icon icon="menu" size={20} color={colors.palette.primary500} />
-              <Text style={$contactButtonText}>Message Tailor</Text>
-            </TouchableOpacity>
+            {canMessage && (
+              <TouchableOpacity
+                style={$contactButton}
+                onPress={handleOpenChat}
+                accessible
+                accessibilityLabel={`Message ${isTailorViewer ? "client" : "tailor"}${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+                accessibilityRole="button"
+              >
+                <Icon icon="menu" size={20} color={colors.palette.primary500} />
+                <Text style={$contactButtonText}>
+                  {isTailorViewer ? "Message Client" : "Message Tailor"}
+                </Text>
+                {unreadCount > 0 && (
+                  <View style={$unreadBadge}>
+                    <Text style={$unreadBadgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={$contactButton}>
               <Icon icon="bell" size={20} color={colors.palette.primary500} />
               <Text style={$contactButtonText}>Call Shop</Text>
@@ -455,7 +562,86 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
             onPress={() => console.log("Schedule pickup")}
           />
         )}
+        {/* Client action: cancel a pending/confirmed order (ORD-011) */}
+        {canCancel && (
+          <Button
+            text="Cancel Order"
+            style={$cancelButton}
+            textStyle={$cancelButtonText}
+            disabled={isActing}
+            onPress={() => setIsCancelModalVisible(true)}
+          />
+        )}
+        {/* Client action: reorder a delivered/cancelled order (ORD-012) */}
+        {canReorder && (
+          <Button
+            text="Reorder"
+            style={$primaryButton}
+            textStyle={$primaryButtonText}
+            onPress={handleReorder}
+          />
+        )}
       </View>
+
+      {/* Cancellation modal (client) */}
+      <Modal
+        visible={isCancelModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeCancelModal}
+      >
+        <View style={$modalOverlay}>
+          <TouchableOpacity style={$modalBackdrop} activeOpacity={1} onPress={closeCancelModal} />
+          <View style={$modalSheet}>
+            <View style={$modalHeader}>
+              <Text style={$modalTitle}>Cancel Order</Text>
+              <TouchableOpacity
+                onPress={closeCancelModal}
+                accessible
+                accessibilityLabel="Close"
+                accessibilityRole="button"
+              >
+                <Icon icon="x" size={22} color={colors.palette.neutral700} />
+              </TouchableOpacity>
+            </View>
+            <Text style={$modalSubtitle}>Why are you cancelling this order?</Text>
+            <View style={$reasonChips}>
+              {CANCEL_REASONS.map((reason) => (
+                <TouchableOpacity
+                  key={reason}
+                  style={[$reasonChip, cancelReason === reason && $reasonChipSelected]}
+                  onPress={() => setCancelReason(reason)}
+                  accessible
+                  accessibilityLabel={reason}
+                  accessibilityRole="button"
+                >
+                  <Text
+                    style={[$reasonChipText, cancelReason === reason && $reasonChipTextSelected]}
+                  >
+                    {reason}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TextField
+              value={cancelDetail}
+              onChangeText={setCancelDetail}
+              placeholder={
+                cancelReason === "Other" ? "Tell us more (required)" : "Add details (optional)"
+              }
+              multiline
+              containerStyle={$reasonDetailField}
+            />
+            <Button
+              text={isActing ? "Cancelling..." : "Confirm Cancellation"}
+              style={$confirmCancelButton}
+              textStyle={$confirmCancelButtonText}
+              disabled={!cancelReason || isActing}
+              onPress={handleConfirmCancel}
+            />
+          </View>
+        </View>
+      </Modal>
 
       {/* Status update bottom sheet (tailor) */}
       <StatusUpdateSheet
@@ -775,4 +961,119 @@ const $secondaryButtonText: TextStyle = {
   fontSize: 16,
   fontWeight: "600",
   color: colors.palette.neutral900,
+}
+
+const $unreadBadge: ViewStyle = {
+  minWidth: 20,
+  height: 20,
+  borderRadius: 10,
+  backgroundColor: colors.palette.error500,
+  justifyContent: "center",
+  alignItems: "center",
+  paddingHorizontal: spacing.xxs,
+  marginLeft: spacing.xs,
+}
+
+const $unreadBadgeText: TextStyle = {
+  fontSize: 11,
+  fontWeight: "700",
+  color: colors.palette.neutral100,
+}
+
+const $cancelButton: ViewStyle = {
+  backgroundColor: colors.palette.error100,
+  borderRadius: 12,
+  paddingVertical: spacing.md,
+}
+
+const $cancelButtonText: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
+  color: colors.palette.error500,
+}
+
+const $modalOverlay: ViewStyle = {
+  flex: 1,
+  justifyContent: "flex-end",
+}
+
+const $modalBackdrop: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: colors.palette.overlay50,
+}
+
+const $modalSheet: ViewStyle = {
+  backgroundColor: colors.palette.neutral100,
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  padding: spacing.lg,
+  paddingBottom: spacing.xl,
+}
+
+const $modalHeader: ViewStyle = {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: spacing.sm,
+}
+
+const $modalTitle: TextStyle = {
+  fontSize: 18,
+  fontWeight: "700",
+  color: colors.palette.neutral900,
+}
+
+const $modalSubtitle: TextStyle = {
+  fontSize: 14,
+  color: colors.palette.neutral600,
+  marginBottom: spacing.md,
+}
+
+const $reasonChips: ViewStyle = {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  gap: spacing.xs,
+  marginBottom: spacing.sm,
+}
+
+const $reasonChip: ViewStyle = {
+  paddingHorizontal: spacing.md,
+  paddingVertical: spacing.xs,
+  borderRadius: 20,
+  borderWidth: 1,
+  borderColor: colors.palette.neutral300,
+}
+
+const $reasonChipSelected: ViewStyle = {
+  borderColor: colors.palette.primary500,
+  backgroundColor: colors.palette.primary100,
+}
+
+const $reasonChipText: TextStyle = {
+  fontSize: 14,
+  color: colors.palette.neutral800,
+}
+
+const $reasonChipTextSelected: TextStyle = {
+  fontWeight: "600",
+  color: colors.palette.primary700,
+}
+
+const $reasonDetailField: ViewStyle = {
+  marginBottom: spacing.md,
+}
+
+const $confirmCancelButton: ViewStyle = {
+  backgroundColor: colors.palette.error500,
+  borderRadius: 12,
+}
+
+const $confirmCancelButtonText: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
+  color: colors.palette.neutral100,
 }

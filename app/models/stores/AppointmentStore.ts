@@ -3,7 +3,7 @@
  * Manages appointment booking, scheduling, availability, and calendar integration
  */
 
-import { types, flow, Instance, SnapshotOut } from "mobx-state-tree"
+import { types, flow, Instance, SnapshotIn, SnapshotOut } from "mobx-state-tree"
 import { createAsyncAction, createCollectionModel, generateId, createTimestamp } from "../mst"
 import { Appointment, AppointmentStatus, AppointmentType } from "../types"
 import { validateAppointment } from "../schemas"
@@ -268,7 +268,9 @@ export const AppointmentStoreModel = types
       setCurrentAppointment(appointment: Appointment | null) {
         if (appointment) {
           const validatedAppointment = validateAppointment(appointment)
-          self.currentAppointment = AppointmentModel.create(validatedAppointment)
+          self.currentAppointment = AppointmentModel.create(
+            validatedAppointment as unknown as SnapshotIn<typeof AppointmentModel>,
+          )
         } else {
           self.currentAppointment = null
         }
@@ -591,26 +593,29 @@ export const AppointmentStoreModel = types
       { errorPrefix: "Failed to load availability" },
     )
 
-    return {
-      /**
-       * Load appointments
-       */
-      loadAppointments: flow(function* (params: any = {}, reset: boolean = false) {
-        try {
-          const result = yield fetchAppointments(params)
+    /**
+     * Load appointments
+     * (hoisted so sibling actions in this block can call it directly)
+     */
+    const loadAppointments = flow(function* (params: any = {}, reset: boolean = false) {
+      try {
+        const result = yield fetchAppointments(params)
 
-          if (reset) {
-            self.appointments.setItems(result.appointments)
-          } else {
-            self.appointments.addItems(result.appointments)
-          }
-
-          self.appointments.setHasMore(result.hasMore)
-          return result
-        } catch (error) {
-          throw error
+        if (reset) {
+          self.appointments.setItems(result.appointments)
+        } else {
+          self.appointments.addItems(result.appointments)
         }
-      }),
+
+        self.appointments.setHasMore(result.hasMore)
+        return result
+      } catch (error) {
+        throw error
+      }
+    })
+
+    return {
+      loadAppointments,
 
       /**
        * Book appointment
@@ -673,7 +678,9 @@ export const AppointmentStoreModel = types
             updatedAt: createTimestamp(),
           }
 
-          const created = yield createAppointment(appointmentData)
+          const created = yield createAppointment(
+            appointmentData as unknown as Partial<Appointment>,
+          )
           self.appointments.addItem(AppointmentModel.create(created))
           self.cancelBooking()
           return created
@@ -725,7 +732,7 @@ export const AppointmentStoreModel = types
         }
 
         try {
-          return yield self.loadAppointments(params, true)
+          return yield loadAppointments(params, true)
         } catch (error) {
           throw error
         }
@@ -747,7 +754,7 @@ export const AppointmentStoreModel = types
         }
 
         try {
-          return yield self.loadAppointments(params, true)
+          return yield loadAppointments(params, true)
         } catch (error) {
           throw error
         }
@@ -838,7 +845,7 @@ export const AppointmentStoreModel = types
      */
     get calendarAppointments() {
       const { currentDate, viewMode, selectedTailorId } = self.calendarView
-      let appointments = self.appointments.items
+      let appointments = self.appointments.items.slice()
 
       // Filter by tailor if selected
       if (selectedTailorId) {

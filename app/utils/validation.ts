@@ -49,7 +49,7 @@ export class ValidationUtils {
     const warnings: string[] = []
 
     // Check for common typos in popular domains
-    const commonDomainTypos = {
+    const commonDomainTypos: Record<string, string> = {
       "gmail.co": "gmail.com",
       "gmail.cm": "gmail.com",
       "gmial.com": "gmail.com",

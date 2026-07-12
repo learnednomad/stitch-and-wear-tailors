@@ -9,7 +9,7 @@ import { observer } from "mobx-react-lite"
 import { Text, TextField, Button } from "app/components"
 import { colors, spacing } from "app/theme"
 import { useStores } from "@/models"
-import { NigerianCity, SupportedLanguage } from "@/types/orders"
+import { CustomerInfo, NigerianCity, SupportedLanguage } from "@/types/orders"
 
 export const CustomerInfoStep: FC = observer(() => {
   const { orderStore, authStore } = useStores()
@@ -31,10 +31,10 @@ export const CustomerInfoStep: FC = observer(() => {
     if (authStore.user) {
       setFormData((prev) => ({
         ...prev,
-        firstName: authStore.user?.firstName || "",
-        lastName: authStore.user?.lastName || "",
+        firstName: authStore.user?.profile.firstName || "",
+        lastName: authStore.user?.profile.lastName || "",
         email: authStore.user?.email || "",
-        phone: authStore.user?.phone || "",
+        phone: authStore.user?.profile.phone ?? "",
       }))
     }
 
@@ -47,8 +47,8 @@ export const CustomerInfoStep: FC = observer(() => {
         email: existing.email,
         phone: existing.phone,
         address: existing.address,
-        city: existing.city,
-        preferredLanguage: existing.preferredLanguage,
+        city: existing.city as NigerianCity,
+        preferredLanguage: existing.preferredLanguage as SupportedLanguage,
       })
     }
   }, [])
@@ -80,7 +80,7 @@ export const CustomerInfoStep: FC = observer(() => {
 
   const handleSave = () => {
     if (validateForm()) {
-      orderStore.setOrderCustomerInfo(formData)
+      orderStore.setOrderCustomerInfo(formData as CustomerInfo)
       Alert.alert("Information Saved", "Customer information has been saved successfully.")
     }
   }

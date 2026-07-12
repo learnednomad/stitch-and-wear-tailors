@@ -1,7 +1,7 @@
 import { MMKV } from "react-native-mmkv"
 
 // Create the MMKV instance
-const mmkvStorage = new MMKV()
+export const mmkvStorage = new MMKV()
 
 // Export as 'storage' object with all methods
 export const storage = {
@@ -19,6 +19,7 @@ export const storage = {
   delete: (key: string) => mmkvStorage.delete(key),
   clearAll: () => mmkvStorage.clearAll(),
   contains: (key: string) => mmkvStorage.contains(key),
+  getAllKeys: () => mmkvStorage.getAllKeys(),
 
   // Additional helper methods
   getObject: <T>(key: string): T | null => {

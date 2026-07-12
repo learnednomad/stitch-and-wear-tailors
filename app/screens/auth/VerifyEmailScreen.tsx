@@ -1,6 +1,6 @@
 import { FC, useState, useEffect } from "react"
 import { observer } from "mobx-react-lite"
-import { ViewStyle, View, Alert, TouchableOpacity } from "react-native"
+import { ViewStyle, TextStyle, View, Alert, TouchableOpacity } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Button } from "@/components"
 import { useNavigation } from "@react-navigation/native"
@@ -30,6 +30,7 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
     } else {
       setCanResend(true)
     }
+    return undefined
   }, [countdown])
 
   const handleResendVerification = async () => {
@@ -73,7 +74,7 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
               onPress: () => {
                 // Clear any existing auth state and navigate to sign in
                 authStore.clearAuth()
-                navigation.navigate("SignIn" as any)
+                navigation.navigate("SignIn" as never)
               },
             },
           ],
@@ -97,7 +98,7 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
         {
           text: "Go Back",
           style: "destructive",
-          onPress: () => navigation.navigate("SignIn" as any),
+          onPress: () => navigation.navigate("SignIn" as never),
         },
       ],
     )
@@ -190,12 +191,12 @@ const $header: ViewStyle = {
   marginBottom: spacing.xl,
 }
 
-const $title: ViewStyle = {
+const $title: TextStyle = {
   marginBottom: spacing.sm,
   textAlign: "center",
 }
 
-const $subtitle: ViewStyle = {
+const $subtitle: TextStyle = {
   textAlign: "center",
   lineHeight: 24,
 }
@@ -213,7 +214,7 @@ const $emailIcon: ViewStyle = {
   alignItems: "center",
 }
 
-const $emailIconText: ViewStyle = {
+const $emailIconText: TextStyle = {
   fontSize: 40,
 }
 
@@ -225,7 +226,7 @@ const $instructionsTitle: ViewStyle = {
   marginBottom: spacing.md,
 }
 
-const $instructionItem: ViewStyle = {
+const $instructionItem: TextStyle = {
   marginBottom: spacing.sm,
   paddingLeft: spacing.md,
   lineHeight: 20,
@@ -241,7 +242,7 @@ const $resendButton: ViewStyle = {
   marginBottom: spacing.xl,
 }
 
-const $resendText: ViewStyle = {
+const $resendText: TextStyle = {
   fontSize: 16,
   fontWeight: "500",
   textDecorationLine: "underline",
@@ -256,7 +257,7 @@ const $helpTitle: ViewStyle = {
   marginBottom: spacing.sm,
 }
 
-const $helpItem: ViewStyle = {
+const $helpItem: TextStyle = {
   marginBottom: spacing.xs,
   paddingLeft: spacing.md,
   fontSize: 14,

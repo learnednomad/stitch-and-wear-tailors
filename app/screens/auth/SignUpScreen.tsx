@@ -1,6 +1,6 @@
 import { FC, useState, useMemo } from "react"
 import { observer } from "mobx-react-lite"
-import { ViewStyle, View, Alert, TouchableOpacity, TextStyle } from "react-native"
+import { ViewStyle, View, Alert, TouchableOpacity, TextStyle, ImageStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, TextField, Button, PasswordStrengthIndicator, Icon } from "@/components"
 import { useNavigation } from "@react-navigation/native"
@@ -464,7 +464,7 @@ const $socialButtonText: TextStyle = {
   fontWeight: "500",
 }
 
-const $socialIcon: ViewStyle = {
+const $socialIcon: ImageStyle = {
   marginRight: spacing.sm,
 }
 

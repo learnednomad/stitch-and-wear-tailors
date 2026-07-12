@@ -213,7 +213,7 @@ class BiometricServiceImpl {
       }
 
       const result = await simplePrompt(reason)
-      return result
+      return result.success
     } catch (error) {
       console.error("💥 Quick auth failed:", error)
       return false
@@ -372,7 +372,7 @@ class BiometricServiceImpl {
    */
   async hasRecentAuth(timeoutMinutes: number = 15): Promise<boolean> {
     try {
-      const lastAuth = await storage.load("lastBiometricAuth")
+      const lastAuth = await storage.load<string>("lastBiometricAuth")
       if (!lastAuth) return false
 
       const lastAuthTime = new Date(lastAuth)

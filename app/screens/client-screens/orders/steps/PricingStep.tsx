@@ -9,7 +9,7 @@ import { observer } from "mobx-react-lite"
 import { Text, Button, Icon } from "app/components"
 import { colors, spacing } from "app/theme"
 import { useStores } from "@/models"
-import { PaymentMethod, NigerianCity, OrderPriority } from "@/types/orders"
+import { PaymentMethod, NigerianCity, NigerianGarmentType, OrderPriority } from "@/types/orders"
 
 interface PricingBreakdown {
   basePrice: number
@@ -36,7 +36,7 @@ export const PricingStep: FC = observer(() => {
       name: orderStore.getTranslation("paymentMethods", "bank_transfer"),
       description: "Direct bank transfer - Most common in Nigeria",
       processingFee: 0,
-      icon: "bank" as const,
+      icon: "money" as const,
       available: true,
     },
     {
@@ -44,7 +44,7 @@ export const PricingStep: FC = observer(() => {
       name: orderStore.getTranslation("paymentMethods", "mobile_money"),
       description: "OPay, PalmPay, and other mobile wallets",
       processingFee: 50,
-      icon: "mobile" as const,
+      icon: "money" as const,
       available: true,
     },
     {
@@ -52,7 +52,7 @@ export const PricingStep: FC = observer(() => {
       name: orderStore.getTranslation("paymentMethods", "cash"),
       description: "Cash payment on delivery or at pickup",
       processingFee: 0,
-      icon: "cash" as const,
+      icon: "money" as const,
       available: true,
     },
     {
@@ -60,7 +60,7 @@ export const PricingStep: FC = observer(() => {
       name: orderStore.getTranslation("paymentMethods", "card"),
       description: "Debit/Credit card payment",
       processingFee: 100,
-      icon: "card" as const,
+      icon: "money" as const,
       available: true,
     },
     {
@@ -68,7 +68,7 @@ export const PricingStep: FC = observer(() => {
       name: "POS Terminal",
       description: "Point of Sale terminal payment",
       processingFee: 50,
-      icon: "terminal" as const,
+      icon: "money" as const,
       available: true,
     },
   ]
@@ -79,28 +79,28 @@ export const PricingStep: FC = observer(() => {
       name: "Standard Delivery",
       description: "Normal processing time",
       multiplier: 1.0,
-      icon: "clock" as const,
+      icon: "appointment" as const,
     },
     {
       priority: "normal" as OrderPriority,
       name: "Priority Delivery",
       description: "Faster processing",
       multiplier: 1.2,
-      icon: "fast-forward" as const,
+      icon: "caretRight" as const,
     },
     {
       priority: "high" as OrderPriority,
       name: "Express Delivery",
       description: "Quick turnaround",
       multiplier: 1.5,
-      icon: "lightning" as const,
+      icon: "sew" as const,
     },
     {
       priority: "urgent" as OrderPriority,
       name: "Rush Order",
       description: "Emergency delivery",
       multiplier: 2.0,
-      icon: "fire" as const,
+      icon: "sew" as const,
     },
   ]
 
@@ -123,8 +123,8 @@ export const PricingStep: FC = observer(() => {
       }
 
       // Calculate Nigerian pricing using OrderStore method
-      const garmentType = orderCreationData.styleConfig.garmentType
-      const city = orderCreationData.customerInfo.city
+      const garmentType = orderCreationData.styleConfig.garmentType as NigerianGarmentType
+      const city = orderCreationData.customerInfo.city as NigerianCity
       const isRush = selectedPriority === "urgent"
 
       const calculatedPricing = orderStore.calculateNigerianPricing(garmentType, city, isRush)
@@ -188,7 +188,7 @@ export const PricingStep: FC = observer(() => {
     if (!orderStore.orderCreationData?.styleConfig) return "N/A"
 
     const garmentConfig = orderStore.getGarmentConfig(
-      orderStore.orderCreationData.styleConfig.garmentType,
+      orderStore.orderCreationData.styleConfig.garmentType as NigerianGarmentType,
     )
     if (!garmentConfig) return "N/A"
 
@@ -361,7 +361,7 @@ export const PricingStep: FC = observer(() => {
 
           <View style={$deliveryInfo}>
             <View style={$deliveryItem}>
-              <Icon icon="calendar" size={20} color={colors.palette.threadBlue} />
+              <Icon icon="appointment" size={20} color={colors.palette.threadBlue} />
               <View style={$deliveryText}>
                 <Text style={$deliveryLabel}>Estimated Delivery</Text>
                 <Text style={$deliveryValue}>{getEstimatedDelivery()}</Text>
@@ -369,7 +369,7 @@ export const PricingStep: FC = observer(() => {
             </View>
 
             <View style={$deliveryItem}>
-              <Icon icon="location" size={20} color={colors.palette.threadBlue} />
+              <Icon icon="home" size={20} color={colors.palette.threadBlue} />
               <View style={$deliveryText}>
                 <Text style={$deliveryLabel}>Delivery Location</Text>
                 <Text style={$deliveryValue}>
@@ -386,7 +386,7 @@ export const PricingStep: FC = observer(() => {
 
         {/* Terms Notice */}
         <View style={$termsNotice}>
-          <Icon icon="info" size={20} color={colors.palette.threadBlue} />
+          <Icon icon="bell" size={20} color={colors.palette.threadBlue} />
           <View style={$termsText}>
             <Text style={$termsTitle}>Payment Terms</Text>
             <Text style={$termsDescription}>

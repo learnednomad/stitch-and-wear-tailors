@@ -370,7 +370,81 @@ export const AuthStoreModel = types
       { errorPrefix: "Sign out failed", handleErrors: false },
     )
 
+    /**
+     * Restore authentication state from persistent storage
+     */
+    const restoreFromStorage = flow(function* () {
+      try {
+        console.log("🔄 AuthStore.restoreFromStorage: Starting...")
+
+        // Check if user enabled remember me
+        const rememberUser = storage.getBoolean("auth.rememberUser")
+        if (!rememberUser) {
+          console.log("🔄 AuthStore.restoreFromStorage: Remember me disabled")
+          return
+        }
+
+        self.setRememberUser(true)
+
+        // Try to restore from secure storage first
+        const [secureTokens, secureProfile, secureCredentials] = yield Promise.all([
+          SecureStorage.getAuthTokens(),
+          SecureStorage.getUserProfile(),
+          SecureStorage.getUserCredentials(),
+        ])
+
+        console.log("🔄 AuthStore.restoreFromStorage: Secure storage results:", {
+          hasTokens: !!secureTokens,
+          hasProfile: !!secureProfile,
+          hasCredentials: !!secureCredentials,
+        })
+
+        // Restore user data (try secure storage first, fallback to regular storage)
+        let userData = secureProfile
+        if (!userData) {
+          const storedUser = storage.getObject("auth.user")
+          if (storedUser) {
+            userData = storedUser
+            console.log(
+              "🔄 AuthStore.restoreFromStorage: Using fallback user data from regular storage",
+            )
+          }
+        }
+
+        if (userData) {
+          self.setUser(userData as User)
+          console.log("🔄 AuthStore.restoreFromStorage: User data restored")
+        }
+
+        // Restore session data (try secure storage first, fallback to regular storage)
+        let sessionData = secureTokens
+        if (!sessionData) {
+          const storedSession = storage.getObject("auth.session")
+          if (storedSession) {
+            sessionData = storedSession
+            console.log(
+              "🔄 AuthStore.restoreFromStorage: Using fallback session data from regular storage",
+            )
+          }
+        }
+
+        if (sessionData) {
+          self.setSession(
+            sessionData as { accessToken: string; refreshToken: string; expiresAt: string },
+          )
+          console.log("🔄 AuthStore.restoreFromStorage: Session data restored")
+        }
+
+        console.log("🔄 AuthStore.restoreFromStorage: Completed successfully")
+      } catch (error) {
+        console.warn("🔄 AuthStore.restoreFromStorage: Failed to restore auth from storage:", error)
+        // Clear corrupted data
+        self.clearAuth()
+      }
+    })
+
     return {
+      restoreFromStorage,
       signIn: flow(function* (credentials: { email: string; password: string }) {
         try {
           const result = yield signIn(credentials)
@@ -477,7 +551,7 @@ export const AuthStoreModel = types
 
           console.log("🔍 AuthStore.checkAuthStatus: Restoring from storage...")
           // Try to restore from persistent storage
-          yield self.restoreFromStorage()
+          yield restoreFromStorage()
 
           if (!self.session.accessToken) {
             console.log("🔍 AuthStore.checkAuthStatus: No access token found")
@@ -519,82 +593,6 @@ export const AuthStoreModel = types
           self.setLoading(false)
         }
       }),
-
-      /**
-       * Restore authentication state from persistent storage
-       */
-      restoreFromStorage: flow(function* () {
-        try {
-          console.log("🔄 AuthStore.restoreFromStorage: Starting...")
-
-          // Check if user enabled remember me
-          const rememberUser = storage.getBoolean("auth.rememberUser")
-          if (!rememberUser) {
-            console.log("🔄 AuthStore.restoreFromStorage: Remember me disabled")
-            return
-          }
-
-          self.setRememberUser(true)
-
-          // Try to restore from secure storage first
-          const [secureTokens, secureProfile, secureCredentials] = yield Promise.all([
-            SecureStorage.getAuthTokens(),
-            SecureStorage.getUserProfile(),
-            SecureStorage.getUserCredentials(),
-          ])
-
-          console.log("🔄 AuthStore.restoreFromStorage: Secure storage results:", {
-            hasTokens: !!secureTokens,
-            hasProfile: !!secureProfile,
-            hasCredentials: !!secureCredentials,
-          })
-
-          // Restore user data (try secure storage first, fallback to regular storage)
-          let userData = secureProfile
-          if (!userData) {
-            const storedUser = storage.getObject("auth.user")
-            if (storedUser) {
-              userData = storedUser
-              console.log(
-                "🔄 AuthStore.restoreFromStorage: Using fallback user data from regular storage",
-              )
-            }
-          }
-
-          if (userData) {
-            self.setUser(userData as User)
-            console.log("🔄 AuthStore.restoreFromStorage: User data restored")
-          }
-
-          // Restore session data (try secure storage first, fallback to regular storage)
-          let sessionData = secureTokens
-          if (!sessionData) {
-            const storedSession = storage.getObject("auth.session")
-            if (storedSession) {
-              sessionData = storedSession
-              console.log(
-                "🔄 AuthStore.restoreFromStorage: Using fallback session data from regular storage",
-              )
-            }
-          }
-
-          if (sessionData) {
-            self.setSession(
-              sessionData as { accessToken: string; refreshToken: string; expiresAt: string },
-            )
-            console.log("🔄 AuthStore.restoreFromStorage: Session data restored")
-          }
-
-          console.log("🔄 AuthStore.restoreFromStorage: Completed successfully")
-        } catch (error) {
-          console.warn(
-            "🔄 AuthStore.restoreFromStorage: Failed to restore auth from storage:",
-            error,
-          )
-          // Clear corrupted data
-          self.clearAuth()
-        }
-      }),
     }
   })
   .views((self) => ({
@@ -616,7 +614,7 @@ export const AuthStoreModel = types
      * Check if user has any of the specified roles
      */
     hasAnyRole(roles: UserRole[]) {
-      return self.user ? roles.includes(self.user.role) : false
+      return self.user ? roles.includes(self.user.role as UserRole) : false
     },
 
     /**

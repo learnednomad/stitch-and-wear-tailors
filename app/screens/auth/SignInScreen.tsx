@@ -4,7 +4,7 @@ import { ViewStyle, View, Alert } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen } from "@/components"
 import { useNavigation } from "@react-navigation/native"
-import { useStores } from "@/models"
+import { useStores, UserStatus } from "@/models"
 import AuthService from "@/services/auth/AuthService"
 import { spacing, colors } from "@/theme"
 import { ValidationUtils } from "@/utils/validation"
@@ -99,7 +99,7 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
           id: result.data.user.$id,
           email: result.data.user.email,
           role: profile?.userType || ("client" as const),
-          status: profile?.status || ("active" as const),
+          status: (profile?.status || "active") as UserStatus,
           profile: {
             firstName: profile?.firstName || result.data.user.name.split(" ")[0] || "",
             lastName:

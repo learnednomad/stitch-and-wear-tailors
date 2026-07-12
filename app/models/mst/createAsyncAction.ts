@@ -107,7 +107,7 @@ export function createDebouncedAsyncAction<TArgs extends any[], TReturn>(
     return new Promise<TReturn>((resolve, reject) => {
       timeoutId = setTimeout(() => {
         asyncAction(...args)
-          .then(resolve)
+          .then((value) => resolve(value as TReturn))
           .catch(reject)
       }, debounceMs)
     })

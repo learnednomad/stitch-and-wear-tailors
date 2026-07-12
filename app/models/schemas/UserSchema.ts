@@ -73,6 +73,7 @@ export const UpdateUserInputSchema = z.object({
 
 // Validation functions
 export const validateUser = (data: unknown) => UserSchema.parse(data)
+export const validateUserAddress = (data: unknown) => UserAddressSchema.passthrough().parse(data)
 export const validateCreateUserInput = (data: unknown) => CreateUserInputSchema.parse(data)
 export const validateUpdateUserInput = (data: unknown) => UpdateUserInputSchema.parse(data)
 

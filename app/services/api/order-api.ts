@@ -90,7 +90,7 @@ export interface FetchOrdersParams {
   unassigned?: boolean
   /** domain or PocketBase priority value */
   priority?: string
-  /** matched against orderNumber */
+  /** matched against orderNumber or specialInstructions (contains) */
   search?: string
   dateFrom?: string
   dateTo?: string
@@ -585,7 +585,12 @@ export const orderApi = {
       params.priority
         ? filters.eq("priority", DOMAIN_TO_PB_PRIORITY[params.priority] ?? params.priority)
         : "",
-      params.search ? filters.like("orderNumber", params.search) : "",
+      params.search
+        ? filters.or(
+            filters.like("orderNumber", params.search),
+            filters.like("specialInstructions", params.search),
+          )
+        : "",
       params.dateFrom ? filters.gte("created", params.dateFrom) : "",
       params.dateTo ? filters.lte("created", params.dateTo) : "",
     )

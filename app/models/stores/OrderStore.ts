@@ -599,6 +599,49 @@ export const OrderStoreModel = types
       },
 
       /**
+       * Hydrate the order-creation workflow from a past order (reorder).
+       * Accepts a mapped domain order (NigerianOrderModel instance or
+       * snapshot) and pre-fills customerInfo, measurementId, fabricSelection
+       * and styleConfig so the creation flow starts from the old selections.
+       */
+      startReorderFrom(order: any) {
+        self.orderCreationStep = 0
+        self.orderCreationData = {
+          customerInfo: order?.customerInfo
+            ? {
+                firstName: order.customerInfo.firstName ?? "",
+                lastName: order.customerInfo.lastName ?? "",
+                email: order.customerInfo.email ?? "",
+                phone: order.customerInfo.phone ?? "",
+                address: order.customerInfo.address ?? "",
+                city: order.city ?? "lagos",
+                preferredLanguage: order.customerLanguage ?? "en",
+              }
+            : null,
+          measurementId: order?.measurementId ?? null,
+          fabricSelection: order?.fabricSelection
+            ? {
+                type: order.fabricSelection.type ?? "ankara",
+                color: order.fabricSelection.color ?? "",
+                quantity: order.fabricSelection.quantity ?? 0,
+                unitPrice: order.fabricSelection.unitPrice ?? 0,
+                totalPrice: order.fabricSelection.totalPrice ?? 0,
+              }
+            : null,
+          styleConfig: order?.styleConfig
+            ? {
+                garmentType: order.garmentType ?? "custom",
+                fitPreference: order.styleConfig.fitPreference ?? "regular",
+                designNotes: order.styleConfig.designNotes ?? null,
+                culturalSpecifications: order.styleConfig.culturalSpecifications ?? null,
+              }
+            : null,
+          orderType: order?.type ?? "custom",
+          priority: order?.priority ?? "normal",
+        }
+      },
+
+      /**
        * Calculate Nigerian pricing based on city and garment type
        */
       calculateNigerianPricing,

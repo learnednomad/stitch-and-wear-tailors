@@ -197,7 +197,7 @@ export const MeasurementsStep: FC = observer(() => {
             onPress={() => setSelectedOption("new")}
           >
             <View style={$optionHeader}>
-              <Icon icon="plus" size={24} color={colors.palette.tailorGold} />
+              <Icon icon="more" size={24} color={colors.palette.tailorGold} />
               <Text style={$optionTitle}>Take New Measurements</Text>
             </View>
             <Text style={$optionDescription}>
@@ -211,7 +211,7 @@ export const MeasurementsStep: FC = observer(() => {
               onPress={() => setSelectedOption("existing")}
             >
               <View style={$optionHeader}>
-                <Icon icon="history" size={24} color={colors.palette.sageGreen} />
+                <Icon icon="appointment" size={24} color={colors.palette.sageGreen} />
                 <Text style={$optionTitle}>Use Saved Measurements</Text>
               </View>
               <Text style={$optionDescription}>
@@ -225,7 +225,7 @@ export const MeasurementsStep: FC = observer(() => {
             onPress={() => setSelectedOption("skip")}
           >
             <View style={$optionHeader}>
-              <Icon icon="clock" size={24} color={colors.palette.threadBlue} />
+              <Icon icon="appointment" size={24} color={colors.palette.threadBlue} />
               <Text style={$optionTitle}>Measure During Fitting</Text>
             </View>
             <Text style={$optionDescription}>
@@ -290,7 +290,7 @@ export const MeasurementsStep: FC = observer(() => {
         {selectedOption === "skip" && (
           <View style={$section}>
             <View style={$skipInfo}>
-              <Icon icon="info" size={24} color={colors.palette.threadBlue} />
+              <Icon icon="bell" size={24} color={colors.palette.threadBlue} />
               <View style={$skipTextContainer}>
                 <Text style={$skipTitle}>Fitting Appointment Required</Text>
                 <Text style={$skipDescription}>

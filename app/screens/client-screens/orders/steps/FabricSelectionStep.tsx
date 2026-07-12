@@ -9,6 +9,7 @@ import {
   ScrollView,
   ViewStyle,
   TextStyle,
+  ImageStyle,
   TouchableOpacity,
   FlatList,
   Alert,
@@ -206,7 +207,7 @@ export const FabricSelectionStep: FC = observer(() => {
         totalPrice,
         supplier: selectedFabric.supplier,
         inStock: selectedFabric.inStock,
-        location: orderStore.orderCreationData?.customerInfo?.city || ("lagos" as NigerianCity),
+        location: (orderStore.orderCreationData?.customerInfo?.city || "lagos") as NigerianCity,
       }
 
       orderStore.setOrderFabricSelection(fabricSelection)
@@ -261,7 +262,7 @@ export const FabricSelectionStep: FC = observer(() => {
 
         {item.culturalSignificance && (
           <View style={$culturalBadge}>
-            <Icon icon="star" size={12} color={colors.palette.tailorGold} />
+            <Icon icon="check" size={12} color={colors.palette.tailorGold} />
             <Text style={$culturalText}>Traditional</Text>
           </View>
         )}
@@ -304,7 +305,7 @@ export const FabricSelectionStep: FC = observer(() => {
             placeholder="Search fabrics..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            LeftAccessory={() => <Icon icon="search" size={20} color={colors.palette.threadBlue} />}
+            LeftAccessory={() => <Icon icon="view" size={20} color={colors.palette.threadBlue} />}
           />
         </View>
 
@@ -506,7 +507,7 @@ const $fabricImageContainer: ViewStyle = {
   marginBottom: spacing.sm,
 }
 
-const $fabricImage: ViewStyle = {
+const $fabricImage: ImageStyle = {
   width: "100%",
   height: 80,
   borderRadius: 8,
@@ -661,7 +662,7 @@ const $quantityButtonText: TextStyle = {
   color: colors.palette.deepCharcoal,
 }
 
-const $quantityInput: ViewStyle = {
+const $quantityInput: TextStyle = {
   flex: 1,
   textAlign: "center",
 }

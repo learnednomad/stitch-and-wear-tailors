@@ -47,10 +47,11 @@ export type AppStackParamList = {
   Home: undefined
   Orders: undefined
   OrderDetail: { orderId: string }
-  NewOrder: undefined
+  NewOrder: { reorderStyleId?: string; reorderFabricId?: string } | undefined
   Measurement: { styleId?: string; fabricId?: string; amount?: number }
   OrderHistory: undefined
   OrderTracking: { orderId: string }
+  OrderChat: { orderId: string }
   Payment: {
     orderId: string
     amount: number
@@ -177,6 +178,7 @@ const AppStack = observer(function AppStack() {
             <Stack.Screen name="Measurement" component={Screens.MeasurementScreen} />
             <Stack.Screen name="OrderHistory" component={Screens.OrderHistoryScreen} />
             <Stack.Screen name="OrderTracking" component={Screens.OrderTrackingScreen} />
+            <Stack.Screen name="OrderChat" component={Screens.OrderChatScreen} />
             <Stack.Screen name="Payment" component={Screens.PaymentScreen as any} />
             <Stack.Screen name="Tailor" component={Screens.TailorScreen} />
             <Stack.Screen name="TailorOrder" component={Screens.TailorOrderScreen} />

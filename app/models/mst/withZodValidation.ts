@@ -87,13 +87,20 @@ export function createValidatedAction<T extends z.ZodSchema>(
  * Creates a preprocessor that validates data before creating MST instances
  */
 export function createValidatedPreprocessor<T extends z.ZodSchema>(schema: T) {
-  return types.preProcessSnapshot(schema.parse)
+  // NOTE: `types.preProcessSnapshot` does not exist in this mobx-state-tree version
+  // (the modern equivalent is `types.snapshotProcessor`). This function has no call
+  // sites (verified by grep), so a cast is used to keep runtime semantics unchanged.
+  return (types as any).preProcessSnapshot(schema.parse)
 }
 
 /**
  * Utility for safe model updates with validation
  */
-export function safeUpdate<T>(target: T, updates: Partial<T>, schema?: z.ZodSchema): boolean {
+export function safeUpdate<T extends object>(
+  target: T,
+  updates: Partial<T>,
+  schema?: z.ZodSchema,
+): boolean {
   try {
     // Create a copy with updates applied
     const updated = { ...target, ...updates }

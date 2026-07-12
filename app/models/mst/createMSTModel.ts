@@ -3,7 +3,7 @@
  * Provides helpers for creating MobX-State-Tree models with TypeScript integration
  */
 
-import { types, Instance, SnapshotIn, SnapshotOut } from "mobx-state-tree"
+import { types, Instance, SnapshotIn, SnapshotOut, IAnyType } from "mobx-state-tree"
 
 /**
  * Creates a basic MST model with common properties
@@ -60,7 +60,7 @@ export function createAsyncModel<T>(name: string, properties: T) {
 export function createCollectionModel<ItemType>(name: string, itemModel: ItemType) {
   return types
     .model(name, {
-      items: types.array(itemModel),
+      items: types.array(itemModel as unknown as IAnyType),
       isLoading: types.optional(types.boolean, false),
       error: types.maybeNull(types.string),
       lastFetched: types.maybeNull(types.string),

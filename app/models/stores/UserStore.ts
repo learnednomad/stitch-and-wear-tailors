@@ -3,7 +3,7 @@
  * Manages user profiles, preferences, settings, and client/tailor specific data
  */
 
-import { types, flow, Instance, SnapshotOut } from "mobx-state-tree"
+import { types, flow, Instance, SnapshotIn, SnapshotOut } from "mobx-state-tree"
 import { createAsyncAction, createCollectionModel, generateId, createTimestamp } from "../mst"
 import { User, UserRole, UserAddress } from "../types"
 import { validateUser, validateUserAddress } from "../schemas"
@@ -116,7 +116,9 @@ export const UserStoreModel = types
        */
       setCurrentUserProfile(userData: User) {
         const validatedUser = validateUser(userData)
-        self.currentUserProfile = UserProfileModel.create(validatedUser)
+        self.currentUserProfile = UserProfileModel.create(
+          validatedUser as unknown as SnapshotIn<typeof UserProfileModel>,
+        )
         self.lastFetched = createTimestamp()
       },
 
@@ -187,7 +189,11 @@ export const UserStoreModel = types
           })
         }
 
-        self.currentUserProfile.addresses.push(UserAddressModel.create(validatedAddress))
+        self.currentUserProfile.addresses.push(
+          UserAddressModel.create(
+            validatedAddress as unknown as SnapshotIn<typeof UserAddressModel>,
+          ),
+        )
         self.currentUserProfile.updatedAt = createTimestamp()
       },
 
@@ -499,7 +505,7 @@ export const UserStoreModel = types
       // Create a copy with pending changes applied
       const preview = { ...self.currentUserProfile }
       self.profileChanges.forEach((value, key) => {
-        const fieldPath = key.split(".")
+        const fieldPath = String(key).split(".")
         let target: any = preview
 
         for (let i = 0; i < fieldPath.length - 1; i++) {

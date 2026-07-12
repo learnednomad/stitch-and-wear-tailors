@@ -184,7 +184,7 @@ export class CacheManager {
     const lastModified = response.headers?.["last-modified"]
 
     const entry: CacheEntry<T> = {
-      data: response,
+      data: response as unknown as T,
       timestamp: Date.now(),
       ttl,
       etag,

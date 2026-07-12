@@ -9,7 +9,7 @@ import { ArgType } from "reactotron-core-client"
 import { mst } from "reactotron-mst"
 import mmkvPlugin from "reactotron-react-native-mmkv"
 
-import { storage, clear } from "@/utils/storage"
+import { mmkvStorage, clear } from "@/utils/storage"
 import { goBack, resetRoot, navigate } from "@/navigators/navigationUtilities"
 
 import { Reactotron } from "./ReactotronClient"
@@ -47,7 +47,7 @@ reactotron.use(
   }),
 )
 
-reactotron.use(mmkvPlugin<ReactotronReactNative>({ storage }))
+reactotron.use(mmkvPlugin<ReactotronReactNative>({ storage: mmkvStorage }))
 
 if (Platform.OS !== "web") {
   reactotron.useReactNative({

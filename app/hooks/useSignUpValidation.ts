@@ -7,56 +7,59 @@ import { z } from "zod"
 import { validateEmail } from "@/utils/emailValidation"
 import { validatePassword } from "@/utils/passwordValidation"
 
-// Define the signup form schema
-const SignUpFormSchema = z
-  .object({
-    firstName: z
-      .string()
-      .min(1, "First name is required")
-      .min(2, "First name must be at least 2 characters")
-      .max(50, "First name must be less than 50 characters")
-      .regex(
-        /^[a-zA-Z\s'-]+$/,
-        "First name can only contain letters, spaces, hyphens, and apostrophes",
-      ),
+// Define the signup form schema (base object, without cross-field refinements)
+const SignUpFormBaseSchema = z.object({
+  firstName: z
+    .string()
+    .min(1, "First name is required")
+    .min(2, "First name must be at least 2 characters")
+    .max(50, "First name must be less than 50 characters")
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      "First name can only contain letters, spaces, hyphens, and apostrophes",
+    ),
 
-    lastName: z
-      .string()
-      .min(1, "Last name is required")
-      .min(2, "Last name must be at least 2 characters")
-      .max(50, "Last name must be less than 50 characters")
-      .regex(
-        /^[a-zA-Z\s'-]+$/,
-        "Last name can only contain letters, spaces, hyphens, and apostrophes",
-      ),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .min(2, "Last name must be at least 2 characters")
+    .max(50, "Last name must be less than 50 characters")
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      "Last name can only contain letters, spaces, hyphens, and apostrophes",
+    ),
 
-    email: z
-      .string()
-      .min(1, "Email is required")
-      .email("Please enter a valid email address")
-      .refine((email) => {
-        const validation = validateEmail(email)
-        return validation.isValid
-      }, "Please enter a valid email address"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address")
+    .refine((email) => {
+      const validation = validateEmail(email)
+      return validation.isValid
+    }, "Please enter a valid email address"),
 
-    password: z
-      .string()
-      .min(1, "Password is required")
-      .refine((password) => {
-        const validation = validatePassword(password)
-        return validation.isValid
-      }, "Password does not meet security requirements"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .refine((password) => {
+      const validation = validatePassword(password)
+      return validation.isValid
+    }, "Password does not meet security requirements"),
 
-    confirmPassword: z.string().min(1, "Please confirm your password"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
 
-    userType: z.enum(["client", "tailor"], {
-      required_error: "Please select if you are a client or tailor",
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
+  userType: z.enum(["client", "tailor"], {
+    required_error: "Please select if you are a client or tailor",
+  }),
+})
+
+const SignUpFormSchema = SignUpFormBaseSchema.refine(
+  (data) => data.password === data.confirmPassword,
+  {
     message: "Passwords do not match",
     path: ["confirmPassword"],
-  })
+  },
+)
 
 export type SignUpFormData = z.infer<typeof SignUpFormSchema>
 
@@ -105,7 +108,7 @@ export function useSignUpValidation() {
       } else {
         // Validate individual fields by creating a temporary object
         const tempData = { ...formData, [fieldName]: value }
-        const result = SignUpFormSchema.partial().safeParse(tempData)
+        const result = SignUpFormBaseSchema.partial().safeParse(tempData)
 
         if (!result.success) {
           const fieldErrors = result.error.issues

@@ -3,9 +3,9 @@
  * Manages client measurements, templates, history, validation, and comparison
  */
 
-import { types, flow, Instance, SnapshotOut } from "mobx-state-tree"
+import { types, flow, Instance, SnapshotIn, SnapshotOut } from "mobx-state-tree"
 import { createAsyncAction, createCollectionModel, generateId, createTimestamp } from "../mst"
-import { Measurement, MeasurementTemplate } from "../types"
+import { Measurement } from "../types"
 import { validateMeasurement } from "../schemas"
 
 /**
@@ -183,11 +183,76 @@ export const MeasurementStoreModel = types
       self.lastFetched = timestamp
     }
 
+    /**
+     * Set active template
+     */
+    const setActiveTemplate = (templateId: string | null) => {
+      if (templateId) {
+        self.activeTemplate = self.templates.findById(templateId)
+      } else {
+        self.activeTemplate = null
+      }
+    }
+
+    /**
+     * Validate current measurement
+     */
+    const validateCurrentMeasurement = () => {
+      if (!self.currentMeasurement) return
+
+      const errors: string[] = []
+
+      // Check required measurements if using template
+      if (self.activeTemplate) {
+        const requiredMeasurements = self.activeTemplate.measurements.filter((m) => m.required)
+        for (const required of requiredMeasurements) {
+          const existing = self.currentMeasurement.measurements.find(
+            (m) => m.name === required.name,
+          )
+          if (!existing) {
+            errors.push(`Missing required measurement: ${required.label}`)
+          } else {
+            // Check value ranges
+            if (required.minValue && existing.value < required.minValue) {
+              errors.push(
+                `${required.label} is below minimum value (${required.minValue}${required.unit})`,
+              )
+            }
+            if (required.maxValue && existing.value > required.maxValue) {
+              errors.push(
+                `${required.label} is above maximum value (${required.maxValue}${required.unit})`,
+              )
+            }
+          }
+        }
+      }
+
+      // Check for reasonable values (basic sanity check)
+      for (const measurement of self.currentMeasurement.measurements) {
+        if (measurement.value <= 0) {
+          errors.push(`${measurement.name} must be greater than 0`)
+        }
+        if (measurement.value > 200) {
+          // 200cm seems reasonable as max for most measurements
+          errors.push(
+            `${measurement.name} seems unusually large (${measurement.value}${measurement.unit})`,
+          )
+        }
+      }
+
+      self.currentMeasurement.validationErrors.clear()
+      self.currentMeasurement.validationErrors.push(...errors)
+      self.currentMeasurement.isValidated = errors.length === 0
+      self.currentMeasurement.updatedAt = createTimestamp()
+    }
+
     return {
       setLoading,
       setError,
       clearError,
       setLastFetched,
+      setActiveTemplate,
+      validateCurrentMeasurement,
 
       /**
        * Set current measurement
@@ -195,20 +260,11 @@ export const MeasurementStoreModel = types
       setCurrentMeasurement(measurement: Measurement | null) {
         if (measurement) {
           const validatedMeasurement = validateMeasurement(measurement)
-          self.currentMeasurement = MeasurementModel.create(validatedMeasurement)
+          self.currentMeasurement = MeasurementModel.create(
+            validatedMeasurement as unknown as SnapshotIn<typeof MeasurementModel>,
+          )
         } else {
           self.currentMeasurement = null
-        }
-      },
-
-      /**
-       * Set active template
-       */
-      setActiveTemplate(templateId: string | null) {
-        if (templateId) {
-          self.activeTemplate = self.templates.findById(templateId)
-        } else {
-          self.activeTemplate = null
         }
       },
 
@@ -253,7 +309,7 @@ export const MeasurementStoreModel = types
 
         // Load template if specified
         if (templateId) {
-          self.setActiveTemplate(templateId)
+          setActiveTemplate(templateId)
         }
       },
 
@@ -286,7 +342,7 @@ export const MeasurementStoreModel = types
 
         // Auto-validate if enabled
         if (self.validationSettings.enableAutoValidation) {
-          self.validateCurrentMeasurement()
+          validateCurrentMeasurement()
         }
       },
 
@@ -305,58 +361,6 @@ export const MeasurementStoreModel = types
       },
 
       /**
-       * Validate current measurement
-       */
-      validateCurrentMeasurement() {
-        if (!self.currentMeasurement) return
-
-        const errors: string[] = []
-
-        // Check required measurements if using template
-        if (self.activeTemplate) {
-          const requiredMeasurements = self.activeTemplate.measurements.filter((m) => m.required)
-          for (const required of requiredMeasurements) {
-            const existing = self.currentMeasurement.measurements.find(
-              (m) => m.name === required.name,
-            )
-            if (!existing) {
-              errors.push(`Missing required measurement: ${required.label}`)
-            } else {
-              // Check value ranges
-              if (required.minValue && existing.value < required.minValue) {
-                errors.push(
-                  `${required.label} is below minimum value (${required.minValue}${required.unit})`,
-                )
-              }
-              if (required.maxValue && existing.value > required.maxValue) {
-                errors.push(
-                  `${required.label} is above maximum value (${required.maxValue}${required.unit})`,
-                )
-              }
-            }
-          }
-        }
-
-        // Check for reasonable values (basic sanity check)
-        for (const measurement of self.currentMeasurement.measurements) {
-          if (measurement.value <= 0) {
-            errors.push(`${measurement.name} must be greater than 0`)
-          }
-          if (measurement.value > 200) {
-            // 200cm seems reasonable as max for most measurements
-            errors.push(
-              `${measurement.name} seems unusually large (${measurement.value}${measurement.unit})`,
-            )
-          }
-        }
-
-        self.currentMeasurement.validationErrors.clear()
-        self.currentMeasurement.validationErrors.push(...errors)
-        self.currentMeasurement.isValidated = errors.length === 0
-        self.currentMeasurement.updatedAt = createTimestamp()
-      },
-
-      /**
        * Compare with previous measurements
        */
       compareWithPrevious(previousMeasurementId: string) {
@@ -372,7 +376,7 @@ export const MeasurementStoreModel = types
 
         // Compare each measurement
         for (const current of self.currentMeasurement.measurements) {
-          const previousValue = previous.measurements.find((m) => m.name === current.name)
+          const previousValue = previous.measurements.find((m: any) => m.name === current.name)
           if (previousValue) {
             const difference = current.value - previousValue.value
             const percentageChange = (difference / previousValue.value) * 100
@@ -414,7 +418,7 @@ export const MeasurementStoreModel = types
         self.currentMeasurement.updatedAt = createTimestamp()
 
         // Validate one final time
-        self.validateCurrentMeasurement()
+        validateCurrentMeasurement()
 
         self.isInSession = false
         self.sessionStartTime = null
@@ -574,7 +578,9 @@ export const MeasurementStoreModel = types
         if (!self.currentMeasurement) return
 
         try {
-          const saved = yield saveMeasurement(self.currentMeasurement)
+          const saved = yield saveMeasurement(
+            self.currentMeasurement as unknown as Partial<Measurement>,
+          )
           self.measurements.addItem(MeasurementModel.create(saved))
           return saved
         } catch (error) {

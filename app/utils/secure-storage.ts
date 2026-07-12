@@ -21,7 +21,7 @@ export class SecureStorage {
       await Keychain.setInternetCredentials("auth_tokens", "auth_tokens", tokenData, {
         service: this.SERVICE_NAME,
         accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE,
-        authenticatePrompt: "Authenticate to access your account",
+        authenticationPrompt: { title: "Authenticate to access your account" },
       })
       return true
     } catch (error) {
@@ -41,7 +41,7 @@ export class SecureStorage {
     try {
       const credentials = await Keychain.getInternetCredentials("auth_tokens", {
         service: this.SERVICE_NAME,
-        authenticatePrompt: "Authenticate to access your account",
+        authenticationPrompt: { title: "Authenticate to access your account" },
       })
 
       if (credentials && credentials.password) {
@@ -144,7 +144,8 @@ export class SecureStorage {
    */
   static async removeAuthTokens(): Promise<boolean> {
     try {
-      await Keychain.resetInternetCredentials("auth_tokens", {
+      await Keychain.resetInternetCredentials({
+        server: "auth_tokens",
         service: this.SERVICE_NAME,
       })
       return true
@@ -159,7 +160,8 @@ export class SecureStorage {
    */
   static async removeUserCredentials(): Promise<boolean> {
     try {
-      await Keychain.resetInternetCredentials("user_credentials", {
+      await Keychain.resetInternetCredentials({
+        server: "user_credentials",
         service: this.SERVICE_NAME,
       })
       return true
@@ -174,7 +176,8 @@ export class SecureStorage {
    */
   static async removeUserProfile(): Promise<boolean> {
     try {
-      await Keychain.resetInternetCredentials("user_profile", {
+      await Keychain.resetInternetCredentials({
+        server: "user_profile",
         service: this.SERVICE_NAME,
       })
       return true

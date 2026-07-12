@@ -39,9 +39,12 @@ describe("Zod Schema Validation", () => {
       expect(() => validateUser(user)).toThrow()
     })
 
-    it("should reject invalid UUID", () => {
+    it("should accept non-UUID ids (relaxed for backend-generated ids) but reject empty ids", () => {
       const user = mockData.user({ id: "invalid-uuid" })
-      expect(() => validateUser(user)).toThrow()
+      expect(() => validateUser(user)).not.toThrow()
+
+      const emptyIdUser = mockData.user({ id: "" })
+      expect(() => validateUser(emptyIdUser)).toThrow()
     })
 
     it("should validate create user input", () => {

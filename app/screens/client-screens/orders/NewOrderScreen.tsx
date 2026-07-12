@@ -42,14 +42,18 @@ interface Fabric {
 
 interface NewOrderScreenProps extends AppStackScreenProps<"NewOrder"> {}
 
-export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
+export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
   const { orderStore, fabricStore } = useStores()
   const { user } = useAuth()
 
-  const [selectedStyle, setSelectedStyle] = useState<string>("")
-  const [selectedFabric, setSelectedFabric] = useState<string>("")
+  // Reorder entry point: OrderDetail pre-selects the past order's style and
+  // fabric via route params (the store's orderCreationData is hydrated too)
+  const { reorderStyleId, reorderFabricId } = route?.params || {}
+
+  const [selectedStyle, setSelectedStyle] = useState<string>(reorderStyleId ?? "")
+  const [selectedFabric, setSelectedFabric] = useState<string>(reorderFabricId ?? "")
   const [currentStep, setCurrentStep] = useState<"style" | "fabric" | "review">("style")
   const [isLoading, setIsLoading] = useState(false)
   const [isCreatingOrder, setIsCreatingOrder] = useState(false)

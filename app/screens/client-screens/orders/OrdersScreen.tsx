@@ -6,7 +6,6 @@
 import { FC, useState, useEffect, useCallback } from "react"
 import {
   View,
-  ScrollView,
   RefreshControl,
   ViewStyle,
   TextStyle,
@@ -16,7 +15,15 @@ import {
 } from "react-native"
 import { observer } from "mobx-react-lite"
 import { TabScreenProps } from "@/navigators/ClientTabsNavigator"
-import { Screen, Text, Button, Icon, TextField } from "@/components"
+import { Screen, Text, Button, Icon } from "@/components"
+import {
+  OrderFilterBar,
+  OrderFilterValue,
+  EMPTY_ORDER_FILTER,
+  orderFilterToParams,
+  matchesOrderFilter,
+  countActiveOrderFilters,
+} from "@/components/OrderFilterBar"
 import { colors, spacing } from "@/theme"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
@@ -32,19 +39,19 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
   const { orderStore, authStore } = useStores()
   const navigation = useNavigation()
 
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "all">("all")
+  // Filters persist in component state for the session (v1)
+  const [filter, setFilter] = useState<OrderFilterValue>(EMPTY_ORDER_FILTER)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   const statusOptions = [
-    { value: "all" as const, label: "All Orders", color: colors.palette.neutral500 },
     { value: "pending" as OrderStatus, label: "Pending", color: colors.palette.tailorGold },
     { value: "confirmed" as OrderStatus, label: "Confirmed", color: colors.palette.threadBlue },
     { value: "in_progress" as OrderStatus, label: "In Progress", color: colors.palette.sageGreen },
-    { value: "completed" as OrderStatus, label: "Completed", color: colors.palette.success500 },
+    { value: "ready" as OrderStatus, label: "Ready", color: colors.palette.success500 },
+    { value: "delivered" as OrderStatus, label: "Delivered", color: colors.palette.success500 },
     { value: "cancelled" as OrderStatus, label: "Cancelled", color: colors.palette.alertRed },
   ]
 
@@ -54,14 +61,17 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
     try {
       setIsLoading(true)
       setPage(1)
-      await orderStore.loadNigerianOrders({ customerId: authStore.user.id, page: 1 }, true)
+      await orderStore.loadNigerianOrders(
+        { customerId: authStore.user.id, page: 1, ...orderFilterToParams(filter) },
+        true,
+      )
     } catch (error) {
       console.error("Failed to load orders:", error)
       Alert.alert("Error", "Failed to load orders. Please try again.")
     } finally {
       setIsLoading(false)
     }
-  }, [authStore.user?.id, orderStore])
+  }, [authStore.user?.id, orderStore, filter])
 
   useEffect(() => {
     loadOrders()
@@ -79,7 +89,11 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
     try {
       setIsLoadingMore(true)
       const nextPage = page + 1
-      await orderStore.loadNigerianOrders({ customerId: authStore.user.id, page: nextPage })
+      await orderStore.loadNigerianOrders({
+        customerId: authStore.user.id,
+        page: nextPage,
+        ...orderFilterToParams(filter),
+      })
       setPage(nextPage)
     } catch (error) {
       console.error("Failed to load more orders:", error)
@@ -88,18 +102,11 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
     }
   }
 
-  const filteredOrders = orderStore.orders.items.filter((order) => {
-    const matchesStatus = selectedStatus === "all" || order.status === selectedStatus
-    const matchesSearch =
-      order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerInfo.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerInfo.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      orderStore
-        .getTranslation("garments", order.items[0]?.garmentType || "")
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    return matchesStatus && matchesSearch
-  })
+  // Server-side filters do the heavy lifting; the client-side predicate adds
+  // multi-status selection and name/garment search matching on top
+  const filteredOrders = orderStore.orders.items.filter((order) =>
+    matchesOrderFilter(order, filter),
+  )
 
   const getStatusColor = (status: OrderStatus) => {
     const statusOption = statusOptions.find((opt) => opt.value === status)
@@ -206,21 +213,34 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
     </TouchableOpacity>
   )
 
-  const renderEmptyState = () => (
-    <View style={$emptyState}>
-      <Icon icon="sew" size={64} color={colors.palette.neutral400} />
-      <Text style={$emptyTitle}>No Orders Yet</Text>
-      <Text style={$emptyDescription}>
-        Start your tailoring journey by creating your first order
-      </Text>
-      <Button
-        text="Create New Order"
-        style={$createOrderButton}
-        textStyle={$createOrderButtonText}
-        onPress={() => navigation.navigate("NewOrder" as never)}
-      />
-    </View>
-  )
+  const renderEmptyState = () => {
+    if (countActiveOrderFilters(filter) > 0) {
+      return (
+        <View style={$emptyState}>
+          <Icon icon="view" size={64} color={colors.palette.neutral400} />
+          <Text style={$emptyTitle}>No Matching Orders</Text>
+          <Text style={$emptyDescription}>
+            Try adjusting your search or clearing some filters
+          </Text>
+        </View>
+      )
+    }
+    return (
+      <View style={$emptyState}>
+        <Icon icon="sew" size={64} color={colors.palette.neutral400} />
+        <Text style={$emptyTitle}>No Orders Yet</Text>
+        <Text style={$emptyDescription}>
+          Start your tailoring journey by creating your first order
+        </Text>
+        <Button
+          text="Create New Order"
+          style={$createOrderButton}
+          textStyle={$createOrderButtonText}
+          onPress={() => navigation.navigate("NewOrder" as never)}
+        />
+      </View>
+    )
+  }
 
   return (
     <Screen style={$root} preset="fixed">
@@ -235,34 +255,12 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
       </View>
 
       {/* Search and Filter */}
-      <View style={$searchContainer}>
-        <TextField
-          placeholder="Search orders..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          LeftAccessory={() => <Icon icon="view" size={20} color={colors.palette.threadBlue} />}
-          containerStyle={$searchField}
+      <View style={$filterBarContainer}>
+        <OrderFilterBar
+          value={filter}
+          onChange={setFilter}
+          statusOptions={statusOptions}
         />
-      </View>
-
-      {/* Status Filter */}
-      <View style={$filterContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={$filterList}>
-            {statusOptions.map((status) => (
-              <Button
-                key={status.value}
-                text={status.label}
-                style={[$filterButton, selectedStatus === status.value && $selectedFilterButton]}
-                textStyle={[
-                  $filterButtonText,
-                  selectedStatus === status.value && $selectedFilterButtonText,
-                ]}
-                onPress={() => setSelectedStatus(status.value)}
-              />
-            ))}
-          </View>
-        </ScrollView>
       </View>
 
       {/* Orders List */}
@@ -332,50 +330,13 @@ const $addButton: ViewStyle = {
   elevation: 3,
 }
 
-const $searchContainer: ViewStyle = {
-  padding: spacing.lg,
-  backgroundColor: colors.palette.warmIvory,
-}
-
-const $searchField: ViewStyle = {
-  marginBottom: 0,
-}
-
-const $filterContainer: ViewStyle = {
+const $filterBarContainer: ViewStyle = {
   paddingHorizontal: spacing.lg,
+  paddingTop: spacing.md,
   paddingBottom: spacing.md,
   backgroundColor: colors.palette.warmIvory,
   borderBottomWidth: 1,
   borderBottomColor: colors.palette.neutral200,
-}
-
-const $filterList: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.sm,
-}
-
-const $filterButton: ViewStyle = {
-  backgroundColor: colors.palette.neutral200,
-  borderRadius: 20,
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
-const $selectedFilterButton: ViewStyle = {
-  backgroundColor: colors.palette.tailorGold,
-  borderColor: colors.palette.tailorGold,
-}
-
-const $filterButtonText: TextStyle = {
-  fontSize: 12,
-  fontWeight: "500",
-  color: colors.palette.deepCharcoal,
-}
-
-const $selectedFilterButtonText: TextStyle = {
-  color: colors.palette.warmIvory,
 }
 
 const $content: ViewStyle = {

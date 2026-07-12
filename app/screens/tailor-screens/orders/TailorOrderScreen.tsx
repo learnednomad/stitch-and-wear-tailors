@@ -22,6 +22,12 @@ import {
 import { observer } from "mobx-react-lite"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import { Screen, Text, Icon } from "@/components"
+import {
+  OrderFilterBar,
+  OrderFilterValue,
+  EMPTY_ORDER_FILTER,
+  matchesOrderFilter,
+} from "@/components/OrderFilterBar"
 import { colors, spacing } from "@/theme"
 import { useStores } from "@/models"
 import { orderApi } from "@/services/api/order-api"
@@ -64,6 +70,9 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
   const realtimeStatus = useRealtimeStatus()
 
   const [orders, setOrders] = useState<Record<string, any>[]>([])
+  // Search/priority/date filter over the fetched set (client-side — statuses
+  // are already the board columns). Persists in component state (v1).
+  const [filter, setFilter] = useState<OrderFilterValue>(EMPTY_ORDER_FILTER)
   const [activeColumn, setActiveColumn] = useState<ColumnKey>("new")
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -120,6 +129,7 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
     delivered: [],
   }
   for (const order of orders) {
+    if (!matchesOrderFilter(order, filter)) continue
     const column = columnForOrder(order)
     if (column) buckets[column].push(order)
   }
@@ -193,6 +203,15 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
           />
           <Text style={$connectionText}>{realtimeStatus === "live" ? "Live" : "Auto"}</Text>
         </View>
+      </View>
+
+      {/* Search + lightweight filters (statuses are the board columns) */}
+      <View style={$filterBarContainer}>
+        <OrderFilterBar
+          value={filter}
+          onChange={setFilter}
+          searchPlaceholder="Search orders, customers..."
+        />
       </View>
 
       {isWide ? (
@@ -308,6 +327,15 @@ const $connectionDot: ViewStyle = {
 const $connectionText: TextStyle = {
   fontSize: 11,
   color: colors.palette.neutral600,
+}
+
+const $filterBarContainer: ViewStyle = {
+  paddingHorizontal: spacing.lg,
+  paddingTop: spacing.sm,
+  paddingBottom: spacing.sm,
+  backgroundColor: colors.palette.warmIvory,
+  borderBottomWidth: 1,
+  borderBottomColor: colors.palette.neutral200,
 }
 
 const $segmentRow: ViewStyle = {

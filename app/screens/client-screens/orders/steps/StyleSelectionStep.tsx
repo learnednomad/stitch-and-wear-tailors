@@ -248,8 +248,8 @@ export const StyleSelectionStep: FC = observer(() => {
     // Load existing selection if available
     if (orderStore.orderCreationData?.styleConfig) {
       const existing = orderStore.orderCreationData.styleConfig
-      setSelectedGarmentType(existing.garmentType)
-      setFitPreference(existing.fitPreference)
+      setSelectedGarmentType(existing.garmentType as NigerianGarmentType)
+      setFitPreference(existing.fitPreference as "slim" | "regular" | "loose")
       setDesignNotes(existing.designNotes || "")
       setCulturalSpecifications(existing.culturalSpecifications || "")
     }
@@ -314,7 +314,7 @@ export const StyleSelectionStep: FC = observer(() => {
       <Text style={$styleDescription}>{style.description}</Text>
 
       <View style={$culturalInfo}>
-        <Icon icon="star" size={16} color={colors.palette.tailorGold} />
+        <Icon icon="check" size={16} color={colors.palette.tailorGold} />
         <Text style={$culturalText}>{style.culturalSignificance}</Text>
       </View>
 
@@ -352,7 +352,7 @@ export const StyleSelectionStep: FC = observer(() => {
       <View style={$featuresList}>
         {variation.features.map((feature, index) => (
           <View key={index} style={$featureItem}>
-            <Icon icon="checkmark" size={12} color={colors.palette.sageGreen} />
+            <Icon icon="check" size={12} color={colors.palette.sageGreen} />
             <Text style={$featureText}>{feature}</Text>
           </View>
         ))}

@@ -343,8 +343,10 @@ class BiometricAuthService {
     if (Platform.OS === "ios" || Platform.OS === "android") {
       await Keychain.setInternetCredentials(this.KEYCHAIN_SERVICE, userId, encryptedData.data, {
         accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-        authenticatePrompt: "Authenticate to save credentials",
-        authenticationPromptTitle: "Save Credentials",
+        authenticationPrompt: {
+          title: "Save Credentials",
+          description: "Authenticate to save credentials",
+        },
       })
     } else {
       // Fallback for web/other platforms
@@ -357,7 +359,7 @@ class BiometricAuthService {
 
   private async removeFromKeychain(userId: string): Promise<void> {
     if (Platform.OS === "ios" || Platform.OS === "android") {
-      await Keychain.resetInternetCredentials(this.KEYCHAIN_SERVICE)
+      await Keychain.resetInternetCredentials({ server: this.KEYCHAIN_SERVICE })
     } else {
       await AsyncStorage.removeItem(`${this.STORAGE_KEY_PREFIX}${userId}:credentials`)
     }
