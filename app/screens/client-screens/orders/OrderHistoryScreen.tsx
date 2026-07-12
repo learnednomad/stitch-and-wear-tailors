@@ -124,7 +124,13 @@ export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = observer(
     }
 
     return (
-      <Screen style={$root} preset="fixed" safeAreaEdges={["top"]} statusBarStyle="dark">
+      <Screen
+        style={$root}
+        preset="fixed"
+        safeAreaEdges={["top"]}
+        statusBarStyle="dark"
+        contentContainerStyle={$screenContent}
+      >
         {/* Header */}
         <View style={$header}>
           <TouchableOpacity
@@ -192,6 +198,12 @@ export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = observer(
 const $root: ViewStyle = {
   flex: 1,
   backgroundColor: colors.palette.neutral100,
+}
+
+// Screen's fixed preset gives its inner container no height; without flex the
+// history list collapses to zero height.
+const $screenContent: ViewStyle = {
+  flex: 1,
 }
 
 const $header: ViewStyle = {

@@ -14,7 +14,7 @@ import {
   ViewStyle,
 } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
-import { CatalogGrid, Screen, Text } from "@/components"
+import { CatalogGrid, Icon, Screen, Text } from "@/components"
 import { catalogApi, PBCatalogStyle } from "@/services/api/catalog-api"
 import { fileUrl } from "@/services/api/pocketbase-api-adapter"
 import { spacing } from "@/theme"
@@ -81,7 +81,18 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
         refreshControl: <RefreshControl refreshing={isLoading} onRefresh={load} />,
       }}
     >
-      <Text preset="heading" text="Styles" style={$heading} />
+      <View style={$headerRow}>
+        <TouchableOpacity
+          style={$backButton}
+          onPress={() => navigation.goBack()}
+          accessible
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <Icon icon="back" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text preset="heading" text="Styles" style={$headingText} />
+      </View>
 
       {/* gender filter chips */}
       <View style={$chips}>
@@ -141,9 +152,23 @@ const $root: ViewStyle = {
   flex: 1,
 }
 
-const $heading: TextStyle = {
+const $headerRow: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
   paddingHorizontal: spacing.md,
   paddingTop: spacing.md,
+}
+
+const $backButton: ViewStyle = {
+  width: 40,
+  height: 40,
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: spacing.xs,
+}
+
+const $headingText: TextStyle = {
+  flex: 1,
 }
 
 const $chips: ViewStyle = {

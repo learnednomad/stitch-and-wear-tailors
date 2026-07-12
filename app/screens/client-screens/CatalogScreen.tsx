@@ -16,7 +16,7 @@ import {
   ViewStyle,
 } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
-import { Button, CatalogGrid, CatalogGridItem, Screen, Text, TextField } from "@/components"
+import { Button, CatalogGrid, CatalogGridItem, Icon, Screen, Text, TextField } from "@/components"
 import { catalogApi, PBCatalogStyle } from "@/services/api/catalog-api"
 import { fileUrl } from "@/services/api/pocketbase-api-adapter"
 import { formatNaira } from "@/utils/formatCurrency"
@@ -92,7 +92,44 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
         refreshControl: <RefreshControl refreshing={isLoading} onRefresh={load} />,
       }}
     >
-      <Text preset="heading" text="Style Catalog" style={$heading} />
+      <View style={$headerRow}>
+        {/* No back affordance when mounted as the Browse tab root */}
+        {(navigation as any).getState()?.type !== "tab" && navigation.canGoBack() && (
+          <TouchableOpacity
+            style={$backButton}
+            onPress={() => navigation.goBack()}
+            accessible
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Icon icon="back" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+        )}
+        <Text preset="heading" text="Style Catalog" style={$headingText} />
+      </View>
+
+      {/* browse siblings: grouped styles and fabrics */}
+      <View style={$browseLinks}>
+        <TouchableOpacity
+          style={[$browseLink, { borderColor: theme.colors.border }]}
+          onPress={() => (navigation as any).navigate("Styles")}
+          accessible
+          accessibilityLabel="Browse styles by group"
+          accessibilityRole="button"
+        >
+          <Text style={[$browseLinkText, { color: theme.colors.tint }]} text="Styles by Group" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[$browseLink, { borderColor: theme.colors.border }]}
+          onPress={() => (navigation as any).navigate("FabricSearch")}
+          accessible
+          accessibilityLabel="Browse fabrics"
+          accessibilityRole="button"
+        >
+          <Text style={[$browseLinkText, { color: theme.colors.tint }]} text="Fabrics" />
+        </TouchableOpacity>
+      </View>
+
       <View style={$searchContainer}>
         <TextField
           placeholder="Search styles..."
@@ -179,9 +216,42 @@ const $root: ViewStyle = {
   flex: 1,
 }
 
-const $heading: TextStyle = {
+const $headerRow: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
   paddingHorizontal: spacing.md,
   paddingTop: spacing.md,
+}
+
+const $backButton: ViewStyle = {
+  width: 40,
+  height: 40,
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: spacing.xs,
+}
+
+const $headingText: TextStyle = {
+  flex: 1,
+}
+
+const $browseLinks: ViewStyle = {
+  flexDirection: "row",
+  gap: spacing.xs,
+  paddingHorizontal: spacing.md,
+  paddingTop: spacing.sm,
+}
+
+const $browseLink: ViewStyle = {
+  paddingHorizontal: spacing.sm,
+  paddingVertical: spacing.xs,
+  borderRadius: 16,
+  borderWidth: 1,
+}
+
+const $browseLinkText: TextStyle = {
+  fontSize: 13,
+  fontWeight: "600",
 }
 
 const $searchContainer: ViewStyle = {

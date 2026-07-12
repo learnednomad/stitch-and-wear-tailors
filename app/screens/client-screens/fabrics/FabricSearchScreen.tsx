@@ -16,7 +16,7 @@ import {
   ViewStyle,
 } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
-import { CatalogGrid, Screen, Text, TextField } from "@/components"
+import { CatalogGrid, Icon, Screen, Text, TextField } from "@/components"
 import { catalogApi, PBFabric } from "@/services/api/catalog-api"
 import { fileUrl } from "@/services/api/pocketbase-api-adapter"
 import { spacing } from "@/theme"
@@ -33,7 +33,7 @@ function labelize(value: string): string {
 }
 
 export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
-  function FabricSearchScreen() {
+  function FabricSearchScreen({ navigation }) {
     const { theme } = useAppTheme()
     const [fabrics, setFabrics] = useState<PBFabric[]>([])
     const [search, setSearch] = useState("")
@@ -74,7 +74,18 @@ export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
           refreshControl: <RefreshControl refreshing={isLoading} onRefresh={load} />,
         }}
       >
-        <Text preset="heading" text="Fabrics" style={$heading} />
+        <View style={$headerRow}>
+          <TouchableOpacity
+            style={$backButton}
+            onPress={() => navigation.goBack()}
+            accessible
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Icon icon="back" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+          <Text preset="heading" text="Fabrics" style={$headingText} />
+        </View>
         <View style={$searchContainer}>
           <TextField
             placeholder="Search fabrics..."
@@ -151,9 +162,23 @@ const $root: ViewStyle = {
   flex: 1,
 }
 
-const $heading: TextStyle = {
+const $headerRow: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
   paddingHorizontal: spacing.md,
   paddingTop: spacing.md,
+}
+
+const $backButton: ViewStyle = {
+  width: 40,
+  height: 40,
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: spacing.xs,
+}
+
+const $headingText: TextStyle = {
+  flex: 1,
 }
 
 const $searchContainer: ViewStyle = {

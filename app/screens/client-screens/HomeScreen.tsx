@@ -16,6 +16,7 @@ import { useAppTheme } from "app/utils/useAppTheme"
 import { colors, spacing } from "app/theme"
 import { useStores } from "app/models"
 import { useNavigation } from "@react-navigation/native"
+import { appointmentApi, PBAppointment } from "app/services/api/appointment-api"
 
 interface ClientPortalScreenProps extends AppStackScreenProps<"Home"> {}
 
@@ -30,16 +31,10 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const [greeting] = React.useState(getGreeting())
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [nextAppointment, setNextAppointment] = useState<PBAppointment | null>(null)
 
   // Get stores
-  const {
-    authStore,
-    userStore,
-    orderStore,
-    measurementStore,
-    appointmentStore,
-    notificationStore,
-  } = useStores()
+  const { authStore, orderStore, measurementStore, notificationStore } = useStores()
 
   // Get user data from stores
   const currentUser = authStore.user
@@ -47,26 +42,20 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : "Welcome User"
   const userAvatar = userProfile?.avatar
 
-  // Default empty states if no user is logged in
-  const defaultStats = {
-    totalOrders: 0,
-    pendingOrders: 0,
-    inProgressOrders: 0,
-    completedOrders: 0,
-    revenue: 0,
-    averageOrderValue: 0,
-    lastUpdated: null,
-  }
-
-  // Get statistics from stores with fallbacks
-  const orderStats = orderStore.statistics || defaultStats
-  const notificationStats = notificationStore.statistics || {}
   const unreadNotifications = notificationStore.unreadCount || 0
 
+  // Real order data (loaded from PocketBase on mount)
+  const myOrders = orderStore?.orders?.items || []
+  const activeOrdersCount = myOrders.filter((order: any) =>
+    ["pending", "confirmed", "in_progress", "ready"].includes(order.status),
+  ).length
+  const outstandingBalance = myOrders
+    .filter((order: any) => order.status !== "cancelled")
+    .reduce((sum: number, order: any) => sum + (order.pricing?.balanceAmount ?? 0), 0)
+
   // Get recent data with safe access
-  const recentOrders = (orderStore?.orders?.items || []).slice(0, 3) // Get first 3 orders
+  const recentOrders = myOrders.slice(0, 3) // Get first 3 orders
   const recentMeasurements = (measurementStore?.measurements?.items || []).slice(0, 3) // Get first 3 measurements
-  const upcomingAppointments = (appointmentStore?.upcomingAppointments || []).slice(0, 2) // Get next 2 appointments
 
   // Load data on component mount
   useEffect(() => {
@@ -77,14 +66,21 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
     if (!currentUser?.id) return
 
     try {
-      // Refresh notifications from PocketBase so the bell badge is live.
-      // TODO: wire the remaining store loads when their backends are ready
-      // await Promise.all([
-      //   orderStore.loadNigerianOrders(currentUser.id),
-      //   measurementStore.loadUserMeasurements(currentUser.id),
-      //   appointmentStore.loadUserAppointments(currentUser.id),
-      // ])
-      await notificationStore.loadServerNotifications()
+      await Promise.all([
+        // Own orders drive the stat tiles and the recent-orders rail
+        orderStore
+          .loadNigerianOrders({ customerId: currentUser.id, perPage: 50 }, true)
+          .catch((error: unknown) => console.warn("Failed to load orders:", error)),
+        // Next upcoming appointment
+        appointmentApi.listUpcoming().then((result) => {
+          if (result.success) {
+            const upcoming = result.data.filter((a) => a.status !== "cancelled")
+            setNextAppointment(upcoming[0] ?? null)
+          }
+        }),
+        // Refresh notifications from PocketBase so the bell badge is live
+        notificationStore.loadServerNotifications(),
+      ])
     } catch (error) {
       console.error("Failed to load dashboard data:", error)
     }
@@ -152,7 +148,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   const renderOrder = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={$orderCard}
-      onPress={() => console.log(`Navigate to Order Tracking: ${item.id}`)}
+      onPress={() => (navigation as any).navigate("OrderDetail", { orderId: item.id })}
       accessible
       accessibilityLabel={`Order: ${item.orderNumber}`}
       accessibilityRole="button"
@@ -197,10 +193,16 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
       onPress: () => navigation.navigate("Orders" as never),
     },
     {
-      title: "Give Feedback",
-      subtitle: "Share thoughts",
-      icon: "feedback" as const,
-      onPress: () => navigation.navigate("Feedback" as never),
+      title: "Book Fitting",
+      subtitle: "Schedule a visit",
+      icon: "appointment" as const,
+      onPress: () => navigation.navigate("BookFitting" as never),
+    },
+    {
+      title: "Style Catalog",
+      subtitle: "Browse designs",
+      icon: "menu" as const,
+      onPress: () => navigation.navigate("Catalog" as never),
     },
   ]
 
@@ -227,9 +229,9 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
             <View style={$profileContainer}>
               <TouchableOpacity
                 style={$profileImage}
-                onPress={() => navigation.navigate("Profile" as never)}
+                onPress={() => navigation.navigate("Settings" as never)}
                 accessible
-                accessibilityLabel="Profile"
+                accessibilityLabel="Profile settings"
               >
                 <AutoImage
                   source={require("../../../assets/images/stock/camera-1846696_1280.jpg")}
@@ -282,28 +284,32 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
             </Text>
             <View style={$welcomeMetrics}>
               <View style={$metricItem}>
-                <Text style={$metricNumber}>{orderStats?.inProgressOrders || 0}</Text>
+                <Text style={$metricNumber} numberOfLines={1} adjustsFontSizeToFit>
+                  {activeOrdersCount}
+                </Text>
                 <Text style={$metricLabel}>Active Orders</Text>
               </View>
               <View style={$metricDivider} />
               <View style={$metricItem}>
-                <Text style={$metricNumber}>{orderStats?.completedOrders || 0}</Text>
-                <Text style={$metricLabel}>Completed</Text>
+                <Text style={$metricNumber} numberOfLines={1} adjustsFontSizeToFit>
+                  {formatCurrency(outstandingBalance)}
+                </Text>
+                <Text style={$metricLabel}>Outstanding</Text>
               </View>
               <View style={$metricDivider} />
               <View style={$metricItem}>
-                <Text style={$metricNumber}>{orderStats?.totalOrders || 0}</Text>
-                <Text style={$metricLabel}>Total Orders</Text>
+                <Text style={$metricNumber} numberOfLines={1} adjustsFontSizeToFit>
+                  {nextAppointment
+                    ? new Date(nextAppointment.scheduledAt).toLocaleDateString("en-NG", {
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : "—"}
+                </Text>
+                <Text style={$metricLabel}>Next Fitting</Text>
               </View>
             </View>
           </View>
-        </View>
-
-        {/* Offline Indicator (Placeholder) */}
-        <View style={$offlineBanner}>
-          <Text style={$offlineText} accessibilityLabel="Offline mode">
-            Offline Mode: Actions will sync when online
-          </Text>
         </View>
 
         {/* Quick Actions */}
@@ -317,7 +323,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
             keyExtractor={(item) => item.title}
             horizontal
             showsHorizontalScrollIndicator={false}
-            snapToInterval={110}
+            snapToInterval={128}
             decelerationRate="fast"
             contentContainerStyle={$quickActionListContent}
             accessibilityLabel="Quick Actions List"
@@ -648,20 +654,6 @@ const $metricDivider: ViewStyle = {
   marginHorizontal: spacing.sm,
 }
 
-const $offlineBanner: ViewStyle = {
-  backgroundColor: colors.palette.warning100,
-  padding: spacing.sm,
-  marginHorizontal: spacing.lg,
-  marginBottom: spacing.sm,
-  borderRadius: 8,
-}
-
-const $offlineText: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral300,
-  textAlign: "center",
-}
-
 const $section: ViewStyle = {
   marginBottom: spacing.xl,
 }
@@ -692,10 +684,11 @@ const $quickActionListContent: ViewStyle = {
 }
 
 const $quickActionCard: ViewStyle = {
-  width: 100,
+  // wide enough that "Measurement" doesn't break mid-word
+  width: 116,
   backgroundColor: colors.palette.neutral100,
   borderRadius: 16,
-  padding: spacing.md,
+  padding: spacing.sm,
   marginRight: spacing.sm,
   alignItems: "center",
   shadowColor: colors.palette.neutral900,

@@ -1,77 +1,55 @@
-# Welcome to your new ignited app!
+# Stitch & Wear Tailors
 
-> The latest and greatest boilerplate for Infinite Red opinions
+A two-sided Nigerian custom-tailoring marketplace: customers order bespoke garments (agbada, senator, kaftan, ankara styles…), pick fabrics, share measurements and track every production stage; tailors manage a pipeline of orders, record offline payments, issue invoices and see analytics.
 
-This is the boilerplate that [Infinite Red](https://infinite.red) uses as a way to test bleeding-edge changes to our React Native stack.
+## Architecture
 
-- [Quick start documentation](https://github.com/infinitered/ignite/blob/master/docs/boilerplate/Boilerplate.md)
-- [Full documentation](https://github.com/infinitered/ignite/blob/master/docs/README.md)
+| Piece | Stack | Location |
+|---|---|---|
+| Mobile app (iOS/Android) | Expo SDK 52 / React Native 0.76, Ignite, MobX-State-Tree | `app/` |
+| Web app | Next.js 16 (App Router), Tailwind CSS 4 | `web/` |
+| Backend | Self-hosted PocketBase 0.39 (auth, DB, files, SSE realtime, JS hooks) | `pb/` |
 
-## Getting Started
+- **Production backend**: https://api.stitchandwear.learnednomad.com (Coolify on a Hostinger VPS)
+- **Production web app**: https://app.stitchandwear.learnednomad.com
+- Server-side business logic lives in `pb/pb_hooks/` (order numbers, status timeline, payment reconciliation, notifications). Schema is versioned in `pb/pb_migrations/`.
+- Payments are recorded manually (cash/transfer/POS) — the server reconciles order balances and invoice statuses. A gateway (Paystack/Stripe) can slot in later.
+
+## Local development
 
 ```bash
+# 1. Backend — download the PocketBase binary once into pb/ (see pb/.gitignore), then:
+cd pb && ./pocketbase serve         # http://127.0.0.1:8090, migrations auto-apply
+
+# 2. Seed demo data (accounts, catalog, orders, invoices)
+yarn seed                           # demo.client@stitchandwear.ng / demo.tailor@stitchandwear.ng, password Demo12345!
+
+# 3. Mobile
 yarn install
-yarn start
+yarn ios                            # or: yarn start (dev client)
+
+# 4. Web
+cd web && npm install && npm run dev   # http://localhost:3000
 ```
 
-To make things work on your local simulator, or on your phone, you need first to [run `eas build`](https://github.com/infinitered/ignite/blob/master/docs/expo/EAS.md). We have many shortcuts on `package.json` to make it easier:
+Useful scripts: `yarn compile` (typecheck), `yarn test` (jest), `yarn lint`, `yarn build:ios:sim` etc. (EAS local builds). The web app builds with `npm run build` in `web/` and ships via `web/Dockerfile` (standalone output).
 
-```bash
-yarn build:ios:sim # build for ios simulator
-yarn build:ios:dev # build for ios device
-yarn build:ios:prod # build for ios device
+## Deployment
+
+Both production apps deploy from this repo via Coolify (project "Stitch and Wear Tailors"):
+- `stitchandwear-pocketbase` — Dockerfile at `pb/Dockerfile`, persistent volume at `/pb/pb_data`, superuser bootstrapped from `PB_ADMIN_EMAIL`/`PB_ADMIN_PASSWORD` env vars.
+- `stitchandwear-web` — Dockerfile at `web/Dockerfile` (Next standalone). `web/.env.production` pins the public API URL.
+
+> **Note:** SMTP is not yet configured on the production PocketBase — verification and password-reset emails won't send until a provider is set in the PB admin settings (Settings → Mail).
+
+## Repo layout
+
+```
+app/           React Native app (screens, models/stores, services, navigators)
+web/           Next.js web app (src/app routes, src/lib PB api modules)
+pb/            PocketBase migrations, hooks, Dockerfile
+scripts/       seed-pocketbase.js
+docs/          product docs and epics (BMAD)
 ```
 
-### `./assets` directory
-
-This directory is designed to organize and store various assets, making it easy for you to manage and use them in your application. The assets are further categorized into subdirectories, including `icons` and `images`:
-
-```tree
-assets
-├── icons
-└── images
-```
-
-**icons**
-This is where your icon assets will live. These icons can be used for buttons, navigation elements, or any other UI components. The recommended format for icons is PNG, but other formats can be used as well.
-
-Ignite comes with a built-in `Icon` component. You can find detailed usage instructions in the [docs](https://github.com/infinitered/ignite/blob/master/docs/boilerplate/app/components/Icon.md).
-
-**images**
-This is where your images will live, such as background images, logos, or any other graphics. You can use various formats such as PNG, JPEG, or GIF for your images.
-
-Another valuable built-in component within Ignite is the `AutoImage` component. You can find detailed usage instructions in the [docs](https://github.com/infinitered/ignite/blob/master/docs/Components-AutoImage.md).
-
-How to use your `icon` or `image` assets:
-
-```typescript
-import { Image } from 'react-native';
-
-const MyComponent = () => {
-  return (
-    <Image source={require('../assets/images/my_image.png')} />
-  );
-};
-```
-
-## Running Maestro end-to-end tests
-
-Follow our [Maestro Setup](https://ignitecookbook.com/docs/recipes/MaestroSetup) recipe.
-
-## Next Steps
-
-### Ignite Cookbook
-
-[Ignite Cookbook](https://ignitecookbook.com/) is an easy way for developers to browse and share code snippets (or “recipes”) that actually work.
-
-### Upgrade Ignite boilerplate
-
-Read our [Upgrade Guide](https://ignitecookbook.com/docs/recipes/UpdatingIgnite) to learn how to upgrade your Ignite project.
-
-## Community
-
-⭐️ Help us out by [starring on GitHub](https://github.com/infinitered/ignite), filing bug reports in [issues](https://github.com/infinitered/ignite/issues) or [ask questions](https://github.com/infinitered/ignite/discussions).
-
-💬 Join us on [Slack](https://join.slack.com/t/infiniteredcommunity/shared_invite/zt-1f137np4h-zPTq_CbaRFUOR_glUFs2UA) to discuss.
-
-📰 Make our Editor-in-chief happy by [reading the React Native Newsletter](https://reactnativenewsletter.com/).
+Built on the [Ignite](https://github.com/infinitered/ignite) boilerplate.

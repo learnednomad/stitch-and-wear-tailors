@@ -50,9 +50,42 @@ export function customerDisplayName(
   invoice: PBInvoiceRecord,
   nameMap?: Record<string, string>,
 ): string {
+  const expanded = invoice.expand?.customer
+  const expandedName =
+    expanded &&
+    (expanded.name || [expanded.firstName, expanded.lastName].filter(Boolean).join(" "))
   return (
-    invoice.expand?.customer?.name ||
+    expandedName ||
     nameMap?.[invoice.customer] ||
     `Customer ${(invoice.customer ?? "").slice(0, 5)}`
   )
+}
+
+/**
+ * Build a customer-id → display-name map from order_items specification
+ * JSON (specifications.customerInfo carries the name the client entered at
+ * order time). `items` may have `specifications` as an object or a JSON
+ * string; `orderCustomer` maps order id → customer id.
+ */
+export function nameMapFromOrderItems(
+  items: Array<{ order: string; specifications?: unknown }>,
+  orderCustomer: Record<string, string>,
+): Record<string, string> {
+  const map: Record<string, string> = {}
+  for (const item of items) {
+    const customerId = orderCustomer[item.order]
+    if (!customerId || map[customerId]) continue
+    let specs: any = item.specifications
+    if (typeof specs === "string") {
+      try {
+        specs = JSON.parse(specs)
+      } catch {
+        continue
+      }
+    }
+    const info = specs?.customerInfo
+    const name = info && [info.firstName, info.lastName].filter(Boolean).join(" ").trim()
+    if (name) map[customerId] = name
+  }
+  return map
 }

@@ -187,7 +187,13 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
   )
 
   return (
-    <Screen style={$root} preset="fixed" safeAreaEdges={["top"]} statusBarStyle="dark">
+    <Screen
+      style={$root}
+      preset="fixed"
+      safeAreaEdges={["top"]}
+      statusBarStyle="dark"
+      contentContainerStyle={$screenContent}
+    >
       {/* Header */}
       <View style={$header}>
         <Text style={$title}>Orders</Text>
@@ -294,6 +300,12 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
 const $root: ViewStyle = {
   flex: 1,
   backgroundColor: colors.palette.neutral100,
+}
+
+// Screen's fixed preset gives its inner container no height; without flex the
+// order list collapses to zero height.
+const $screenContent: ViewStyle = {
+  flex: 1,
 }
 
 const $header: ViewStyle = {

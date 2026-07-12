@@ -14,10 +14,20 @@ import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button, RecordPaymentModal } from "@/components"
 import { colors, spacing } from "app/theme"
-import { getPocketBaseAdapter, COLLECTIONS } from "@/services/api/pocketbase-api-adapter"
+import { getPocketBaseAdapter, filters, COLLECTIONS } from "@/services/api/pocketbase-api-adapter"
 import { invoiceApi, formatMoney, PBInvoiceRecord } from "@/services/api/invoice-api"
 import { paymentApi, PBPaymentRecord } from "@/services/api/payment-api"
-import { STATUS_LABELS, STATUS_COLORS, formatDate, customerDisplayName } from "./invoicing-shared"
+import {
+  STATUS_LABELS,
+  STATUS_COLORS,
+  formatDate,
+  customerDisplayName,
+  nameMapFromOrderItems,
+} from "./invoicing-shared"
+
+// Screen's fixed preset gives its inner container no height; without flex the
+// scrollable invoice body collapses to zero height.
+const $screenContent = { flex: 1 } as const
 
 interface InvoiceDetailScreenProps extends AppStackScreenProps<"InvoiceDetail"> {}
 
@@ -37,6 +47,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
     const [order, setOrder] = useState<any | null>(null)
     const [payments, setPayments] = useState<PBPaymentRecord[]>([])
     const [showPaymentModal, setShowPaymentModal] = useState(false)
+    const [nameMap, setNameMap] = useState<Record<string, string>>({})
 
     const load = useCallback(async () => {
       const invoiceResult = await invoiceApi.getOne(invoiceId)
@@ -46,17 +57,34 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
         setIsRefreshing(false)
         return
       }
-      setInvoice(invoiceResult.data)
+      const loadedInvoice = invoiceResult.data
+      setInvoice(loadedInvoice)
 
       // Fresh order money fields + payment history in parallel
       const [orderResult, paymentsResult] = await Promise.all([
-        getPocketBaseAdapter().getOne<any>(COLLECTIONS.ORDERS, invoiceResult.data.order),
-        paymentApi.listByOrder(invoiceResult.data.order),
+        getPocketBaseAdapter().getOne<any>(COLLECTIONS.ORDERS, loadedInvoice.order),
+        paymentApi.listByOrder(loadedInvoice.order),
       ])
       if (orderResult.success) setOrder(orderResult.data)
       if (paymentsResult.success) setPayments(paymentsResult.data)
       setIsLoading(false)
       setIsRefreshing(false)
+
+      // Customer user records are usually not readable by tailors, so fall
+      // back to the name in the order's order_items specifications JSON.
+      if (!loadedInvoice.expand?.customer?.name && !loadedInvoice.expand?.customer?.firstName) {
+        const itemsResult = await getPocketBaseAdapter().fullList<any>(COLLECTIONS.ORDER_ITEMS, {
+          filter: filters.eq("order", loadedInvoice.order),
+          sort: "created",
+        })
+        if (itemsResult.success) {
+          setNameMap(
+            nameMapFromOrderItems(itemsResult.data, {
+              [loadedInvoice.order]: loadedInvoice.customer,
+            }),
+          )
+        }
+      }
     }, [invoiceId])
 
     useEffect(() => {
@@ -101,6 +129,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
         safeAreaEdges={["top"]}
         preset="fixed"
         statusBarStyle="dark"
+        contentContainerStyle={$screenContent}
       >
         {/* Header */}
         <View style={$header}>
@@ -155,7 +184,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
                 <View style={$partyRow}>
                   <View style={$party}>
                     <Text style={$partyLabel}>Billed To</Text>
-                    <Text style={$partyName}>{customerDisplayName(invoice)}</Text>
+                    <Text style={$partyName}>{customerDisplayName(invoice, nameMap)}</Text>
                   </View>
                   <View style={$party}>
                     <Text style={$partyLabel}>Order</Text>

@@ -248,7 +248,17 @@ export const AuthStoreModel = types
       getPocketBaseAuthAdapter,
     } = require("../../services/pocketbase/pocketbase-auth-adapter")
 
-    /** Map a PocketBase user record to the AuthUser model shape */
+    /** PB timestamps ("2026-07-12 02:27:42.145Z") → strict ISO for UserSchema */
+    const toISO = (value: any) => {
+      const date = value ? new Date(value) : new Date()
+      return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString()
+    }
+
+    /**
+     * Map a PocketBase user record to the AuthUser model shape.
+     * Must satisfy UserSchema (setUser validates): phone/avatar are ""
+     * rather than null, avatar must be a URL, dates strict ISO.
+     */
     const mapPBUser = (user: any, overrides: Partial<Record<string, any>> = {}) => ({
       id: user.id,
       email: user.email,
@@ -261,8 +271,8 @@ export const AuthStoreModel = types
       profile: {
         firstName: user.firstName || "",
         lastName: user.lastName || "",
-        phone: user.phone || null,
-        avatar: user.avatar || null,
+        phone: user.phone || "",
+        avatar: /^https?:\/\//.test(user.avatar || "") ? user.avatar : "",
       },
       preferences: {
         notifications: { email: true, push: true, sms: false },
@@ -272,8 +282,8 @@ export const AuthStoreModel = types
       },
       emailVerified: !!user.verified,
       lastLoginAt: new Date().toISOString(),
-      createdAt: user.created || new Date().toISOString(),
-      updatedAt: user.updated || new Date().toISOString(),
+      createdAt: toISO(user.created),
+      updatedAt: toISO(user.updated),
       ...overrides,
     })
 
@@ -448,6 +458,9 @@ export const AuthStoreModel = types
       signIn: flow(function* (credentials: { email: string; password: string }) {
         try {
           const result = yield signIn(credentials)
+          // Sessions persist by default (rememberUser only governs credential
+          // autofill semantics) — set it before setUser so the profile persists.
+          self.setRememberUser(true)
           self.setUser(result.user)
           self.setSession(result.session)
           return result
@@ -538,56 +551,34 @@ export const AuthStoreModel = types
         self.setLoading(true)
 
         try {
-          // Check if remember me is enabled
-          const rememberUser = storage.getBoolean("auth.rememberUser")
-          console.log("🔍 AuthStore.checkAuthStatus: Remember user:", rememberUser)
-
-          if (!rememberUser) {
-            console.log("🔍 AuthStore.checkAuthStatus: Remember me disabled, showing login")
-            self.setStatus("unauthenticated")
-            self.setLoading(false)
-            return
-          }
-
-          console.log("🔍 AuthStore.checkAuthStatus: Restoring from storage...")
-          // Try to restore from persistent storage
-          yield restoreFromStorage()
-
-          if (!self.session.accessToken) {
-            console.log("🔍 AuthStore.checkAuthStatus: No access token found")
-            self.setStatus("unauthenticated")
-            self.setLoading(false)
-            return
-          }
-
-          console.log(
-            "🔍 AuthStore.checkAuthStatus: Access token found, verifying with PocketBase...",
-          )
-
-          // Verify the session with PocketBase
+          // Sessions persist by default: PocketBase keeps its auth token in
+          // MMKV, so if that token is still valid we hydrate the user from it
+          // regardless of the rememberUser flag (which only governs
+          // credential autofill semantics).
           const authAdapter = getPocketBaseAuthAdapter()
-          try {
-            const userResult = yield authAdapter.getCurrentUser()
+          const userResult = yield authAdapter.getCurrentUser()
 
-            if (userResult.success && userResult.data) {
-              console.log("🔍 AuthStore.checkAuthStatus: Session verified successfully")
-              self.setStatus("authenticated")
-              self.updateLastActivity()
-            } else {
-              console.log("🔍 AuthStore.checkAuthStatus: Session invalid, clearing auth")
-              self.clearAuth()
-              self.setStatus("unauthenticated")
-            }
-          } catch (verifyError) {
-            console.log("🔍 AuthStore.checkAuthStatus: Session verification failed:", verifyError)
-            // Session is invalid, clear everything
-            self.clearAuth()
-            self.setStatus("unauthenticated")
+          if (userResult.success && userResult.data) {
+            console.log("🔍 AuthStore.checkAuthStatus: Valid PocketBase session found")
+            self.setUser(mapPBUser(userResult.data) as User)
+            self.setSession({
+              accessToken: "current",
+              refreshToken: "current",
+              // PocketBase auth tokens default to ~14 days; refreshed on app start
+              expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+            })
+            self.setStatus("authenticated")
+            self.updateLastActivity()
+            return
           }
+
+          console.log("🔍 AuthStore.checkAuthStatus: No valid session, showing login")
+          self.clearAuth()
+          self.setStatus("unauthenticated")
         } catch (error) {
           console.error("🔍 AuthStore.checkAuthStatus: Error occurred:", error)
-          self.setStatus("unauthenticated")
           self.clearAuth()
+          self.setStatus("unauthenticated")
         } finally {
           console.log("🔍 AuthStore.checkAuthStatus: Completed, setting loading to false")
           self.setLoading(false)

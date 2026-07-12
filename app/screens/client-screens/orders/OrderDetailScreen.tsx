@@ -298,6 +298,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
         safeAreaEdges={["top"]}
         preset="fixed"
         statusBarStyle="dark"
+        contentContainerStyle={$screenContent}
       >
         <View style={$header}>
           <TouchableOpacity
@@ -559,7 +560,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
             text="Schedule Pickup"
             style={$secondaryButton}
             textStyle={$secondaryButtonText}
-            onPress={() => console.log("Schedule pickup")}
+            onPress={() => (navigation as any).navigate("BookFitting")}
           />
         )}
         {/* Client action: cancel a pending/confirmed order (ORD-011) */}
@@ -670,6 +671,12 @@ const $loadingContainer: ViewStyle = {
 const $loadingText: TextStyle = {
   fontSize: 16,
   color: colors.palette.neutral600,
+}
+
+// Screen's fixed preset gives its inner container no height; without flex the
+// scrollable body collapses to zero height.
+const $screenContent: ViewStyle = {
+  flex: 1,
 }
 
 const $header: ViewStyle = {

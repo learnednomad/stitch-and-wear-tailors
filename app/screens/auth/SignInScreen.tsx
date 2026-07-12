@@ -136,12 +136,9 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
           await BiometricService.setupBiometricKeys()
         }
 
-        const userRole = userData.role
-        if (userRole === "tailor") {
-          navigation.navigate("TailorTab" as never)
-        } else {
-          navigation.navigate("ClientTab" as never)
-        }
+        // No explicit navigation: AppNavigator remounts with the authenticated
+        // screen set once the auth store updates, landing on the role's tab
+        // navigator. Navigating here races that remount and always errors.
       } else {
         // Record failed login attempt
         if (!biometric) {
@@ -199,13 +196,7 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
           // In production, you'd retrieve stored encrypted credentials
           Alert.alert("Biometric Success", "Welcome back! Biometric authentication successful.")
 
-          // Navigate to appropriate screen based on user role
-          const userRole = authStore.user?.role || "client"
-          if (userRole === "tailor") {
-            navigation.navigate("TailorTab" as never)
-          } else {
-            navigation.navigate("ClientTab" as never)
-          }
+          // No explicit navigation needed; AppNavigator remounts on auth change.
         }
       } else {
         Alert.alert(

@@ -11,10 +11,12 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { HomeScreen } from "@/screens/client-screens/HomeScreen"
 import { OrdersScreen } from "@/screens/client-screens/orders/OrdersScreen"
 import { PaymentScreen } from "@/screens/client-screens/orders/PaymentScreen"
+import { CatalogScreen } from "@/screens/client-screens/CatalogScreen"
 
 export type TabParamList = {
   Home: undefined
   Orders: { queryIndex?: string; itemIndex?: string }
+  Browse: undefined
   Pay: undefined
   Settings: undefined
 }
@@ -76,6 +78,16 @@ export function TabNavigator() {
           tabBarLabel: "Orders",
           tabBarIcon: ({ focused }) => (
             <Icon icon="sew" color={focused ? colors.tint : "#000"} size={35} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Browse"
+        component={CatalogScreen as any}
+        options={{
+          tabBarLabel: "Browse",
+          tabBarIcon: ({ focused }) => (
+            <Icon icon="view" color={focused ? colors.tint : "#000"} size={24} />
           ),
         }}
       />

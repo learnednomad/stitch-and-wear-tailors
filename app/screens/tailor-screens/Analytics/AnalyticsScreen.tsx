@@ -415,7 +415,13 @@ export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
   const maxGarmentCount = data ? Math.max(...data.garmentCounts.map((g) => g.count), 1) : 1
 
   return (
-    <Screen style={$root} preset="fixed" safeAreaEdges={["top"]} statusBarStyle="dark">
+    <Screen
+      style={$root}
+      contentContainerStyle={$screenContent}
+      preset="fixed"
+      safeAreaEdges={["top"]}
+      statusBarStyle="dark"
+    >
       <View style={$header}>
         <Text style={$title}>Analytics</Text>
       </View>
@@ -522,6 +528,12 @@ export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
 const $root: ViewStyle = {
   flex: 1,
   backgroundColor: colors.palette.neutral100,
+}
+
+// Screen's fixed preset gives its inner container no height; without flex the
+// analytics scroll area collapses to zero height.
+const $screenContent: ViewStyle = {
+  flex: 1,
 }
 
 const $header: ViewStyle = {

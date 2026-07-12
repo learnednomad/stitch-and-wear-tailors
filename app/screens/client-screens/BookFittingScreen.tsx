@@ -22,7 +22,7 @@ import {
   ViewStyle,
 } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
-import { Button, Screen, Text, TextField } from "@/components"
+import { Button, Icon, Screen, Text, TextField } from "@/components"
 import { appointmentApi, PBAppointment } from "@/services/api/appointment-api"
 import { catalogApi, PBTailor } from "@/services/api/catalog-api"
 import { spacing } from "@/theme"
@@ -69,7 +69,9 @@ const STATUS_COLORS: Record<string, string> = {
   rescheduled: "#E8B04B",
 }
 
-export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function BookFittingScreen() {
+export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function BookFittingScreen({
+  navigation,
+}) {
   const { theme } = useAppTheme()
   const [tailors, setTailors] = useState<PBTailor[]>([])
   const [appointments, setAppointments] = useState<PBAppointment[]>([])
@@ -179,7 +181,18 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
         refreshControl: <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />,
       }}
     >
-      <Text preset="heading" text="Book an Appointment" style={$heading} />
+      <View style={$headerRow}>
+        <TouchableOpacity
+          style={$backButton}
+          onPress={() => navigation.goBack()}
+          accessible
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <Icon icon="back" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text preset="heading" text="Book an Appointment" style={$headingText} />
+      </View>
 
       {/* tailor picker */}
       <Text preset="formLabel" text="Tailor" style={$label} />
@@ -336,9 +349,23 @@ const $root: ViewStyle = {
   flex: 1,
 }
 
-const $heading: TextStyle = {
+const $headerRow: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
   paddingHorizontal: spacing.md,
   paddingTop: spacing.md,
+}
+
+const $backButton: ViewStyle = {
+  width: 40,
+  height: 40,
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: spacing.xs,
+}
+
+const $headingText: TextStyle = {
+  flex: 1,
 }
 
 const $label: TextStyle = {

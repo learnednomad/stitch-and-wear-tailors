@@ -193,6 +193,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
         safeAreaEdges={["top"]}
         preset="fixed"
         statusBarStyle="dark"
+        contentContainerStyle={$screenContent}
       >
         {/* Header */}
         <View style={$header}>
@@ -426,6 +427,12 @@ const $loadingContainer: ViewStyle = {
   flex: 1,
   justifyContent: "center",
   alignItems: "center",
+}
+
+// Screen's fixed preset gives its inner container no height; without flex the
+// scrollable body collapses to zero height.
+const $screenContent: ViewStyle = {
+  flex: 1,
 }
 
 const $header: ViewStyle = {

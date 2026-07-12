@@ -186,20 +186,23 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
           <Text style={$totalAmount}>₦{order.pricing.totalPrice.toLocaleString()}</Text>
         </View>
 
-        <View style={$progressSection}>
-          <View style={$progressBar}>
-            <View
-              style={[
-                $progressFill,
-                {
-                  width: `${order.progress.percentage}%`,
-                  backgroundColor: getStatusColor(order.status as OrderStatus),
-                },
-              ]}
-            />
+        {/* Progress is meaningless for terminated orders — hide the bar */}
+        {order.status !== "cancelled" && (
+          <View style={$progressSection}>
+            <View style={$progressBar}>
+              <View
+                style={[
+                  $progressFill,
+                  {
+                    width: `${order.progress.percentage}%`,
+                    backgroundColor: getStatusColor(order.status as OrderStatus),
+                  },
+                ]}
+              />
+            </View>
+            <Text style={$progressText}>{order.progress.percentage}% Complete</Text>
           </View>
-          <Text style={$progressText}>{order.progress.percentage}% Complete</Text>
-        </View>
+        )}
       </View>
 
       {order.estimatedDeliveryDate && (
@@ -243,7 +246,12 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
   }
 
   return (
-    <Screen style={$root} contentContainerStyle={$screenContent} preset="fixed">
+    <Screen
+      style={$root}
+      contentContainerStyle={$screenContent}
+      preset="fixed"
+      safeAreaEdges={["top"]}
+    >
       <View style={$header}>
         <Text style={$title}>My Orders</Text>
         <TouchableOpacity

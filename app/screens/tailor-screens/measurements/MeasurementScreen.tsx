@@ -102,6 +102,7 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
         safeAreaEdges={["top"]}
         preset="fixed"
         statusBarStyle="dark"
+        contentContainerStyle={$screenContent}
       >
         {/* Header */}
         <View style={$header}>
@@ -192,6 +193,12 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
 )
 
 // Styles
+// Screen's fixed preset gives its inner container no height; without flex the
+// measurement list collapses to zero height.
+const $screenContent: ViewStyle = {
+  flex: 1,
+}
+
 const $container: ViewStyle = {
   flex: 1,
 }

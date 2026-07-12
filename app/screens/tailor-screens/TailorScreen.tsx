@@ -11,7 +11,6 @@ import {
   View,
   FlatList,
   TouchableOpacity,
-  ScrollView,
   ViewStyle,
   TextStyle,
 } from "react-native"
@@ -233,6 +232,12 @@ export const TailorScreen: FC = observer(function TailorScreen() {
       onPress: () => (navigation as any).navigate("Measurements"),
     },
     {
+      title: "Invoices",
+      icon: "money",
+      color: colors.palette.tailorGold,
+      onPress: () => (navigation as any).navigate("Invoices"),
+    },
+    {
       title: "Analytics",
       icon: "view",
       color: colors.palette.accent500,
@@ -281,8 +286,7 @@ export const TailorScreen: FC = observer(function TailorScreen() {
       preset="scroll"
       statusBarStyle="dark"
     >
-      <ScrollView style={$container} showsVerticalScrollIndicator={false}>
-        {/* Enhanced Header */}
+      {/* Enhanced Header */}
         <View style={$header}>
           <View style={$greetingContainer}>
             <Text style={$greetingText} accessibilityLabel={greeting}>
@@ -372,19 +376,16 @@ export const TailorScreen: FC = observer(function TailorScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={$bottomContainerInsets} />
-      </ScrollView>
+      <View style={$bottomContainerInsets} />
     </Screen>
   )
 })
 
 // Enhanced Styles
+// Screen preset="scroll" owns the scrolling: this is its contentContainerStyle,
+// so no flex (a nested ScrollView here previously ate the scroll gesture and
+// let the greeting slide under the status bar).
 const $root: ViewStyle = {
-  flex: 1,
-}
-
-const $container: ViewStyle = {
-  flex: 1,
   paddingHorizontal: spacing.md,
 }
 
@@ -402,6 +403,8 @@ const $greetingContainer: ViewStyle = {
 
 const $greetingText: TextStyle = {
   fontSize: 28,
+  // Space Grotesk clips ascenders without an explicit line height
+  lineHeight: 36,
   fontWeight: "700",
   color: "#1a202c",
   marginBottom: spacing.xs,
@@ -492,10 +495,11 @@ const $quickActionListContent: ViewStyle = {
 }
 
 const $quickActionCard: ViewStyle = {
-  width: 100,
+  // wide enough that "Measurements" doesn't break mid-word
+  width: 116,
   backgroundColor: colors.palette.neutral100,
   borderRadius: 16,
-  padding: spacing.md,
+  padding: spacing.sm,
   marginRight: spacing.sm,
   alignItems: "center",
   shadowColor: colors.palette.neutral900,

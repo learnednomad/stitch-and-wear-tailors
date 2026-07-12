@@ -21,12 +21,14 @@ import {
   PBInvoiceRecord,
 } from "@/services/api/invoice-api"
 import { paymentApi, PBPaymentRecord } from "@/services/api/payment-api"
+import { getPocketBaseAdapter, filters, COLLECTIONS } from "@/services/api/pocketbase-api-adapter"
 import {
   INVOICE_STATUSES,
   STATUS_LABELS,
   STATUS_COLORS,
   formatDate,
   customerDisplayName,
+  nameMapFromOrderItems,
 } from "./invoicing-shared"
 
 interface InvoicesScreenProps extends AppStackScreenProps<"Invoices"> {}
@@ -45,6 +47,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all")
   const [error, setError] = useState<string | null>(null)
   const [actingClaimId, setActingClaimId] = useState<string | null>(null)
+  const [nameMap, setNameMap] = useState<Record<string, string>>({})
 
   const load = useCallback(async () => {
     setError(null)
@@ -54,6 +57,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
     ])
     if (invoicesResult.success) {
       setInvoices(invoicesResult.data)
+      loadNameMap(invoicesResult.data)
     } else {
       setError(invoicesResult.message ?? "Failed to load invoices")
     }
@@ -61,6 +65,24 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
     setIsLoading(false)
     setIsRefreshing(false)
   }, [])
+
+  // Customer user records are usually not readable by tailors, so fall back
+  // to the customer name captured in order_items specifications JSON.
+  const loadNameMap = async (loadedInvoices: PBInvoiceRecord[]) => {
+    const unnamed = loadedInvoices.filter(
+      (inv) => !inv.expand?.customer?.name && !inv.expand?.customer?.firstName,
+    )
+    const orderIds = [...new Set(unnamed.map((inv) => inv.order).filter(Boolean))]
+    if (orderIds.length === 0) return
+    const itemsResult = await getPocketBaseAdapter().fullList<any>(COLLECTIONS.ORDER_ITEMS, {
+      filter: filters.in("order", orderIds),
+      sort: "created",
+    })
+    if (!itemsResult.success) return
+    const orderCustomer: Record<string, string> = {}
+    for (const inv of unnamed) orderCustomer[inv.order] = inv.customer
+    setNameMap(nameMapFromOrderItems(itemsResult.data, orderCustomer))
+  }
 
   // Reload whenever the screen regains focus (after create/detail actions)
   useEffect(() => {
@@ -107,6 +129,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
       safeAreaEdges={["top"]}
       preset="fixed"
       statusBarStyle="dark"
+      contentContainerStyle={$screenContent}
     >
       {/* Header */}
       <View style={$header}>
@@ -239,7 +262,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
                     {renderStatusChip(invoice.status)}
                   </View>
                   <Text style={$invoiceMeta}>
-                    {customerDisplayName(invoice)} · Order{" "}
+                    {customerDisplayName(invoice, nameMap)} · Order{" "}
                     {invoice.expand?.order?.orderNumber ?? invoice.order}
                   </Text>
                   <View style={$invoiceBottomRow}>
@@ -267,6 +290,12 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
 })
 
 // Styles
+// Screen's fixed preset gives its inner container no height; without flex the
+// invoice list collapses to zero height.
+const $screenContent: ViewStyle = {
+  flex: 1,
+}
+
 const $container: ViewStyle = {
   flex: 1,
 }

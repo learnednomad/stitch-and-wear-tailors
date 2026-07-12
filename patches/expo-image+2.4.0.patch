@@ -1,0 +1,21 @@
+diff --git a/node_modules/expo-image/ios/ImageModule.swift b/node_modules/expo-image/ios/ImageModule.swift
+index 1451696..72b6e58 100644
+--- a/node_modules/expo-image/ios/ImageModule.swift
++++ b/node_modules/expo-image/ios/ImageModule.swift
+@@ -107,12 +107,12 @@ public final class ImageModule: Module {
+         view.autoplay = autoplay ?? true
+       }
+ 
+-      Prop("useAppleWebpCodec", true) { (view, useAppleWebpCodec: Bool) in
+-        view.useAppleWebpCodec = useAppleWebpCodec
++      Prop("useAppleWebpCodec") { (view, useAppleWebpCodec: Bool?) in
++        view.useAppleWebpCodec = useAppleWebpCodec ?? true
+       }
+ 
+-      Prop("enforceEarlyResizing", false) { (view, enforceEarlyResizing: Bool) in
+-        view.enforceEarlyResizing = enforceEarlyResizing
++      Prop("enforceEarlyResizing") { (view, enforceEarlyResizing: Bool?) in
++        view.enforceEarlyResizing = enforceEarlyResizing ?? false
+       }
+ 
+       AsyncFunction("startAnimating") { (view: ImageView) in
