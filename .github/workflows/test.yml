@@ -1,0 +1,29 @@
+# Unit tests (Obytes starter CI, adapted: yarn v1 + corepack disabled).
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Unit Tests (jest)
+    runs-on: ubuntu-latest
+    env:
+      COREPACK_ENABLE_STRICT: "0"
+      COREPACK_ENABLE_PROJECT_SPEC: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run tests
+        run: yarn test --ci --coverage=false
