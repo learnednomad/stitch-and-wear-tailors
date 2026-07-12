@@ -11,6 +11,9 @@ import {
   ActivityIndicator,
 } from "react-native"
 import { observer } from "mobx-react-lite"
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button } from "@/components"
@@ -20,11 +23,25 @@ import { useCreateInvoice, useUninvoicedOrders } from "@/api/invoices"
 import { formatMoney, InvoiceLineItem } from "@/services/api/invoice-api"
 import { formatDate } from "./invoicing-shared"
 
-interface LineItemDraft {
-  description: string
-  quantity: string
-  amount: string
-}
+// Inputs hold strings; the zod schema enforces description min 1 and
+// positive numeric quantity/amount at submit time (RHF + zodResolver).
+const lineItemSchema = z.object({
+  description: z.string().trim().min(1, "Description is required"),
+  quantity: z
+    .string()
+    .refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0, "Quantity must be positive"),
+  amount: z
+    .string()
+    .refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0, "Amount must be positive"),
+})
+
+const lineItemsFormSchema = z.object({
+  lineItems: z.array(lineItemSchema).min(1, "Add at least one line item"),
+})
+
+type LineItemsFormValues = z.infer<typeof lineItemsFormSchema>
+
+const EMPTY_LINE_ITEM = { description: "", quantity: "1", amount: "" }
 
 interface CreateInvoiceScreenProps extends AppStackScreenProps<"CreateInvoice"> {}
 
@@ -39,15 +56,21 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
     const navigation = useNavigation<any>()
 
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
-    const [lineItems, setLineItems] = useState<LineItemDraft[]>([
-      { description: "", quantity: "1", amount: "" },
-    ])
     const [depositRequired, setDepositRequired] = useState("")
     const [depositTouched, setDepositTouched] = useState(false)
     const [dueInDays, setDueInDays] = useState<number | null>(14)
     const [dueAtText, setDueAtText] = useState("")
     const [notes, setNotes] = useState("")
     const [sendNow, setSendNow] = useState(true)
+
+    // Line items live in react-hook-form (useFieldArray); everything else on
+    // this screen is simple single-value state.
+    const { control, handleSubmit, getValues } = useForm<LineItemsFormValues>({
+      resolver: zodResolver(lineItemsFormSchema),
+      defaultValues: { lineItems: [{ ...EMPTY_LINE_ITEM }] },
+    })
+    const { fields, append, remove, replace } = useFieldArray({ control, name: "lineItems" })
+    const watchedLineItems = useWatch({ control, name: "lineItems" }) ?? []
 
     const ordersQuery = useUninvoicedOrders()
     const createInvoice = useCreateInvoice()
@@ -64,9 +87,9 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
 
     const selectedOrder = orders.find((o) => o.id === selectedOrderId) ?? null
 
-    const subtotal = lineItems.reduce((sum, item) => {
-      const quantity = parseFloat(item.quantity) || 0
-      const amount = parseFloat(item.amount) || 0
+    const subtotal = watchedLineItems.reduce((sum, item) => {
+      const quantity = parseFloat(item?.quantity ?? "") || 0
+      const amount = parseFloat(item?.amount ?? "") || 0
       return sum + quantity * amount
     }, 0)
 
@@ -80,9 +103,9 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
     // Prefill the first line item from the order when one is picked
     const handleSelectOrder = (order: any) => {
       setSelectedOrderId(order.id)
-      const first = lineItems[0]
-      if (lineItems.length === 1 && !first.description && !first.amount) {
-        setLineItems([
+      const current = getValues("lineItems")
+      if (current.length === 1 && !current[0].description && !current[0].amount) {
+        replace([
           {
             description: order.specialInstructions || `Order ${order.orderNumber}`,
             quantity: "1",
@@ -90,20 +113,6 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
           },
         ])
       }
-    }
-
-    const setLineItemField = (index: number, field: keyof LineItemDraft, value: string) => {
-      setLineItems((prev) =>
-        prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
-      )
-    }
-
-    const addLineItem = () => {
-      setLineItems((prev) => [...prev, { description: "", quantity: "1", amount: "" }])
-    }
-
-    const removeLineItem = (index: number) => {
-      setLineItems((prev) => prev.filter((_, i) => i !== index))
     }
 
     const resolveDueAt = (): string | undefined => {
@@ -117,34 +126,26 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
       return undefined
     }
 
-    const handleCreate = () => {
+    const handleCreate = handleSubmit(onValidLineItems, onInvalidLineItems)
+
+    function onInvalidLineItems() {
       if (!selectedOrder) {
         Alert.alert("Select an Order", "Please choose the order this invoice is for.")
         return
       }
-      const items: InvoiceLineItem[] = []
-      for (const draft of lineItems) {
-        const quantity = parseFloat(draft.quantity)
-        const amount = parseFloat(draft.amount)
-        if (
-          !draft.description.trim() ||
-          isNaN(quantity) ||
-          quantity <= 0 ||
-          isNaN(amount) ||
-          amount <= 0
-        ) {
-          Alert.alert(
-            "Invalid Line Items",
-            "Every line item needs a description, quantity and amount.",
-          )
-          return
-        }
-        items.push({ description: draft.description.trim(), quantity, amount })
-      }
-      if (items.length === 0) {
-        Alert.alert("Line Items Required", "Add at least one line item.")
+      Alert.alert("Invalid Line Items", "Every line item needs a description, quantity and amount.")
+    }
+
+    function onValidLineItems(values: LineItemsFormValues) {
+      if (!selectedOrder) {
+        Alert.alert("Select an Order", "Please choose the order this invoice is for.")
         return
       }
+      const items: InvoiceLineItem[] = values.lineItems.map((draft) => ({
+        description: draft.description.trim(),
+        quantity: parseFloat(draft.quantity),
+        amount: parseFloat(draft.amount),
+      }))
       const deposit = parseFloat(depositRequired) || 0
       if (deposit < 0 || deposit > subtotal) {
         Alert.alert("Invalid Deposit", "Deposit must be between 0 and the subtotal.")
@@ -237,42 +238,63 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
             {/* Line items */}
             <View style={$section}>
               <Text style={$sectionTitle}>Line Items</Text>
-              {lineItems.map((item, index) => (
-                <View key={index} style={$lineItemCard}>
+              {fields.map((field, index) => (
+                <View key={field.id} style={$lineItemCard}>
                   <View style={$inputContainer}>
-                    <TextInput
-                      style={$textInput}
-                      placeholder="Description"
-                      placeholderTextColor={colors.palette.neutral400}
-                      value={item.description}
-                      onChangeText={(v) => setLineItemField(index, "description", v)}
+                    <Controller
+                      control={control}
+                      name={`lineItems.${index}.description`}
+                      render={({ field: { value, onChange, onBlur } }) => (
+                        <TextInput
+                          style={$textInput}
+                          placeholder="Description"
+                          placeholderTextColor={colors.palette.neutral400}
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                        />
+                      )}
                     />
                   </View>
                   <View style={$lineItemNumbersRow}>
                     <View style={[$inputContainer, $qtyInput]}>
-                      <TextInput
-                        style={$textInput}
-                        placeholder="Qty"
-                        placeholderTextColor={colors.palette.neutral400}
-                        value={item.quantity}
-                        onChangeText={(v) => setLineItemField(index, "quantity", v)}
-                        keyboardType="numeric"
+                      <Controller
+                        control={control}
+                        name={`lineItems.${index}.quantity`}
+                        render={({ field: { value, onChange, onBlur } }) => (
+                          <TextInput
+                            style={$textInput}
+                            placeholder="Qty"
+                            placeholderTextColor={colors.palette.neutral400}
+                            value={value}
+                            onChangeText={onChange}
+                            onBlur={onBlur}
+                            keyboardType="numeric"
+                          />
+                        )}
                       />
                     </View>
                     <View style={[$inputContainer, $amountInput]}>
-                      <TextInput
-                        style={$textInput}
-                        placeholder="Unit amount"
-                        placeholderTextColor={colors.palette.neutral400}
-                        value={item.amount}
-                        onChangeText={(v) => setLineItemField(index, "amount", v)}
-                        keyboardType="numeric"
+                      <Controller
+                        control={control}
+                        name={`lineItems.${index}.amount`}
+                        render={({ field: { value, onChange, onBlur } }) => (
+                          <TextInput
+                            style={$textInput}
+                            placeholder="Unit amount"
+                            placeholderTextColor={colors.palette.neutral400}
+                            value={value}
+                            onChangeText={onChange}
+                            onBlur={onBlur}
+                            keyboardType="numeric"
+                          />
+                        )}
                       />
                     </View>
-                    {lineItems.length > 1 && (
+                    {fields.length > 1 && (
                       <TouchableOpacity
                         style={$removeItemButton}
-                        onPress={() => removeLineItem(index)}
+                        onPress={() => remove(index)}
                         accessibilityLabel="Remove line item"
                       >
                         <Icon icon="x" size={16} color={colors.palette.error500} />
@@ -281,7 +303,10 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
                   </View>
                 </View>
               ))}
-              <TouchableOpacity style={$addItemButton} onPress={addLineItem}>
+              <TouchableOpacity
+                style={$addItemButton}
+                onPress={() => append({ ...EMPTY_LINE_ITEM })}
+              >
                 <Text style={$addItemText}>+ Add line item</Text>
               </TouchableOpacity>
 
