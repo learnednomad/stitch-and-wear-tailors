@@ -7,13 +7,7 @@
  */
 
 import { FC, useCallback, useState } from "react"
-import {
-  View,
-  FlatList,
-  TouchableOpacity,
-  ViewStyle,
-  TextStyle,
-} from "react-native"
+import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle } from "react-native"
 import { observer } from "mobx-react-lite"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import {
@@ -30,7 +24,7 @@ import {
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
 import { useStores } from "@/models"
-import { orderApi } from "@/services/api/order-api"
+import { useTailorBoardOrders } from "@/api/orders"
 
 /** Mapped domain order snapshot (loosely typed — mapper guarantees shape) */
 type DomainOrder = Record<string, any>
@@ -40,7 +34,6 @@ export const TailorScreen: FC = observer(function TailorScreen() {
   const navigation = useNavigation()
   const { authStore } = useStores()
 
-  const [orders, setOrders] = useState<DomainOrder[]>([])
   const [activeTab, setActiveTab] = useState<"all" | "urgent">("all")
 
   // Time-of-day greeting with the tailor's real name
@@ -52,27 +45,14 @@ export const TailorScreen: FC = observer(function TailorScreen() {
     currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening"
 
   // Own orders + unassigned pending requests, refreshed on focus
-  const loadDashboard = useCallback(async () => {
-    const tailorId = authStore.user?.id
-    if (!tailorId) return
-    const [mine, unassigned] = await Promise.all([
-      orderApi.fetchOrders({ tailorId, perPage: 100 }),
-      orderApi.fetchOrders({ unassigned: true, status: "pending", perPage: 50 }),
-    ])
-    const merged = new Map<string, DomainOrder>()
-    for (const order of mine.success ? mine.data.orders : []) merged.set(order.id, order)
-    for (const order of unassigned.success ? unassigned.data.orders : []) {
-      merged.set(order.id, order)
-    }
-    setOrders(
-      [...merged.values()].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
-    )
-  }, [authStore.user?.id])
+  const ordersQuery = useTailorBoardOrders(authStore.user?.id)
+  const orders: DomainOrder[] = ordersQuery.data ?? []
+  const { refetch } = ordersQuery
 
   useFocusEffect(
     useCallback(() => {
-      loadDashboard()
-    }, [loadDashboard]),
+      refetch()
+    }, [refetch]),
   )
 
   // Dashboard stats derived from the loaded orders
@@ -171,7 +151,8 @@ export const TailorScreen: FC = observer(function TailorScreen() {
         <View style={$orderFooter}>
           <Text style={$orderAmount}>₦{(item.pricing?.totalPrice ?? 0).toLocaleString()}</Text>
           <Text style={$orderDueDate}>
-            Due {new Date(item.estimatedDeliveryDate).toLocaleDateString("en-NG", {
+            Due{" "}
+            {new Date(item.estimatedDeliveryDate).toLocaleDateString("en-NG", {
               day: "numeric",
               month: "short",
             })}
@@ -256,95 +237,95 @@ export const TailorScreen: FC = observer(function TailorScreen() {
       statusBarStyle="dark"
     >
       {/* Header */}
-        <View style={$header}>
-          <View style={$greetingContainer}>
-            <Text style={$greetingText} accessibilityLabel={greeting}>
-              {greeting},
-            </Text>
-            <Text style={$nameText} numberOfLines={1}>
-              {tailorName}
-            </Text>
-            <Text style={$welcomeText}>Welcome back to your atelier</Text>
-          </View>
-          <TouchableOpacity
-            style={$notificationIcon}
-            onPress={() => (navigation as any).navigate("TailorNotifications")}
-            accessible
-            accessibilityLabel="Notifications"
-          >
-            <Icon icon="bell" size={20} color={colors.text} />
-          </TouchableOpacity>
+      <View style={$header}>
+        <View style={$greetingContainer}>
+          <Text style={$greetingText} accessibilityLabel={greeting}>
+            {greeting},
+          </Text>
+          <Text style={$nameText} numberOfLines={1}>
+            {tailorName}
+          </Text>
+          <Text style={$welcomeText}>Welcome back to your atelier</Text>
         </View>
+        <TouchableOpacity
+          style={$notificationIcon}
+          onPress={() => (navigation as any).navigate("TailorNotifications")}
+          accessible
+          accessibilityLabel="Notifications"
+        >
+          <Icon icon="bell" size={20} color={colors.text} />
+        </TouchableOpacity>
+      </View>
 
-        {/* Dashboard Stats */}
-        <View style={$statsContainer}>
-          <SectionHeader title="Overview" style={$sectionHeaderSpacing} />
-          <View style={$statsGrid}>
-            {statsData.map((stat, index) => (
-              <View key={index} style={$statsCardWrapper}>
-                <StatTile
-                  value={stat.value}
-                  label={stat.title}
-                  icon={stat.icon}
-                  iconColor={stat.color}
-                  iconBackgroundColor={stat.backgroundColor}
-                />
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Quick Actions */}
-        <View style={$quickActionsContainer}>
-          <SectionHeader title="Quick Actions" style={$sectionHeaderSpacing} />
-          <View style={$quickActionGrid} accessibilityLabel="Quick Actions List">
-            {quickActions.map((item) => renderQuickAction({ item }))}
-          </View>
-        </View>
-
-        {/* Recent Orders with Tabs */}
-        <View style={$ordersContainer}>
-          <View style={$ordersHeader}>
-            <Text style={$sectionTitle}>Recent Orders</Text>
-            <View style={$tabContainer}>
-              <TouchableOpacity
-                style={[$tab, activeTab === "all" && $activeTab]}
-                onPress={() => setActiveTab("all")}
-              >
-                <Text style={[$tabText, activeTab === "all" && $activeTabText]}>All</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[$tab, activeTab === "urgent" && $activeTab]}
-                onPress={() => setActiveTab("urgent")}
-              >
-                <Text style={[$tabText, activeTab === "urgent" && $activeTabText]}>Urgent</Text>
-              </TouchableOpacity>
+      {/* Dashboard Stats */}
+      <View style={$statsContainer}>
+        <SectionHeader title="Overview" style={$sectionHeaderSpacing} />
+        <View style={$statsGrid}>
+          {statsData.map((stat, index) => (
+            <View key={index} style={$statsCardWrapper}>
+              <StatTile
+                value={stat.value}
+                label={stat.title}
+                icon={stat.icon}
+                iconColor={stat.color}
+                iconBackgroundColor={stat.backgroundColor}
+              />
             </View>
-          </View>
-          {recentOrders.length === 0 ? (
-            <View style={$emptyOrders}>
-              <Icon icon="sew" size={32} color={colors.palette.neutral400} />
-              <Text style={$emptyOrdersText}>No orders yet</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={recentOrders}
-              renderItem={renderOrder}
-              keyExtractor={(item) => item.id}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={$orderListContent}
-              accessibilityLabel="Orders List"
-            />
-          )}
-          <TouchableOpacity
-            style={$viewAllOrders}
-            onPress={() => (navigation as any).navigate("TailorOrders", {})}
-          >
-            <Text style={$viewAllText}>View All Orders</Text>
-            <Icon icon="caretRight" size={16} color={colors.accent} />
-          </TouchableOpacity>
+          ))}
         </View>
+      </View>
+
+      {/* Quick Actions */}
+      <View style={$quickActionsContainer}>
+        <SectionHeader title="Quick Actions" style={$sectionHeaderSpacing} />
+        <View style={$quickActionGrid} accessibilityLabel="Quick Actions List">
+          {quickActions.map((item) => renderQuickAction({ item }))}
+        </View>
+      </View>
+
+      {/* Recent Orders with Tabs */}
+      <View style={$ordersContainer}>
+        <View style={$ordersHeader}>
+          <Text style={$sectionTitle}>Recent Orders</Text>
+          <View style={$tabContainer}>
+            <TouchableOpacity
+              style={[$tab, activeTab === "all" && $activeTab]}
+              onPress={() => setActiveTab("all")}
+            >
+              <Text style={[$tabText, activeTab === "all" && $activeTabText]}>All</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[$tab, activeTab === "urgent" && $activeTab]}
+              onPress={() => setActiveTab("urgent")}
+            >
+              <Text style={[$tabText, activeTab === "urgent" && $activeTabText]}>Urgent</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        {recentOrders.length === 0 ? (
+          <View style={$emptyOrders}>
+            <Icon icon="sew" size={32} color={colors.palette.neutral400} />
+            <Text style={$emptyOrdersText}>No orders yet</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={recentOrders}
+            renderItem={renderOrder}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={$orderListContent}
+            accessibilityLabel="Orders List"
+          />
+        )}
+        <TouchableOpacity
+          style={$viewAllOrders}
+          onPress={() => (navigation as any).navigate("TailorOrders", {})}
+        >
+          <Text style={$viewAllText}>View All Orders</Text>
+          <Icon icon="caretRight" size={16} color={colors.accent} />
+        </TouchableOpacity>
+      </View>
 
       <View style={$bottomContainerInsets} />
     </Screen>

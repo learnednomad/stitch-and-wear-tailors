@@ -30,7 +30,7 @@ import {
 } from "@/components/OrderFilterBar"
 import { colors, spacing } from "@/theme"
 import { useStores } from "@/models"
-import { orderApi } from "@/services/api/order-api"
+import { useTailorBoardOrders } from "@/api/orders"
 import { COLLECTIONS } from "@/services/pocketbase/pocketbase-client"
 import { realtimeManager, useRealtimeStatus } from "@/services/realtime"
 import { formatRelativeTime } from "@/utils/formatRelativeTime"
@@ -69,57 +69,39 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
   const isWide = width >= 768
   const realtimeStatus = useRealtimeStatus()
 
-  const [orders, setOrders] = useState<Record<string, any>[]>([])
   // Search/priority/date filter over the fetched set (client-side — statuses
   // are already the board columns). Persists in component state (v1).
   const [filter, setFilter] = useState<OrderFilterValue>(EMPTY_ORDER_FILTER)
   const [activeColumn, setActiveColumn] = useState<ColumnKey>("new")
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Own orders + unassigned pending requests, merged and deduped
-  const loadOrders = useCallback(async () => {
-    const tailorId = authStore.user?.id
-    if (!tailorId) return
-    const [mine, unassigned] = await Promise.all([
-      orderApi.fetchOrders({ tailorId, perPage: 100 }),
-      orderApi.fetchOrders({ unassigned: true, status: "pending", perPage: 50 }),
-    ])
-    const merged = new Map<string, Record<string, any>>()
-    for (const order of mine.success ? mine.data.orders : []) merged.set(order.id, order)
-    for (const order of unassigned.success ? unassigned.data.orders : []) {
-      merged.set(order.id, order)
-    }
-    setOrders(
-      [...merged.values()].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
-    )
-  }, [authStore.user?.id])
+  const ordersQuery = useTailorBoardOrders(authStore.user?.id)
+  const orders = ordersQuery.data ?? []
+  const isLoading = ordersQuery.isLoading
+  const isRefreshing = ordersQuery.isRefetching
+  const { refetch } = ordersQuery
 
   // Refresh whenever the tab regains focus
   useFocusEffect(
     useCallback(() => {
-      loadOrders().finally(() => setIsLoading(false))
-    }, [loadOrders]),
+      refetch()
+    }, [refetch]),
   )
 
   // Realtime: any order change re-syncs the board (unassigned orders are not
   // covered by the store's per-user subscription, hence a screen-level key)
   useEffect(() => {
-    const unsubscribe = realtimeManager.subscribe(
-      "tailor-orders",
-      COLLECTIONS.ORDERS,
-      () => {
-        loadOrders()
-      },
-      { fallbackPoll: loadOrders },
-    )
+    const resync = async () => {
+      await refetch()
+    }
+    const unsubscribe = realtimeManager.subscribe("tailor-orders", COLLECTIONS.ORDERS, resync, {
+      fallbackPoll: resync,
+    })
     return unsubscribe
-  }, [loadOrders])
+  }, [refetch])
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await loadOrders()
-    setIsRefreshing(false)
+  const handleRefresh = () => {
+    refetch()
   }
 
   const buckets: Record<ColumnKey, Record<string, any>[]> = {
