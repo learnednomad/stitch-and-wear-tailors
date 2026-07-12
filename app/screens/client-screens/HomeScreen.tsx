@@ -200,7 +200,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
       title: "Give Feedback",
       subtitle: "Share thoughts",
       icon: "feedback" as const,
-      onPress: () => navigation.navigate("Catalog" as never),
+      onPress: () => navigation.navigate("Feedback" as never),
     },
   ]
 
