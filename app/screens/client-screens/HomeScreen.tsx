@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from "react-native"
 import { observer } from "mobx-react-lite"
-import { AppStackScreenProps } from "app/navigators"
+import { AppStackScreenProps } from "@/navigators"
 import {
   Button,
   Screen,
@@ -21,13 +21,13 @@ import {
   Chip,
   statusTone,
   statusLabel,
-} from "app/components"
-import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
-import { useAppTheme } from "app/utils/useAppTheme"
-import type { ThemedStyle } from "app/theme"
-import { useStores } from "app/models"
+} from "@/components"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { useAppTheme } from "@/utils/useAppTheme"
+import type { ThemedStyle } from "@/theme"
+import { useStores } from "@/models"
 import { useNavigation } from "@react-navigation/native"
-import { appointmentApi, PBAppointment } from "app/services/api/appointment-api"
+import { appointmentApi, PBAppointment } from "@/services/api/appointment-api"
 
 interface ClientPortalScreenProps extends AppStackScreenProps<"Home"> {}
 

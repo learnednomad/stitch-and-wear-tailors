@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useState } from "react"
 import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle, Alert, Modal } from "react-native"
 import { observer } from "mobx-react-lite"
-import { AppStackScreenProps } from "app/navigators"
+import { AppStackScreenProps } from "@/navigators"
 import {
   Button,
   Screen,
@@ -11,9 +11,9 @@ import {
   StatusUpdateSheet,
   Chip,
   statusTone,
-} from "app/components"
-import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
-import { colors, spacing } from "app/theme"
+} from "@/components"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { colors, spacing } from "@/theme"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
 import { orderApi } from "@/services/api/order-api"

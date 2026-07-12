@@ -15,8 +15,8 @@ import {
   Alert,
 } from "react-native"
 import { observer } from "mobx-react-lite"
-import { Text, TextField, Button, Icon, AutoImage } from "app/components"
-import { colors, spacing } from "app/theme"
+import { Text, TextField, Button, Icon, AutoImage } from "@/components"
+import { colors, spacing } from "@/theme"
 import { useStores } from "@/models"
 import { FabricType, NigerianCity } from "@/types/orders"
 

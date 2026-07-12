@@ -8,10 +8,10 @@ import {
   TextInput,
   Alert,
 } from "react-native"
-import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon, Text } from "app/components"
-import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
-import { colors, spacing } from "app/theme"
+import { AppStackScreenProps } from "@/navigators"
+import { Button, Screen, Icon, Text } from "@/components"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { colors, spacing } from "@/theme"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
 import { useAuth } from "@/contexts/AuthContext"

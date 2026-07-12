@@ -12,7 +12,7 @@ import { observer } from "mobx-react-lite"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button } from "@/components"
-import { colors, spacing } from "app/theme"
+import { colors, spacing } from "@/theme"
 import { tailorMeasurementApi, PBMeasurementRecord } from "./measurement-data"
 
 type Segment = "customers" | "templates"

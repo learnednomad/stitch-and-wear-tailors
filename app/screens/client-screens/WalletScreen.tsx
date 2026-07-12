@@ -1,10 +1,10 @@
 import React, { FC } from "react"
 import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle } from "react-native"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
-import { AppStackParamList } from "app/navigators"
-import { Button, Screen, Icon, Text } from "app/components"
-import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
-import { colors, spacing } from "app/theme"
+import { AppStackParamList } from "@/navigators"
+import { Button, Screen, Icon, Text } from "@/components"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { colors, spacing } from "@/theme"
 import { useNavigation } from "@react-navigation/native"
 
 interface PaymentMethod {

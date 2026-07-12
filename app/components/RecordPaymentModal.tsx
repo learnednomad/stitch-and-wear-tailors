@@ -11,7 +11,7 @@ import {
 } from "react-native"
 import { Button } from "./Button"
 import { Text } from "./Text"
-import { colors, spacing } from "app/theme"
+import { colors, spacing } from "@/theme"
 import { paymentApi, PaymentMethod, PaymentType } from "@/services/api/payment-api"
 import { formatMoney } from "@/services/api/invoice-api"
 

@@ -26,9 +26,9 @@ import {
   Chip,
   statusTone,
   statusLabel,
-} from "app/components"
-import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
-import { colors, spacing } from "app/theme"
+} from "@/components"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { colors, spacing } from "@/theme"
 import { useStores } from "@/models"
 import { orderApi } from "@/services/api/order-api"
 

@@ -10,9 +10,9 @@ import {
   ActivityIndicator,
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import { Button, Screen, Icon, Text } from "app/components"
-import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
-import { colors, spacing } from "app/theme"
+import { Button, Screen, Icon, Text } from "@/components"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { colors, spacing } from "@/theme"
 import {
   tailorMeasurementApi,
   MEASUREMENT_FIELD_GROUPS,

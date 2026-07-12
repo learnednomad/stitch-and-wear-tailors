@@ -3,7 +3,7 @@
  * date formatting, customer display names).
  */
 
-import { colors } from "app/theme"
+import { colors } from "@/theme"
 import { InvoiceStatus, PBInvoiceRecord } from "@/services/api/invoice-api"
 
 export const INVOICE_STATUSES: InvoiceStatus[] = [

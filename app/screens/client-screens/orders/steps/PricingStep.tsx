@@ -6,8 +6,8 @@
 import React, { FC, useState, useEffect } from "react"
 import { View, ScrollView, ViewStyle, TextStyle, TouchableOpacity, Alert } from "react-native"
 import { observer } from "mobx-react-lite"
-import { Text, Button, Icon } from "app/components"
-import { colors, spacing } from "app/theme"
+import { Text, Button, Icon } from "@/components"
+import { colors, spacing } from "@/theme"
 import { useStores } from "@/models"
 import { PaymentMethod, NigerianCity, NigerianGarmentType, OrderPriority } from "@/types/orders"
 
