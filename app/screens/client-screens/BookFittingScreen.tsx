@@ -10,7 +10,7 @@
  * AppointmentStoreEnhanced are unwired mock machinery targeting /api
  * endpoints that don't exist.
  */
-import { FC, useCallback, useEffect, useMemo, useState } from "react"
+import { FC, useEffect, useMemo, useState } from "react"
 import { observer } from "mobx-react-lite"
 import {
   Alert,
@@ -23,8 +23,14 @@ import {
 } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, Icon, Screen, Text, TextField } from "@/components"
-import { appointmentApi, PBAppointment } from "@/services/api/appointment-api"
-import { catalogApi, PBTailor } from "@/services/api/catalog-api"
+import {
+  useCancelAppointment,
+  useCreateAppointment,
+  useUpcomingAppointments,
+} from "@/api/appointments"
+import { useTailors } from "@/api/catalog"
+import { errorMessage } from "@/api/common"
+import { PBAppointment } from "@/services/api/appointment-api"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
@@ -55,9 +61,7 @@ function nextTwoWeeks(): Date[] {
 function tailorName(tailor?: Record<string, any> | null): string {
   if (!tailor) return "Tailor"
   return (
-    tailor.businessName ||
-    [tailor.firstName, tailor.lastName].filter(Boolean).join(" ") ||
-    "Tailor"
+    tailor.businessName || [tailor.firstName, tailor.lastName].filter(Boolean).join(" ") || "Tailor"
   )
 }
 
@@ -73,42 +77,37 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
   navigation,
 }) {
   const { theme } = useAppTheme()
-  const [tailors, setTailors] = useState<PBTailor[]>([])
-  const [appointments, setAppointments] = useState<PBAppointment[]>([])
   const [selectedTailor, setSelectedTailor] = useState<string | null>(null)
   const [type, setType] = useState<PBAppointment["type"]>("fitting")
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [selectedHour, setSelectedHour] = useState<number | null>(null)
   const [note, setNote] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const days = useMemo(nextTwoWeeks, [])
 
-  const load = useCallback(async () => {
-    const [tailorsResult, appointmentsResult] = await Promise.all([
-      catalogApi.listTailors(),
-      appointmentApi.listUpcoming(),
-    ])
-    if (tailorsResult.success) {
-      setTailors(tailorsResult.data)
-      // preselect when there's a single tailor
-      if (tailorsResult.data.length === 1) setSelectedTailor(tailorsResult.data[0].id)
-    }
-    if (appointmentsResult.success) setAppointments(appointmentsResult.data)
-  }, [])
+  const tailorsQuery = useTailors()
+  const appointmentsQuery = useUpcomingAppointments()
+  const createAppointment = useCreateAppointment()
+  const cancelAppointment = useCancelAppointment()
 
+  const tailors = useMemo(() => tailorsQuery.data ?? [], [tailorsQuery.data])
+  const appointments = appointmentsQuery.data ?? []
+  const isSubmitting = createAppointment.isPending
+
+  // preselect when there's a single tailor
   useEffect(() => {
-    load()
-  }, [load])
+    if (tailors.length === 1) {
+      setSelectedTailor((current) => current ?? tailors[0].id)
+    }
+  }, [tailors])
 
-  const onRefresh = useCallback(async () => {
-    setIsRefreshing(true)
-    await load()
-    setIsRefreshing(false)
-  }, [load])
+  const isRefreshing = tailorsQuery.isRefetching || appointmentsQuery.isRefetching
+  const onRefresh = () => {
+    tailorsQuery.refetch()
+    appointmentsQuery.refetch()
+  }
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!selectedTailor || !selectedDay || selectedHour === null) {
       Alert.alert("Incomplete", "Please pick a tailor, a day and a time slot.")
       return
@@ -120,25 +119,26 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
       return
     }
 
-    setIsSubmitting(true)
-    const result = await appointmentApi.createAppointment({
-      tailor: selectedTailor,
-      type,
-      scheduledAt: scheduledAt.toISOString(),
-      durationMinutes: 60,
-      notes: note.trim(),
-    })
-    setIsSubmitting(false)
-
-    if (result.success) {
-      Alert.alert("Requested!", "Your appointment request has been sent to the tailor.")
-      setSelectedDay(null)
-      setSelectedHour(null)
-      setNote("")
-      await load()
-    } else {
-      Alert.alert("Error", result.message ?? "Failed to book the appointment")
-    }
+    createAppointment.mutate(
+      {
+        tailor: selectedTailor,
+        type,
+        scheduledAt: scheduledAt.toISOString(),
+        durationMinutes: 60,
+        notes: note.trim(),
+      },
+      {
+        onSuccess: () => {
+          Alert.alert("Requested!", "Your appointment request has been sent to the tailor.")
+          setSelectedDay(null)
+          setSelectedHour(null)
+          setNote("")
+        },
+        onError: (error) => {
+          Alert.alert("Error", errorMessage(error) || "Failed to book the appointment")
+        },
+      },
+    )
   }
 
   const handleCancel = (appointment: PBAppointment) => {
@@ -147,13 +147,12 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
       {
         text: "Cancel appointment",
         style: "destructive",
-        onPress: async () => {
-          const result = await appointmentApi.cancelAppointment(appointment.id)
-          if (result.success) {
-            await load()
-          } else {
-            Alert.alert("Error", result.message ?? "Failed to cancel")
-          }
+        onPress: () => {
+          cancelAppointment.mutate(appointment.id, {
+            onError: (error) => {
+              Alert.alert("Error", errorMessage(error) || "Failed to cancel")
+            },
+          })
         },
       },
     ])
@@ -314,7 +313,10 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
                 ]}
               >
                 <Text
-                  style={[$statusChipText, { color: STATUS_COLORS[appointment.status] ?? "#8B9D83" }]}
+                  style={[
+                    $statusChipText,
+                    { color: STATUS_COLORS[appointment.status] ?? "#8B9D83" },
+                  ]}
                   text={appointment.status}
                 />
               </View>
