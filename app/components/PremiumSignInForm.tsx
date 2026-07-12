@@ -3,7 +3,7 @@
  * Features: Biometric auth, premium animations, accessibility, modern UX
  */
 
-import React, { useState, useEffect, useRef } from "react"
+import { FC, useState, useEffect, useRef } from "react"
 import {
   View,
   Text,
@@ -13,7 +13,6 @@ import {
   Dimensions,
   StyleSheet,
   Alert,
-  Platform,
   ViewStyle,
   TextStyle,
   ImageStyle,
@@ -21,12 +20,21 @@ import {
 } from "react-native"
 import { LinearGradient } from "react-native-linear-gradient"
 import { observer } from "mobx-react-lite"
-import { useStores } from "@/models"
+import { Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import { BiometricService } from "@/services/biometric/BiometricService"
-import { spacing, colors } from "@/theme"
+import { spacing } from "@/theme"
 import { Ionicons } from "@expo/vector-icons"
 
 const { width, height } = Dimensions.get("window")
+
+const signInSchema = z.object({
+  email: z.string().trim().min(1, "Email is required").email("Please enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+})
+
+type SignInFormValues = z.infer<typeof signInSchema>
 
 interface PremiumSignInFormProps {
   onSignIn: (email: string, password: string, biometric?: boolean) => Promise<void>
@@ -36,16 +44,19 @@ interface PremiumSignInFormProps {
   isLoading?: boolean
 }
 
-export const PremiumSignInForm: React.FC<PremiumSignInFormProps> = observer(
+export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
   ({ onSignIn, onForgotPassword, onSignUp, onBiometricAuth, isLoading = false }) => {
-    const { authStore } = useStores()
-
-    // Form state
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
+    // Form state — react-hook-form + zod own field values and validation
+    const {
+      control,
+      handleSubmit,
+      formState: { errors },
+    } = useForm<SignInFormValues>({
+      resolver: zodResolver(signInSchema),
+      defaultValues: { email: "", password: "" },
+    })
     const [showPassword, setShowPassword] = useState(false)
     const [rememberMe, setRememberMe] = useState(true)
-    const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
     // Biometric state
     const [biometricAvailable, setBiometricAvailable] = useState(false)
@@ -149,29 +160,9 @@ export const PremiumSignInForm: React.FC<PremiumSignInFormProps> = observer(
       }).start()
     }
 
-    const validateForm = () => {
-      const errors: Record<string, string> = {}
-
-      if (!email.trim()) {
-        errors.email = "Email is required"
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        errors.email = "Please enter a valid email"
-      }
-
-      if (!password.trim()) {
-        errors.password = "Password is required"
-      } else if (password.length < 6) {
-        errors.password = "Password must be at least 6 characters"
-      }
-
-      setFormErrors(errors)
-      return Object.keys(errors).length === 0
-    }
-
-    const handleSubmit = async () => {
-      if (!validateForm()) return
-      await onSignIn(email.trim().toLowerCase(), password, false)
-    }
+    const onSubmit = handleSubmit(async (values) => {
+      await onSignIn(values.email.trim().toLowerCase(), values.password, false)
+    })
 
     const getBiometricIcon = (): keyof typeof Ionicons.glyphMap => {
       switch (biometricType) {
@@ -267,26 +258,30 @@ export const PremiumSignInForm: React.FC<PremiumSignInFormProps> = observer(
               ]}
             >
               <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter your email"
-                placeholderTextColor="#999"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text)
-                  if (formErrors.email) {
-                    setFormErrors((prev) => ({ ...prev, email: "" }))
-                  }
-                }}
-                onFocus={() => animateInputFocus(emailFocusAnim, true)}
-                onBlur={() => animateInputFocus(emailFocusAnim, false)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { value, onChange, onBlur } }) => (
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your email"
+                    placeholderTextColor="#999"
+                    value={value}
+                    onChangeText={onChange}
+                    onFocus={() => animateInputFocus(emailFocusAnim, true)}
+                    onBlur={() => {
+                      animateInputFocus(emailFocusAnim, false)
+                      onBlur()
+                    }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isLoading}
+                  />
+                )}
               />
             </Animated.View>
-            {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
+            {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
           </View>
 
           {/* Password Input */}
@@ -312,21 +307,25 @@ export const PremiumSignInForm: React.FC<PremiumSignInFormProps> = observer(
                 color="#666"
                 style={styles.inputIcon}
               />
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter your password"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text)
-                  if (formErrors.password) {
-                    setFormErrors((prev) => ({ ...prev, password: "" }))
-                  }
-                }}
-                onFocus={() => animateInputFocus(passwordFocusAnim, true)}
-                onBlur={() => animateInputFocus(passwordFocusAnim, false)}
-                secureTextEntry={!showPassword}
-                editable={!isLoading}
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { value, onChange, onBlur } }) => (
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#999"
+                    value={value}
+                    onChangeText={onChange}
+                    onFocus={() => animateInputFocus(passwordFocusAnim, true)}
+                    onBlur={() => {
+                      animateInputFocus(passwordFocusAnim, false)
+                      onBlur()
+                    }}
+                    secureTextEntry={!showPassword}
+                    editable={!isLoading}
+                  />
+                )}
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
@@ -340,7 +339,7 @@ export const PremiumSignInForm: React.FC<PremiumSignInFormProps> = observer(
                 />
               </TouchableOpacity>
             </Animated.View>
-            {formErrors.password && <Text style={styles.errorText}>{formErrors.password}</Text>}
+            {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
           </View>
 
           {/* Remember Me & Forgot Password */}
@@ -364,7 +363,7 @@ export const PremiumSignInForm: React.FC<PremiumSignInFormProps> = observer(
           {/* Sign In Button */}
           <TouchableOpacity
             style={[styles.signInButton, isLoading && styles.disabledButton]}
-            onPress={handleSubmit}
+            onPress={onSubmit}
             disabled={isLoading}
             activeOpacity={0.8}
           >
