@@ -104,7 +104,7 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
               style={[
                 $chip,
                 {
-                  backgroundColor: active ? theme.colors.tint : theme.colors.palette.neutral100,
+                  backgroundColor: active ? theme.colors.accent : theme.colors.surface,
                   borderColor: theme.colors.border,
                 },
               ]}

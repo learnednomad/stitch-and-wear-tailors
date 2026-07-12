@@ -148,7 +148,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
 
         {isLoading || !invoice ? (
           <View style={$loadingContainer}>
-            <ActivityIndicator size="large" color={colors.palette.primary500} />
+            <ActivityIndicator size="large" color={colors.accent} />
           </View>
         ) : (
           <ScrollView
@@ -157,7 +157,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
               <RefreshControl
                 refreshing={isRefreshing}
                 onRefresh={onRefresh}
-                tintColor={colors.palette.primary500}
+                tintColor={colors.accent}
               />
             }
             showsVerticalScrollIndicator={false}
@@ -412,7 +412,7 @@ const $invoiceNumber: TextStyle = {
 
 const $summaryMeta: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   marginTop: 2,
 }
 
@@ -444,7 +444,7 @@ const $party: ViewStyle = {
 const $partyLabel: TextStyle = {
   fontSize: 12,
   fontWeight: "600",
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   textTransform: "uppercase",
   marginBottom: 2,
 }
@@ -463,7 +463,7 @@ const $lineItemHeaderRow: ViewStyle = {
 const $lineItemHeaderText: TextStyle = {
   fontSize: 12,
   fontWeight: "600",
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   textTransform: "uppercase",
 }
 
@@ -499,7 +499,7 @@ const $totalRow: ViewStyle = {
 
 const $totalLabel: TextStyle = {
   fontSize: 14,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
 }
 
 const $totalValue: TextStyle = {
@@ -517,7 +517,7 @@ const $balanceLabel: TextStyle = {
 const $balanceValue: TextStyle = {
   fontSize: 16,
   fontWeight: "700",
-  color: colors.palette.primary600,
+  color: colors.accent,
 }
 
 const $notesText: TextStyle = {
@@ -549,7 +549,7 @@ const $paymentAmount: TextStyle = {
 
 const $paymentMeta: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   marginTop: 2,
   textTransform: "capitalize",
 }
@@ -573,7 +573,7 @@ const $paymentPending: TextStyle = {
 }
 
 const $primaryButton: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
+  backgroundColor: colors.accent,
   borderRadius: 12,
   marginBottom: spacing.sm,
 }
@@ -595,7 +595,7 @@ const $secondaryButton: ViewStyle = {
 const $secondaryButtonText: TextStyle = {
   fontSize: 16,
   fontWeight: "600",
-  color: colors.palette.primary500,
+  color: colors.accent,
 }
 
 const $voidButton: ViewStyle = {
@@ -611,7 +611,7 @@ const $voidButtonText: TextStyle = {
 
 const $emptyText: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   lineHeight: 18,
 }
 

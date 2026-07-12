@@ -53,8 +53,8 @@ export function TailorTabNavigator() {
         headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarStyle: themed([$tabBar, { height: bottom + 70 }]),
-        tabBarActiveTintColor: "#000", // Black text
-        tabBarInactiveTintColor: "#FFD700", // Yellow for inactive
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.palette.gray500,
         tabBarLabelStyle: themed($tabBarLabel),
         tabBarItemStyle: themed($tabBarItem),
       }}
@@ -64,9 +64,7 @@ export function TailorTabNavigator() {
         component={TailorScreen}
         options={{
           tabBarLabel: "Dashboard",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="home" color={focused ? colors.tint : "#000"} size={24} />
-          ),
+          tabBarIcon: ({ color }) => <Icon icon="home" color={color} size={24} />,
         }}
       />
       <Tab.Screen
@@ -74,19 +72,15 @@ export function TailorTabNavigator() {
         component={TailorOrderScreen}
         options={{
           tabBarLabel: "Orders",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="sew" color={focused ? colors.tint : "#000"} size={35} />
-          ),
+          tabBarIcon: ({ color }) => <Icon icon="sew" color={color} size={24} />,
         }}
       />
       <Tab.Screen
         name="Measurements"
         component={TailorMeasurementScreen as any}
         options={{
-          tabBarLabel: "Measurements",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="profile" color={focused ? colors.tint : "#000"} size={24} />
-          ),
+          tabBarLabel: "Measure",
+          tabBarIcon: ({ color }) => <Icon icon="profile" color={color} size={24} />,
         }}
       />
       <Tab.Screen
@@ -94,9 +88,7 @@ export function TailorTabNavigator() {
         component={AnalyticsScreen}
         options={{
           tabBarLabel: "Analytics",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="bell" color={focused ? colors.tint : "#000"} size={24} />
-          ),
+          tabBarIcon: ({ color }) => <Icon icon="menu" color={color} size={24} />,
         }}
       />
       <Tab.Screen
@@ -104,27 +96,25 @@ export function TailorTabNavigator() {
         component={SettingsScreen}
         options={{
           tabBarLabel: "Settings",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="settings" color={focused ? colors.tint : "#000"} size={24} />
-          ),
+          tabBarIcon: ({ color }) => <Icon icon="settings" color={color} size={24} />,
         }}
       />
     </Tab.Navigator>
   )
 }
 
-const $tabBar: ThemedStyle<ViewStyle> = () => ({
-  backgroundColor: "#FFF", // White background
-  borderTopColor: "#000", // Black border
+const $tabBar: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  backgroundColor: colors.surface,
+  borderTopColor: colors.border,
+  borderTopWidth: 1,
 })
 
 const $tabBarItem: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingTop: spacing.md,
+  paddingTop: spacing.xs,
 })
 
 const $tabBarLabel: ThemedStyle<TextStyle> = ({ typography }) => ({
-  fontSize: 12,
+  fontSize: 11,
   fontFamily: typography.primary.medium,
-  lineHeight: 16,
-  color: "#000", // Black text
+  lineHeight: 15,
 })

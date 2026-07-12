@@ -37,10 +37,10 @@ import { formatRelativeTime } from "@/utils/formatRelativeTime"
 
 /** Pipeline columns keyed by the domain statuses they collect */
 const COLUMNS = [
-  { key: "new", label: "New Requests", color: colors.palette.warning500 },
-  { key: "in_progress", label: "In Progress", color: colors.palette.threadBlue },
-  { key: "ready", label: "Ready", color: colors.palette.success500 },
-  { key: "delivered", label: "Delivered", color: colors.palette.sageGreen },
+  { key: "new", label: "New", color: colors.palette.warning600 },
+  { key: "in_progress", label: "In Progress", color: colors.palette.secondary400 },
+  { key: "ready", label: "Ready", color: colors.palette.success600 },
+  { key: "delivered", label: "Delivered", color: colors.palette.gray500 },
 ] as const
 
 type ColumnKey = (typeof COLUMNS)[number]["key"]
@@ -280,7 +280,7 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
                 <RefreshControl
                   refreshing={isRefreshing}
                   onRefresh={handleRefresh}
-                  tintColor={colors.palette.tailorGold}
+                  tintColor={colors.accent}
                 />
               }
               ListEmptyComponent={renderEmptyColumn(
@@ -299,7 +299,7 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
 // Styles
 const $root: ViewStyle = {
   flex: 1,
-  backgroundColor: colors.palette.neutral100,
+  backgroundColor: colors.background,
 }
 
 // Screen's fixed preset gives its inner container no height; without flex the
@@ -312,16 +312,15 @@ const $header: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
-  padding: spacing.lg,
-  backgroundColor: colors.palette.warmIvory,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
+  paddingHorizontal: spacing.md,
+  paddingTop: spacing.sm,
+  paddingBottom: spacing.md,
 }
 
 const $title: TextStyle = {
   fontSize: 24,
   fontWeight: "700",
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
 }
 
 const $connectionIndicator: ViewStyle = {
@@ -338,26 +337,19 @@ const $connectionDot: ViewStyle = {
 
 const $connectionText: TextStyle = {
   fontSize: 11,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
 }
 
 const $filterBarContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.sm,
+  paddingHorizontal: spacing.md,
   paddingBottom: spacing.sm,
-  backgroundColor: colors.palette.warmIvory,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
 }
 
 const $segmentRow: ViewStyle = {
   flexDirection: "row",
-  paddingHorizontal: spacing.sm,
+  paddingHorizontal: spacing.md,
   paddingVertical: spacing.sm,
   gap: spacing.xs,
-  backgroundColor: colors.palette.warmIvory,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
 }
 
 const $segment: ViewStyle = {
@@ -369,19 +361,19 @@ const $segment: ViewStyle = {
   paddingVertical: spacing.xs,
   paddingHorizontal: spacing.xxs,
   borderRadius: 8,
-  backgroundColor: colors.palette.neutral200,
+  backgroundColor: colors.palette.sand200,
 }
 
 const $segmentActive: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
+  backgroundColor: colors.surface,
   borderWidth: 1,
-  borderColor: colors.palette.tailorGold,
+  borderColor: colors.accent,
 }
 
 const $segmentText: TextStyle = {
   fontSize: 11,
   fontWeight: "500",
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   flexShrink: 1,
 }
 
@@ -417,8 +409,8 @@ const $kanbanContainer: ViewStyle = {
 
 const $kanbanColumn: ViewStyle = {
   width: 300,
-  backgroundColor: colors.palette.neutral200,
-  borderRadius: 12,
+  backgroundColor: colors.palette.sand100,
+  borderRadius: 16,
   padding: spacing.sm,
 }
 
@@ -440,27 +432,22 @@ const $columnTitle: TextStyle = {
   flex: 1,
   fontSize: 14,
   fontWeight: "700",
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
 }
 
 const $columnCount: TextStyle = {
   fontSize: 12,
   fontWeight: "600",
-  color: colors.palette.neutral600,
+  color: colors.textDim,
 }
 
 const $orderCard: ViewStyle = {
-  backgroundColor: colors.palette.warmIvory,
-  borderRadius: 12,
+  backgroundColor: colors.surface,
+  borderRadius: 16,
   padding: spacing.md,
   marginBottom: spacing.sm,
   borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-  shadowColor: colors.palette.deepCharcoal,
-  shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.1,
-  shadowRadius: 3,
-  elevation: 2,
+  borderColor: colors.border,
 }
 
 const $cardHeader: ViewStyle = {
@@ -473,31 +460,30 @@ const $cardHeader: ViewStyle = {
 const $orderNumber: TextStyle = {
   fontSize: 14,
   fontWeight: "700",
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
 }
 
 const $statusChip: ViewStyle = {
-  borderRadius: 6,
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xxs,
+  borderRadius: 999,
+  paddingHorizontal: 10,
+  paddingVertical: 3,
 }
 
 const $statusChipText: TextStyle = {
-  fontSize: 10,
-  fontWeight: "600",
-  textTransform: "uppercase",
+  fontSize: 12,
+  fontWeight: "500",
 }
 
 const $customerName: TextStyle = {
   fontSize: 14,
   fontWeight: "600",
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
   marginBottom: spacing.xxs,
 }
 
 const $garmentSummary: TextStyle = {
   fontSize: 12,
-  color: colors.palette.threadBlue,
+  color: colors.textDim,
   marginBottom: spacing.sm,
 }
 
@@ -507,13 +493,13 @@ const $cardFooter: ViewStyle = {
   alignItems: "center",
   paddingTop: spacing.xs,
   borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral300,
+  borderTopColor: colors.separator,
 }
 
 const $orderAmount: TextStyle = {
-  fontSize: 14,
+  fontSize: 15,
   fontWeight: "700",
-  color: colors.palette.sageGreen,
+  color: colors.accent,
 }
 
 const $orderTime: TextStyle = {
@@ -540,5 +526,5 @@ const $loadingState: ViewStyle = {
 
 const $loadingText: TextStyle = {
   fontSize: 16,
-  color: colors.palette.threadBlue,
+  color: colors.textDim,
 }

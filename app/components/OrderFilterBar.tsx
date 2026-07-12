@@ -238,7 +238,7 @@ export const OrderFilterBar: FC<OrderFilterBarProps> = function OrderFilterBar(p
     label: string,
     isActive: boolean,
     onPress: () => void,
-    activeColor: string = colors.palette.tailorGold,
+    activeColor: string = colors.palette.emerald500,
   ) => (
     <TouchableOpacity
       key={key}
@@ -265,7 +265,7 @@ export const OrderFilterBar: FC<OrderFilterBarProps> = function OrderFilterBar(p
           <Icon
             icon="view"
             size={20}
-            color={colors.palette.threadBlue}
+            color={colors.palette.gray500}
             containerStyle={accessoryProps.style}
           />
         )}
@@ -304,7 +304,6 @@ export const OrderFilterBar: FC<OrderFilterBarProps> = function OrderFilterBar(p
             option.label,
             value.statuses.includes(option.value),
             () => toggleStatus(option.value),
-            option.color ?? colors.palette.tailorGold,
           ),
         )}
         {statusOptions.length > 0 && <View style={$chipDivider} />}
@@ -314,7 +313,6 @@ export const OrderFilterBar: FC<OrderFilterBarProps> = function OrderFilterBar(p
             option.label,
             value.priority === option.value,
             () => togglePriority(option.value),
-            colors.palette.threadBlue,
           ),
         )}
         {priorityOptions.length > 0 && <View style={$chipDivider} />}
@@ -324,7 +322,6 @@ export const OrderFilterBar: FC<OrderFilterBarProps> = function OrderFilterBar(p
             option.label,
             activePreset === option.value,
             () => selectDatePreset(option.value),
-            colors.palette.sageGreen,
           ),
         )}
       </ScrollView>
@@ -344,28 +341,28 @@ const $chipRow: ViewStyle = {
 }
 
 const $chip: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.xs,
-  borderRadius: 16,
-  backgroundColor: colors.palette.neutral200,
+  paddingHorizontal: spacing.sm,
+  paddingVertical: 6,
+  borderRadius: 999,
+  backgroundColor: colors.surface,
   borderWidth: 1,
-  borderColor: colors.palette.neutral300,
+  borderColor: colors.border,
 }
 
 const $chipText: TextStyle = {
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: "500",
-  color: colors.palette.deepCharcoal,
+  color: colors.textDim,
 }
 
 const $chipTextActive: TextStyle = {
-  color: colors.palette.warmIvory,
+  color: colors.palette.neutral100,
   fontWeight: "600",
 }
 
 const $chipDivider: ViewStyle = {
   width: 1,
   height: 20,
-  backgroundColor: colors.palette.neutral300,
+  backgroundColor: colors.separator,
   marginHorizontal: spacing.xxs,
 }

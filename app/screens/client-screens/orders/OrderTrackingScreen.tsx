@@ -120,7 +120,7 @@ export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
         state === "completed"
           ? colors.palette.success500
           : state === "current"
-            ? colors.palette.primary500
+            ? colors.accent
             : colors.palette.neutral400
       const photoUri = record?.photo ? fileUrl(record as any, record.photo, "200x200") : ""
 
@@ -167,7 +167,7 @@ export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
 
     return (
       <Screen
-        backgroundColor={colors.palette.neutral100}
+        backgroundColor={colors.background}
         safeAreaEdges={["top"]}
         preset="scroll"
         statusBarStyle="dark"
@@ -176,7 +176,7 @@ export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor={colors.palette.tailorGold}
+              tintColor={colors.accent}
             />
           ),
         }}
@@ -277,7 +277,7 @@ const $header: ViewStyle = {
   paddingHorizontal: spacing.lg,
   paddingVertical: spacing.md,
   borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
+  borderBottomColor: colors.border,
 }
 
 const $backButton: ViewStyle = {
@@ -330,7 +330,7 @@ const $summaryCard: ViewStyle = {
   borderRadius: 12,
   padding: spacing.lg,
   borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+  borderColor: colors.border,
   shadowColor: colors.palette.neutral900,
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.05,
@@ -366,7 +366,7 @@ const $orderGarment: TextStyle = {
 
 const $orderDelivery: TextStyle = {
   fontSize: 13,
-  color: colors.palette.threadBlue,
+  color: colors.textDim,
 }
 
 const $timelineContainer: ViewStyle = {
@@ -447,7 +447,7 @@ const $stageTitle: TextStyle = {
 }
 
 const $stageTitleCurrent: TextStyle = {
-  color: colors.palette.primary600,
+  color: colors.accent,
 }
 
 const $stageTime: TextStyle = {

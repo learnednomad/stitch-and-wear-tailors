@@ -155,7 +155,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
 
       {isLoading ? (
         <View style={$loadingContainer}>
-          <ActivityIndicator size="large" color={colors.palette.primary500} />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : (
         <ScrollView
@@ -164,7 +164,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={onRefresh}
-              tintColor={colors.palette.primary500}
+              tintColor={colors.accent}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -333,7 +333,7 @@ const $headerTitle: TextStyle = {
 const $plusText: TextStyle = {
   fontSize: 22,
   fontWeight: "600",
-  color: colors.palette.primary500,
+  color: colors.accent,
 }
 
 const $errorText: TextStyle = {
@@ -374,7 +374,7 @@ const $claimAmount: TextStyle = {
 
 const $claimMeta: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   marginTop: 2,
 }
 
@@ -431,8 +431,8 @@ const $filterChip: ViewStyle = {
 }
 
 const $selectedFilterChip: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
-  borderColor: colors.palette.primary500,
+  backgroundColor: colors.accent,
+  borderColor: colors.accent,
 }
 
 const $filterChipText: TextStyle = {
@@ -446,10 +446,10 @@ const $selectedFilterChipText: TextStyle = {
 }
 
 const $invoiceCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
+  backgroundColor: colors.surface,
+  borderRadius: 16,
   borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+  borderColor: colors.border,
   padding: spacing.md,
   marginBottom: spacing.sm,
 }
@@ -479,7 +479,7 @@ const $statusChipText: TextStyle = {
 
 const $invoiceMeta: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   marginTop: spacing.xs,
 }
 
@@ -493,16 +493,16 @@ const $invoiceBottomRow: ViewStyle = {
 const $invoiceAmount: TextStyle = {
   fontSize: 16,
   fontWeight: "700",
-  color: colors.palette.primary600,
+  color: colors.accent,
 }
 
 const $invoiceDue: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
 }
 
 const $newInvoiceButton: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
+  backgroundColor: colors.accent,
   borderRadius: 12,
   marginHorizontal: spacing.lg,
   marginTop: spacing.md,
@@ -528,7 +528,7 @@ const $emptyTitle: TextStyle = {
 
 const $emptyText: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   textAlign: "center",
   lineHeight: 18,
 }

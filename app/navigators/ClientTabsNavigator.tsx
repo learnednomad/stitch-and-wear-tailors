@@ -55,8 +55,8 @@ export function TabNavigator() {
         headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarStyle: themed([$tabBar, { height: bottom + 70 }]),
-        tabBarActiveTintColor: "#000", // Black text
-        tabBarInactiveTintColor: "#FFD700", // Yellow for inactive
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.palette.gray500,
         tabBarLabelStyle: themed($tabBarLabel),
         tabBarItemStyle: themed($tabBarItem),
       }}
@@ -66,9 +66,7 @@ export function TabNavigator() {
         component={HomeScreen}
         options={{
           tabBarLabel: "Home",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="home" color={focused ? colors.tint : "#000"} size={24} />
-          ),
+          tabBarIcon: ({ color }) => <Icon icon="home" color={color} size={24} />,
         }}
       />
       <Tab.Screen
@@ -76,9 +74,7 @@ export function TabNavigator() {
         component={OrdersScreen}
         options={{
           tabBarLabel: "Orders",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="sew" color={focused ? colors.tint : "#000"} size={35} />
-          ),
+          tabBarIcon: ({ color }) => <Icon icon="sew" color={color} size={24} />,
         }}
       />
       <Tab.Screen
@@ -86,9 +82,7 @@ export function TabNavigator() {
         component={CatalogScreen as any}
         options={{
           tabBarLabel: "Browse",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="view" color={focused ? colors.tint : "#000"} size={24} />
-          ),
+          tabBarIcon: ({ color }) => <Icon icon="view" color={color} size={24} />,
         }}
       />
       <Tab.Screen
@@ -96,9 +90,7 @@ export function TabNavigator() {
         component={PaymentScreen}
         options={{
           tabBarLabel: "Pay",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="coins" color={focused ? colors.tint : colors.tintInactive} size={35} />
-          ),
+          tabBarIcon: ({ color }) => <Icon icon="coins" color={color} size={24} />,
         }}
       />
       <Tab.Screen
@@ -106,27 +98,25 @@ export function TabNavigator() {
         component={SettingsScreen}
         options={{
           tabBarLabel: "Settings",
-          tabBarIcon: ({ focused }) => (
-            <Icon icon="settings" color={focused ? colors.tint : "#000"} size={24} />
-          ),
+          tabBarIcon: ({ color }) => <Icon icon="settings" color={color} size={24} />,
         }}
       />
     </Tab.Navigator>
   )
 }
 
-const $tabBar: ThemedStyle<ViewStyle> = () => ({
-  backgroundColor: "#FFF", // White background
-  borderTopColor: "#000", // Black border
+const $tabBar: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  backgroundColor: colors.surface,
+  borderTopColor: colors.border,
+  borderTopWidth: 1,
 })
 
 const $tabBarItem: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingTop: spacing.md,
+  paddingTop: spacing.xs,
 })
 
 const $tabBarLabel: ThemedStyle<TextStyle> = ({ typography }) => ({
-  fontSize: 12,
+  fontSize: 11,
   fontFamily: typography.primary.medium,
-  lineHeight: 16,
-  color: "#000", // Black text
+  lineHeight: 15,
 })

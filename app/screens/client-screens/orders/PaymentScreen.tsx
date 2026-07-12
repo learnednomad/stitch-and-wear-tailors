@@ -20,7 +20,7 @@ import {
   ViewStyle,
 } from "react-native"
 import { TabScreenProps } from "@/navigators/ClientTabsNavigator"
-import { Button, Screen, Text, TextField } from "@/components"
+import { Button, Screen, Text, TextField, Chip, ChipTone } from "@/components"
 import { orderApi } from "@/services/api/order-api"
 import {
   clientPaymentApi,
@@ -51,10 +51,10 @@ const PAYMENT_METHODS: Array<{ value: PBPayment["method"]; label: string }> = [
   { value: "other", label: "Other" },
 ]
 
-const STATUS_COLORS: Record<string, string> = {
-  pending_confirmation: "#E8B04B",
-  confirmed: "#6B8E6B",
-  rejected: "#C85450",
+const STATUS_TONES: Record<string, ChipTone> = {
+  pending_confirmation: "warning",
+  confirmed: "success",
+  rejected: "error",
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -189,48 +189,50 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
       {outstanding.map((order) => (
         <View
           key={order.id}
-          style={[$card, { backgroundColor: theme.colors.palette.neutral100 }]}
+          style={[
+            $card,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+          ]}
         >
           <View style={$cardHeader}>
             <Text style={[$cardTitle, { color: theme.colors.text }]} text={`#${order.orderNumber}`} />
             {order.invoice && (
               <Text
-                style={[$invoiceNumber, { color: theme.colors.textDim }]}
+                style={[$invoiceNumber, { color: theme.colors.palette.gray500 }]}
                 text={order.invoice.invoiceNumber}
               />
             )}
           </View>
-          <View style={$amountRow}>
-            <View style={$amountItem}>
-              <Text style={[$amountLabel, { color: theme.colors.textDim }]} text="Total" />
-              <Text style={[$amountValue, { color: theme.colors.text }]} text={formatNaira(order.total)} />
-            </View>
-            <View style={$amountItem}>
-              <Text style={[$amountLabel, { color: theme.colors.textDim }]} text="Paid" />
+          <View style={$balanceRow}>
+            <View>
               <Text
-                style={[$amountValue, { color: (theme.colors.palette as any).success500 ?? "#6B8E6B" }]}
-                text={formatNaira(order.depositPaid)}
+                style={[$amountLabel, { color: theme.colors.textDim }]}
+                text="Balance due"
               />
-            </View>
-            <View style={$amountItem}>
-              <Text style={[$amountLabel, { color: theme.colors.textDim }]} text="Balance" />
               <Text
-                style={[$amountValue, { color: theme.colors.error }]}
+                style={[$balanceValue, { color: theme.colors.error }]}
                 text={formatNaira(order.balance)}
               />
             </View>
-          </View>
-          {order.invoice?.dueAt ? (
-            <Text
-              style={[$dueText, { color: theme.colors.textDim }]}
-              text={`Due ${new Date(order.invoice.dueAt).toLocaleDateString("en-NG", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}`}
+            <Button
+              text="I've paid"
+              onPress={() => openPayForm(order)}
+              style={[$payButton, { backgroundColor: theme.colors.accent }]}
+              pressedStyle={{ backgroundColor: theme.colors.palette.emerald600 }}
+              textStyle={[$payButtonText, { color: theme.colors.palette.neutral100 }]}
             />
-          ) : null}
-          <Button text="I've paid" onPress={() => openPayForm(order)} style={$payButton} />
+          </View>
+          <Text
+            style={[$paidMeta, { color: theme.colors.textDim }]}
+            text={`Total ${formatNaira(order.total)}  ·  Paid ${formatNaira(order.depositPaid)}${
+              order.invoice?.dueAt
+                ? `  ·  Due ${new Date(order.invoice.dueAt).toLocaleDateString("en-NG", {
+                    day: "numeric",
+                    month: "short",
+                  })}`
+                : ""
+            }`}
+          />
         </View>
       ))}
 
@@ -242,7 +244,11 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
       {payments.map((payment) => (
         <TouchableOpacity
           key={payment.id}
-          style={[$historyRow, { backgroundColor: theme.colors.palette.neutral100 }]}
+          style={[
+            $historyRow,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+          ]}
+          activeOpacity={0.7}
           onPress={() => setReceipt(payment)}
         >
           <View style={$historyLeft}>
@@ -257,17 +263,10 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
               ).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}`}
             />
           </View>
-          <View
-            style={[
-              $statusChip,
-              { backgroundColor: (STATUS_COLORS[payment.status] ?? "#8B9D83") + "33" },
-            ]}
-          >
-            <Text
-              style={[$statusChipText, { color: STATUS_COLORS[payment.status] ?? "#8B9D83" }]}
-              text={STATUS_LABELS[payment.status] ?? payment.status}
-            />
-          </View>
+          <Chip
+            text={STATUS_LABELS[payment.status] ?? payment.status}
+            tone={STATUS_TONES[payment.status] ?? "neutral"}
+          />
         </TouchableOpacity>
       ))}
 
@@ -302,9 +301,7 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
                     style={[
                       $chip,
                       {
-                        backgroundColor: active
-                          ? theme.colors.tint
-                          : theme.colors.palette.neutral100,
+                        backgroundColor: active ? theme.colors.accent : theme.colors.surface,
                         borderColor: theme.colors.border,
                       },
                     ]}
@@ -421,7 +418,8 @@ const $emptyText: TextStyle = {
 const $card: ViewStyle = {
   marginHorizontal: spacing.md,
   marginBottom: spacing.sm,
-  borderRadius: 12,
+  borderRadius: 16,
+  borderWidth: 1,
   padding: spacing.md,
 }
 
@@ -440,35 +438,39 @@ const $invoiceNumber: TextStyle = {
   fontSize: 12,
 }
 
-const $amountRow: ViewStyle = {
+const $balanceRow: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
-  marginTop: spacing.sm,
-}
-
-const $amountItem: ViewStyle = {
   alignItems: "center",
-  flex: 1,
+  marginTop: spacing.sm,
 }
 
 const $amountLabel: TextStyle = {
   fontSize: 12,
 }
 
-const $amountValue: TextStyle = {
-  fontSize: 15,
+const $balanceValue: TextStyle = {
+  fontSize: 22,
   fontWeight: "700",
   marginTop: 2,
 }
 
-const $dueText: TextStyle = {
+const $paidMeta: TextStyle = {
   fontSize: 12,
-  marginTop: spacing.xs,
-  textAlign: "center",
+  marginTop: spacing.sm,
 }
 
 const $payButton: ViewStyle = {
-  marginTop: spacing.sm,
+  borderWidth: 0,
+  borderRadius: 12,
+  paddingVertical: spacing.xs,
+  paddingHorizontal: spacing.md,
+  minHeight: 40,
+}
+
+const $payButtonText: TextStyle = {
+  fontSize: 14,
+  fontWeight: "600",
 }
 
 const $historyRow: ViewStyle = {
@@ -477,7 +479,8 @@ const $historyRow: ViewStyle = {
   alignItems: "center",
   marginHorizontal: spacing.md,
   marginBottom: spacing.xs,
-  borderRadius: 12,
+  borderRadius: 16,
+  borderWidth: 1,
   padding: spacing.md,
 }
 

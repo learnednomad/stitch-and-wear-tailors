@@ -110,7 +110,7 @@ export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
                 style={[
                   $chip,
                   {
-                    backgroundColor: active ? theme.colors.tint : theme.colors.palette.neutral100,
+                    backgroundColor: active ? theme.colors.accent : theme.colors.surface,
                     borderColor: theme.colors.border,
                   },
                 ]}

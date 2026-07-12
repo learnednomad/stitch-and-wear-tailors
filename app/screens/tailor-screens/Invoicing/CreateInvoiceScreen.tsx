@@ -212,7 +212,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
 
         {isLoading ? (
           <View style={$loadingContainer}>
-            <ActivityIndicator size="large" color={colors.palette.primary500} />
+            <ActivityIndicator size="large" color={colors.accent} />
           </View>
         ) : (
           <ScrollView style={$container} showsVerticalScrollIndicator={false}>
@@ -477,7 +477,7 @@ const $sectionTitle: TextStyle = {
 
 const $sectionDescription: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   marginBottom: spacing.sm,
 }
 
@@ -508,7 +508,7 @@ const $orderNumber: TextStyle = {
 
 const $orderMeta: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   marginTop: 2,
   textTransform: "capitalize",
 }
@@ -523,7 +523,7 @@ const $radio: ViewStyle = {
 
 const $radioSelected: ViewStyle = {
   borderColor: colors.palette.primary500,
-  backgroundColor: colors.palette.primary500,
+  backgroundColor: colors.accent,
 }
 
 const $lineItemCard: ViewStyle = {
@@ -559,7 +559,7 @@ const $addItemButton: ViewStyle = {
 const $addItemText: TextStyle = {
   fontSize: 14,
   fontWeight: "600",
-  color: colors.palette.primary500,
+  color: colors.accent,
 }
 
 const $subtotalRow: ViewStyle = {
@@ -579,7 +579,7 @@ const $subtotalLabel: TextStyle = {
 const $subtotalValue: TextStyle = {
   fontSize: 16,
   fontWeight: "700",
-  color: colors.palette.primary600,
+  color: colors.accent,
 }
 
 const $inputContainer: ViewStyle = {
@@ -615,7 +615,7 @@ const $chip: ViewStyle = {
 }
 
 const $selectedChip: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
+  backgroundColor: colors.accent,
   borderColor: colors.palette.primary500,
 }
 
@@ -635,12 +635,12 @@ const $dueAtInput: ViewStyle = {
 
 const $dueAtPreview: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   marginTop: spacing.sm,
 }
 
 const $submitButton: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
+  backgroundColor: colors.accent,
   borderRadius: 12,
   marginHorizontal: spacing.lg,
   marginTop: spacing.xl,
@@ -654,7 +654,7 @@ const $submitButtonText: TextStyle = {
 
 const $emptyText: TextStyle = {
   fontSize: 13,
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   lineHeight: 18,
 }
 

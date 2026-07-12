@@ -16,37 +16,24 @@ import {
 } from "react-native"
 import { observer } from "mobx-react-lite"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
-import { Screen, Icon, Text, IconTypes } from "app/components"
+import {
+  Screen,
+  Icon,
+  Text,
+  IconTypes,
+  StatTile,
+  SectionHeader,
+  Chip,
+  statusTone,
+  statusLabel,
+} from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "app/theme"
 import { useStores } from "@/models"
 import { orderApi } from "@/services/api/order-api"
-import { formatRelativeTime } from "@/utils/formatRelativeTime"
 
 /** Mapped domain order snapshot (loosely typed — mapper guarantees shape) */
 type DomainOrder = Record<string, any>
-
-const getStatusColor = (status: string) => {
-  const statusColors: Record<string, string> = {
-    pending: colors.palette.warning500,
-    confirmed: colors.palette.secondary400,
-    in_progress: colors.palette.secondary500,
-    ready: colors.palette.success500,
-    delivered: colors.palette.success600,
-    cancelled: colors.palette.error500,
-  }
-  return statusColors[status] || colors.palette.neutral400
-}
-
-const getPriorityColor = (priority: string) => {
-  const priorityColors: Record<string, string> = {
-    low: colors.palette.success500,
-    normal: colors.palette.secondary400,
-    high: colors.palette.warning500,
-    urgent: colors.palette.error500,
-  }
-  return priorityColors[priority] || colors.palette.neutral500
-}
 
 export const TailorScreen: FC = observer(function TailorScreen() {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
@@ -62,11 +49,7 @@ export const TailorScreen: FC = observer(function TailorScreen() {
     : "Tailor"
   const currentHour = new Date().getHours()
   const greeting =
-    currentHour < 12
-      ? `Good Morning, ${tailorName}`
-      : currentHour < 18
-        ? `Good Afternoon, ${tailorName}`
-        : `Good Evening, ${tailorName}`
+    currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening"
 
   // Own orders + unassigned pending requests, refreshed on focus
   const loadDashboard = useCallback(async () => {
@@ -123,45 +106,22 @@ export const TailorScreen: FC = observer(function TailorScreen() {
   const titleCase = (value: string) =>
     value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase())
 
-  // Dashboard stats cards
-  const renderStatsCard = ({
-    title,
-    value,
-    icon,
-    color,
-  }: {
-    title: string
-    value: string
-    icon: IconTypes
-    color: string
-  }) => (
-    <View style={[$statsCard, { borderLeftColor: color }]}>
-      <View style={$statsContent}>
-        <View style={$statsIconContainer}>
-          <Icon icon={icon} size={20} color={color} />
-        </View>
-        <View style={$statsTextContainer}>
-          <Text style={$statsValue}>{value}</Text>
-          <Text style={$statsTitle}>{title}</Text>
-        </View>
-      </View>
-    </View>
-  )
-
-  // Enhanced quick action card
+  // Quick action card (matches the client home grid anatomy)
   const renderQuickAction = ({
     item,
   }: {
-    item: { title: string; icon: IconTypes; color: string; onPress: () => void }
+    item: { title: string; icon: IconTypes; onPress: () => void }
   }) => (
     <TouchableOpacity
+      key={item.title}
       style={$quickActionCard}
       onPress={item.onPress}
       accessible
       accessibilityLabel={item.title}
+      activeOpacity={0.7}
     >
-      <View style={[$quickActionIconContainer, { backgroundColor: item.color + "20" }]}>
-        <Icon icon={item.icon} size={24} color={item.color} />
+      <View style={$quickActionIconContainer}>
+        <Icon icon={item.icon} size={18} color={colors.accent} />
       </View>
       <Text style={$quickActionText}>{item.title}</Text>
     </TouchableOpacity>
@@ -181,120 +141,130 @@ export const TailorScreen: FC = observer(function TailorScreen() {
         accessibilityLabel={`Order: ${item.orderNumber}`}
       >
         <View style={$orderHeader}>
-          <Text style={$orderTitle}>#{item.orderNumber}</Text>
-          <View style={[$priorityBadge, { backgroundColor: getPriorityColor(item.priority) }]}>
-            <Text style={$priorityText}>{String(item.priority).toUpperCase()}</Text>
+          <Text style={$orderTitle} numberOfLines={1}>
+            #{item.orderNumber}
+          </Text>
+          <View style={$orderChips}>
+            {["high", "urgent"].includes(item.priority) && (
+              <Chip
+                text={item.priority === "urgent" ? "Urgent" : "Express"}
+                tone={item.priority === "urgent" ? "error" : "warning"}
+              />
+            )}
+            <Chip text={statusLabel(item.status)} tone={statusTone(item.status)} />
           </View>
         </View>
 
-        <Text style={$orderMeasurement}>
-          {customerName} • {titleCase(item.garmentType ?? "custom")}
+        <Text style={$orderMeasurement} numberOfLines={1}>
+          {customerName} · {titleCase(item.garmentType ?? "custom")}
         </Text>
 
-        <View style={$orderStatusContainer}>
-          <View style={[$statusIndicator, { backgroundColor: getStatusColor(item.status) }]} />
-          <Text style={$orderStatus}>{titleCase(item.status)}</Text>
-        </View>
-
-        <View style={$progressContainer}>
-          <View style={$progressBar}>
-            <View style={[$progressFill, { width: `${progressPercentage}%` }]} />
+        {item.status !== "cancelled" && (
+          <View style={$progressContainer}>
+            <View style={$progressBar}>
+              <View style={[$progressFill, { width: `${progressPercentage}%` }]} />
+            </View>
+            <Text style={$progressText}>{progressPercentage}%</Text>
           </View>
-          <Text style={$progressText}>{progressPercentage}%</Text>
-        </View>
+        )}
 
         <View style={$orderFooter}>
-          <Text style={$orderDueDate}>
-            Due: {new Date(item.estimatedDeliveryDate).toLocaleDateString()}
-          </Text>
-          <Text style={$orderCreated}>{formatRelativeTime(item.createdAt)}</Text>
-        </View>
-
-        <View style={$orderAmountRow}>
           <Text style={$orderAmount}>₦{(item.pricing?.totalPrice ?? 0).toLocaleString()}</Text>
+          <Text style={$orderDueDate}>
+            Due {new Date(item.estimatedDeliveryDate).toLocaleDateString("en-NG", {
+              day: "numeric",
+              month: "short",
+            })}
+          </Text>
         </View>
       </TouchableOpacity>
     )
   }
 
   // Quick links into the tailor tabs
-  const quickActions: { title: string; icon: IconTypes; color: string; onPress: () => void }[] = [
+  const quickActions: { title: string; icon: IconTypes; onPress: () => void }[] = [
     {
       title: "Orders",
       icon: "sew",
-      color: colors.palette.primary500,
       onPress: () => (navigation as any).navigate("TailorOrders", {}),
     },
     {
       title: "Measurements",
       icon: "profile",
-      color: colors.palette.secondary400,
       onPress: () => (navigation as any).navigate("Measurements"),
     },
     {
       title: "Invoices",
       icon: "money",
-      color: colors.palette.tailorGold,
       onPress: () => (navigation as any).navigate("Invoices"),
     },
     {
       title: "Analytics",
       icon: "view",
-      color: colors.palette.accent500,
       onPress: () => (navigation as any).navigate("Analytics"),
     },
     {
       title: "Settings",
       icon: "settings",
-      color: colors.palette.warning500,
       onPress: () => (navigation as any).navigate("Settings"),
     },
   ]
 
-  const statsData: { title: string; value: string; icon: IconTypes; color: string }[] = [
+  const statsData: {
+    title: string
+    value: string
+    icon: IconTypes
+    color: string
+    backgroundColor: string
+  }[] = [
     {
       title: "New Requests",
       value: String(newRequestsCount),
       icon: "bell",
-      color: colors.palette.warning500,
+      color: colors.palette.warning600,
+      backgroundColor: colors.palette.warning100,
     },
     {
       title: "In Progress",
       value: String(inProgressCount),
       icon: "sew",
       color: colors.palette.secondary400,
+      backgroundColor: colors.palette.secondary100,
     },
     {
       title: "Ready",
       value: String(readyCount),
       icon: "check",
-      color: colors.palette.success500,
+      color: colors.palette.success600,
+      backgroundColor: colors.palette.success100,
     },
     {
       title: "Revenue (Month)",
       value: `₦${revenueThisMonth.toLocaleString()}`,
       icon: "money",
-      color: colors.palette.tailorGold,
+      color: colors.accent,
+      backgroundColor: colors.accentSoft,
     },
   ]
 
   return (
     <Screen
-      backgroundColor="#f7fafc"
+      backgroundColor={colors.background}
       contentContainerStyle={$root}
       safeAreaEdges={["top"]}
       preset="scroll"
       statusBarStyle="dark"
     >
-      {/* Enhanced Header */}
+      {/* Header */}
         <View style={$header}>
           <View style={$greetingContainer}>
             <Text style={$greetingText} accessibilityLabel={greeting}>
-              {greeting}
+              {greeting},
             </Text>
-            <Text style={$welcomeText}>
-              Welcome back to your atelier - crafting Nigerian excellence
+            <Text style={$nameText} numberOfLines={1}>
+              {tailorName}
             </Text>
+            <Text style={$welcomeText}>Welcome back to your atelier</Text>
           </View>
           <TouchableOpacity
             style={$notificationIcon}
@@ -302,17 +272,23 @@ export const TailorScreen: FC = observer(function TailorScreen() {
             accessible
             accessibilityLabel="Notifications"
           >
-            <Icon icon="bell" size={24} color="#ffffff" />
+            <Icon icon="bell" size={20} color={colors.text} />
           </TouchableOpacity>
         </View>
 
         {/* Dashboard Stats */}
         <View style={$statsContainer}>
-          <Text style={$sectionTitle}>Dashboard Overview</Text>
+          <SectionHeader title="Overview" style={$sectionHeaderSpacing} />
           <View style={$statsGrid}>
             {statsData.map((stat, index) => (
               <View key={index} style={$statsCardWrapper}>
-                {renderStatsCard(stat)}
+                <StatTile
+                  value={stat.value}
+                  label={stat.title}
+                  icon={stat.icon}
+                  iconColor={stat.color}
+                  iconBackgroundColor={stat.backgroundColor}
+                />
               </View>
             ))}
           </View>
@@ -320,16 +296,10 @@ export const TailorScreen: FC = observer(function TailorScreen() {
 
         {/* Quick Actions */}
         <View style={$quickActionsContainer}>
-          <Text style={$sectionTitle}>Quick Actions</Text>
-          <FlatList
-            data={quickActions}
-            renderItem={renderQuickAction}
-            keyExtractor={(item) => item.title}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={$quickActionListContent}
-            accessibilityLabel="Quick Actions List"
-          />
+          <SectionHeader title="Quick Actions" style={$sectionHeaderSpacing} />
+          <View style={$quickActionGrid} accessibilityLabel="Quick Actions List">
+            {quickActions.map((item) => renderQuickAction({ item }))}
+          </View>
         </View>
 
         {/* Recent Orders with Tabs */}
@@ -372,7 +342,7 @@ export const TailorScreen: FC = observer(function TailorScreen() {
             onPress={() => (navigation as any).navigate("TailorOrders", {})}
           >
             <Text style={$viewAllText}>View All Orders</Text>
-            <Icon icon="caretRight" size={16} color={colors.palette.primary500} />
+            <Icon icon="caretRight" size={16} color={colors.accent} />
           </TouchableOpacity>
         </View>
 
@@ -392,36 +362,44 @@ const $root: ViewStyle = {
 const $header: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
-  alignItems: "flex-start",
-  paddingVertical: spacing.lg,
-  paddingHorizontal: spacing.sm,
+  alignItems: "center",
+  paddingVertical: spacing.md,
 }
 
 const $greetingContainer: ViewStyle = {
   flex: 1,
+  marginRight: spacing.sm,
 }
 
 const $greetingText: TextStyle = {
-  fontSize: 28,
-  // Space Grotesk clips ascenders without an explicit line height
-  lineHeight: 36,
+  fontSize: 14,
+  lineHeight: 20,
+  color: colors.textDim,
+}
+
+const $nameText: TextStyle = {
+  fontSize: 24,
+  lineHeight: 32,
   fontWeight: "700",
-  color: "#1a202c",
-  marginBottom: spacing.xs,
-  letterSpacing: 0.5,
+  color: colors.text,
 }
 
 const $welcomeText: TextStyle = {
-  fontSize: 16,
-  color: "#4a5568",
-  fontWeight: "400",
+  fontSize: 13,
+  lineHeight: 18,
+  color: colors.palette.gray500,
+  marginTop: 2,
 }
 
 const $notificationIcon: ViewStyle = {
-  padding: spacing.sm,
-  position: "relative",
-  backgroundColor: "#2B5D2F",
-  borderRadius: 12,
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: colors.surface,
+  borderWidth: 1,
+  borderColor: colors.border,
+  justifyContent: "center",
+  alignItems: "center",
 }
 
 // Stats styles
@@ -436,53 +414,18 @@ const $statsGrid: ViewStyle = {
 }
 
 const $statsCardWrapper: ViewStyle = {
-  width: "48%",
-  marginBottom: spacing.sm,
-}
-
-const $statsCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  borderLeftWidth: 4,
-  padding: spacing.md,
-  shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  elevation: 2,
-}
-
-const $statsContent: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $statsIconContainer: ViewStyle = {
-  marginRight: spacing.sm,
-}
-
-const $statsTextContainer: ViewStyle = {
-  flex: 1,
-}
-
-const $statsValue: TextStyle = {
-  fontSize: 18,
-  fontWeight: "bold",
-  color: colors.palette.neutral900,
-}
-
-const $statsTitle: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral600,
-  marginTop: 2,
+  width: "48.5%",
+  marginBottom: spacing.xs,
 }
 
 const $sectionTitle: TextStyle = {
-  fontSize: 22,
-  fontWeight: "700",
-  color: "#1a202c",
-  marginBottom: spacing.md,
-  letterSpacing: 0.3,
+  fontSize: 18,
+  fontWeight: "600",
+  color: colors.text,
+}
+
+const $sectionHeaderSpacing: ViewStyle = {
+  marginBottom: spacing.sm,
 }
 
 // Quick actions styles
@@ -490,39 +433,36 @@ const $quickActionsContainer: ViewStyle = {
   marginBottom: spacing.lg,
 }
 
-const $quickActionListContent: ViewStyle = {
-  paddingRight: spacing.lg,
+const $quickActionGrid: ViewStyle = {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  gap: spacing.xs,
 }
 
 const $quickActionCard: ViewStyle = {
-  // wide enough that "Measurements" doesn't break mid-word
-  width: 116,
-  backgroundColor: colors.palette.neutral100,
+  flexBasis: "31%",
+  flexGrow: 1,
+  backgroundColor: colors.surface,
   borderRadius: 16,
+  borderWidth: 1,
+  borderColor: colors.border,
   padding: spacing.sm,
-  marginRight: spacing.sm,
-  alignItems: "center",
-  shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  elevation: 2,
 }
 
 const $quickActionIconContainer: ViewStyle = {
-  width: 48,
-  height: 48,
-  borderRadius: 24,
+  width: 34,
+  height: 34,
+  borderRadius: 17,
+  backgroundColor: colors.accentSoft,
   justifyContent: "center",
   alignItems: "center",
-  marginBottom: spacing.sm,
+  marginBottom: spacing.xs,
 }
 
 const $quickActionText: TextStyle = {
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: "600",
-  color: colors.palette.neutral800,
-  textAlign: "center",
+  color: colors.text,
 }
 
 // Orders styles
@@ -570,66 +510,39 @@ const $orderListContent: ViewStyle = {
 }
 
 const $orderCard: ViewStyle = {
-  width: 280,
-  backgroundColor: colors.palette.neutral100,
+  width: 260,
+  backgroundColor: colors.surface,
   borderRadius: 16,
+  borderWidth: 1,
+  borderColor: colors.border,
   padding: spacing.md,
-  marginRight: spacing.md,
-  shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  elevation: 2,
+  marginRight: spacing.sm,
 }
 
 const $orderHeader: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
-  marginBottom: spacing.sm,
+  gap: spacing.xs,
+  marginBottom: spacing.xs,
+}
+
+const $orderChips: ViewStyle = {
+  flexDirection: "row",
+  gap: spacing.xxs,
 }
 
 const $orderTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "bold",
-  color: colors.palette.neutral900,
-}
-
-const $priorityBadge: ViewStyle = {
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-  borderRadius: 4,
-}
-
-const $priorityText: TextStyle = {
-  fontSize: 10,
-  fontWeight: "bold",
-  color: colors.palette.neutral100,
+  flexShrink: 1,
+  fontSize: 15,
+  fontWeight: "600",
+  color: colors.text,
 }
 
 const $orderMeasurement: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral700,
+  fontSize: 13,
+  color: colors.textDim,
   marginBottom: spacing.sm,
-}
-
-const $orderStatusContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
-
-const $statusIndicator: ViewStyle = {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-  marginRight: spacing.xs,
-}
-
-const $orderStatus: TextStyle = {
-  fontSize: 12,
-  fontWeight: "600",
-  color: colors.palette.neutral700,
 }
 
 const $progressContainer: ViewStyle = {
@@ -648,7 +561,7 @@ const $progressBar: ViewStyle = {
 
 const $progressFill: ViewStyle = {
   height: "100%",
-  backgroundColor: colors.palette.primary500,
+  backgroundColor: colors.accent,
   borderRadius: 2,
 }
 
@@ -667,25 +580,13 @@ const $orderFooter: ViewStyle = {
 
 const $orderDueDate: TextStyle = {
   fontSize: 12,
-  color: colors.palette.neutral600,
-}
-
-const $orderCreated: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.neutral500,
-}
-
-const $orderAmountRow: ViewStyle = {
-  marginTop: spacing.xs,
-  paddingTop: spacing.xs,
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral300,
+  color: colors.palette.gray500,
 }
 
 const $orderAmount: TextStyle = {
-  fontSize: 14,
+  fontSize: 15,
   fontWeight: "700",
-  color: colors.palette.accent500,
+  color: colors.accent,
 }
 
 const $emptyOrders: ViewStyle = {
@@ -709,6 +610,6 @@ const $viewAllOrders: ViewStyle = {
 
 const $viewAllText: TextStyle = {
   fontSize: 14,
-  color: colors.palette.primary500,
+  color: colors.accent,
   fontWeight: "600",
 }

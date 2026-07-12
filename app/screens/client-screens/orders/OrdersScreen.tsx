@@ -15,7 +15,7 @@ import {
 } from "react-native"
 import { observer } from "mobx-react-lite"
 import { TabScreenProps } from "@/navigators/ClientTabsNavigator"
-import { Screen, Text, Button, Icon } from "@/components"
+import { Screen, Text, Button, Icon, Chip, statusTone } from "@/components"
 import {
   OrderFilterBar,
   OrderFilterValue,
@@ -29,7 +29,7 @@ import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
 import { Instance } from "mobx-state-tree"
 import { NigerianOrderModel } from "@/models/stores/OrderStore"
-import { NigerianGarmentType, OrderStatus, NigerianCity } from "@/types/orders"
+import { NigerianGarmentType, OrderStatus } from "@/types/orders"
 
 type OrderInstance = Instance<typeof NigerianOrderModel>
 
@@ -108,17 +108,8 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
     matchesOrderFilter(order, filter),
   )
 
-  const getStatusColor = (status: OrderStatus) => {
-    const statusOption = statusOptions.find((opt) => opt.value === status)
-    return statusOption?.color || colors.palette.neutral500
-  }
-
   const getGarmentDisplayName = (garmentType: NigerianGarmentType) => {
     return orderStore.getTranslation("garments", garmentType) || garmentType
-  }
-
-  const getCityDisplayName = (city: NigerianCity) => {
-    return orderStore.getTranslation("cities", city) || city
   }
 
   const formatOrderDate = (dateString: string) => {
@@ -129,98 +120,56 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
     })
   }
 
-  const renderOrderCard = ({ item: order }: { item: OrderInstance }) => (
-    <TouchableOpacity
-      style={$orderCard}
-      onPress={() => {
-        // Navigate to order detail screen
-        ;(navigation as any).navigate("OrderDetail", { orderId: order.id })
-      }}
-    >
-      <View style={$orderHeader}>
-        <View style={$orderTitleSection}>
-          <Text style={$orderNumber}>#{order.orderNumber}</Text>
-          <View
-            style={[
-              $statusBadge,
-              { backgroundColor: getStatusColor(order.status as OrderStatus) + "20" },
-            ]}
-          >
-            <Text style={[$statusText, { color: getStatusColor(order.status as OrderStatus) }]}>
-              {statusOptions.find((s) => s.value === order.status)?.label}
+  const renderOrderCard = ({ item: order }: { item: OrderInstance }) => {
+    const garmentSummary =
+      order.items.length === 0
+        ? "Custom Order"
+        : `${getGarmentDisplayName(order.items[0].garmentType as NigerianGarmentType)}${
+            order.items.length > 1 ? `  ·  +${order.items.length - 1} more` : ""
+          }`
+    const dateLine = order.estimatedDeliveryDate
+      ? `Due ${formatOrderDate(order.estimatedDeliveryDate)}`
+      : `Placed ${formatOrderDate(order.createdAt)}`
+
+    return (
+      <TouchableOpacity
+        style={$orderCard}
+        activeOpacity={0.7}
+        onPress={() => {
+          // Navigate to order detail screen
+          ;(navigation as any).navigate("OrderDetail", { orderId: order.id })
+        }}
+      >
+        <View style={$orderCardBody}>
+          <View style={$orderHeader}>
+            <Text style={$orderNumber} numberOfLines={1}>
+              #{order.orderNumber}
             </Text>
+            <Chip
+              text={statusOptions.find((s) => s.value === order.status)?.label ?? order.status}
+              tone={statusTone(order.status)}
+            />
+          </View>
+
+          <Text style={$garmentText} numberOfLines={1}>
+            {garmentSummary}
+          </Text>
+
+          <View style={$orderFooter}>
+            <Text style={$totalAmount}>₦{order.pricing.totalPrice.toLocaleString()}</Text>
+            <Text style={$orderDate}>{dateLine}</Text>
           </View>
         </View>
-        <Text style={$orderDate}>{formatOrderDate(order.createdAt)}</Text>
-      </View>
-
-      <View style={$orderInfo}>
-        <View style={$customerInfo}>
-          <Text style={$customerName}>
-            {order.customerInfo.firstName} {order.customerInfo.lastName}
-          </Text>
-          <Text style={$customerDetails}>
-            {order.customerInfo.phone} • {getCityDisplayName(order.city as NigerianCity)}
-          </Text>
-        </View>
-      </View>
-
-      <View style={$orderItems}>
-        {order.items.slice(0, 2).map((item: any, index: number) => (
-          <View key={index} style={$orderItem}>
-            <Icon icon="sew" size={16} color={colors.palette.threadBlue} />
-            <Text style={$itemName}>
-              {getGarmentDisplayName(item.garmentType as NigerianGarmentType)}
-            </Text>
-            <Text style={$itemPrice}>₦{item.totalPrice.toLocaleString()}</Text>
-          </View>
-        ))}
-        {order.items.length > 2 && (
-          <Text style={$moreItems}>+{order.items.length - 2} more items</Text>
-        )}
-      </View>
-
-      <View style={$orderFooter}>
-        <View style={$totalSection}>
-          <Text style={$totalLabel}>Total:</Text>
-          <Text style={$totalAmount}>₦{order.pricing.totalPrice.toLocaleString()}</Text>
-        </View>
-
-        {/* Progress is meaningless for terminated orders — hide the bar */}
-        {order.status !== "cancelled" && (
-          <View style={$progressSection}>
-            <View style={$progressBar}>
-              <View
-                style={[
-                  $progressFill,
-                  {
-                    width: `${order.progress.percentage}%`,
-                    backgroundColor: getStatusColor(order.status as OrderStatus),
-                  },
-                ]}
-              />
-            </View>
-            <Text style={$progressText}>{order.progress.percentage}% Complete</Text>
-          </View>
-        )}
-      </View>
-
-      {order.estimatedDeliveryDate && (
-        <View style={$deliveryInfo}>
-          <Icon icon="appointment" size={14} color={colors.palette.threadBlue} />
-          <Text style={$deliveryText}>
-            Est. Delivery: {formatOrderDate(order.estimatedDeliveryDate)}
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  )
+        <Icon icon="caretRight" size={18} color={colors.palette.gray500} />
+      </TouchableOpacity>
+    )
+  }
 
   const renderEmptyState = () => {
     if (countActiveOrderFilters(filter) > 0) {
       return (
         <View style={$emptyState}>
-          <Icon icon="view" size={64} color={colors.palette.neutral400} />
+          <Icon icon="view" size={64} color={colors.palette.gray500} />
           <Text style={$emptyTitle}>No Matching Orders</Text>
           <Text style={$emptyDescription}>
             Try adjusting your search or clearing some filters
@@ -230,7 +179,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
     }
     return (
       <View style={$emptyState}>
-        <Icon icon="sew" size={64} color={colors.palette.neutral400} />
+        <Icon icon="sew" size={64} color={colors.palette.gray500} />
         <Text style={$emptyTitle}>No Orders Yet</Text>
         <Text style={$emptyDescription}>
           Start your tailoring journey by creating your first order
@@ -258,7 +207,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
           style={$addButton}
           onPress={() => navigation.navigate("NewOrder" as never)}
         >
-          <Icon icon="sew" size={24} color={colors.palette.warmIvory} />
+          <Icon icon="sew" size={22} color={colors.palette.neutral100} />
         </TouchableOpacity>
       </View>
 
@@ -305,7 +254,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
 // Styles
 const $root: ViewStyle = {
   flex: 1,
-  backgroundColor: colors.palette.neutral100,
+  backgroundColor: colors.background,
 }
 
 // Screen's fixed preset does not give its inner container a height; without
@@ -318,39 +267,29 @@ const $header: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
-  padding: spacing.lg,
-  backgroundColor: colors.palette.warmIvory,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
+  paddingHorizontal: spacing.md,
+  paddingTop: spacing.sm,
+  paddingBottom: spacing.md,
 }
 
 const $title: TextStyle = {
   fontSize: 24,
   fontWeight: "700",
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
 }
 
 const $addButton: ViewStyle = {
-  width: 44,
-  height: 44,
-  borderRadius: 22,
-  backgroundColor: colors.palette.tailorGold,
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: colors.accent,
   justifyContent: "center",
   alignItems: "center",
-  shadowColor: colors.palette.deepCharcoal,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.2,
-  shadowRadius: 4,
-  elevation: 3,
 }
 
 const $filterBarContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.md,
+  paddingHorizontal: spacing.md,
   paddingBottom: spacing.md,
-  backgroundColor: colors.palette.warmIvory,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
 }
 
 const $content: ViewStyle = {
@@ -358,168 +297,63 @@ const $content: ViewStyle = {
 }
 
 const $listContainer: ViewStyle = {
-  padding: spacing.lg,
-  gap: spacing.md,
+  paddingHorizontal: spacing.md,
+  paddingTop: spacing.xs,
+  paddingBottom: spacing.lg,
+  gap: spacing.sm,
 }
 
 const $orderCard: ViewStyle = {
-  backgroundColor: colors.palette.warmIvory,
-  borderRadius: 12,
-  padding: spacing.lg,
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: colors.surface,
+  borderRadius: 16,
+  padding: spacing.md,
   borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-  shadowColor: colors.palette.deepCharcoal,
-  shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.1,
-  shadowRadius: 3,
-  elevation: 2,
+  borderColor: colors.border,
+  gap: spacing.xs,
+}
+
+const $orderCardBody: ViewStyle = {
+  flex: 1,
 }
 
 const $orderHeader: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
-  alignItems: "flex-start",
-  marginBottom: spacing.sm,
-}
-
-const $orderTitleSection: ViewStyle = {
-  flexDirection: "row",
   alignItems: "center",
-  gap: spacing.sm,
+  gap: spacing.xs,
+  marginBottom: spacing.xs,
 }
 
 const $orderNumber: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.palette.deepCharcoal,
-}
-
-const $statusBadge: ViewStyle = {
-  borderRadius: 6,
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xxs,
-}
-
-const $statusText: TextStyle = {
-  fontSize: 11,
+  flexShrink: 1,
+  fontSize: 15,
   fontWeight: "600",
-  textTransform: "uppercase",
+  color: colors.text,
 }
 
-const $orderDate: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral500,
-}
-
-const $orderInfo: ViewStyle = {
-  marginBottom: spacing.md,
-}
-
-const $customerInfo: ViewStyle = {
-  gap: spacing.xxs,
-}
-
-const $customerName: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $customerDetails: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-}
-
-const $orderItems: ViewStyle = {
-  gap: spacing.xs,
-  marginBottom: spacing.md,
-}
-
-const $orderItem: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.sm,
-}
-
-const $itemName: TextStyle = {
-  flex: 1,
+const $garmentText: TextStyle = {
   fontSize: 13,
-  color: colors.palette.deepCharcoal,
-}
-
-const $itemPrice: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-  color: colors.palette.tailorGold,
-}
-
-const $moreItems: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-  fontStyle: "italic",
-  marginLeft: spacing.xl,
+  color: colors.textDim,
+  marginBottom: spacing.sm,
 }
 
 const $orderFooter: ViewStyle = {
-  gap: spacing.sm,
-}
-
-const $totalSection: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
-  paddingTop: spacing.sm,
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral300,
-}
-
-const $totalLabel: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
 }
 
 const $totalAmount: TextStyle = {
   fontSize: 16,
   fontWeight: "700",
-  color: colors.palette.sageGreen,
+  color: colors.accent,
 }
 
-const $progressSection: ViewStyle = {
-  gap: spacing.xs,
-}
-
-const $progressBar: ViewStyle = {
-  height: 4,
-  backgroundColor: colors.palette.neutral300,
-  borderRadius: 2,
-  overflow: "hidden",
-}
-
-const $progressFill: ViewStyle = {
-  height: "100%",
-  borderRadius: 2,
-}
-
-const $progressText: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.threadBlue,
-  textAlign: "right",
-}
-
-const $deliveryInfo: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.xs,
-  marginTop: spacing.sm,
-  paddingTop: spacing.sm,
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral300,
-}
-
-const $deliveryText: TextStyle = {
+const $orderDate: TextStyle = {
   fontSize: 12,
-  color: colors.palette.threadBlue,
+  color: colors.palette.gray500,
 }
 
 const $emptyState: ViewStyle = {
@@ -532,22 +366,23 @@ const $emptyState: ViewStyle = {
 const $emptyTitle: TextStyle = {
   fontSize: 20,
   fontWeight: "600",
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
   marginTop: spacing.lg,
   marginBottom: spacing.xs,
 }
 
 const $emptyDescription: TextStyle = {
   fontSize: 14,
-  color: colors.palette.threadBlue,
+  color: colors.textDim,
   textAlign: "center",
   marginBottom: spacing.xl,
   lineHeight: 20,
 }
 
 const $createOrderButton: ViewStyle = {
-  backgroundColor: colors.palette.tailorGold,
-  borderRadius: 12,
+  backgroundColor: colors.accent,
+  borderWidth: 0,
+  borderRadius: 14,
   paddingHorizontal: spacing.xl,
   paddingVertical: spacing.md,
 }
@@ -555,7 +390,7 @@ const $createOrderButton: ViewStyle = {
 const $createOrderButtonText: TextStyle = {
   fontSize: 16,
   fontWeight: "600",
-  color: colors.palette.warmIvory,
+  color: colors.palette.neutral100,
 }
 
 const $loadingState: ViewStyle = {
@@ -567,5 +402,5 @@ const $loadingState: ViewStyle = {
 
 const $loadingText: TextStyle = {
   fontSize: 16,
-  color: colors.palette.threadBlue,
+  color: colors.textDim,
 }

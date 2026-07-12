@@ -319,14 +319,14 @@ const RevenueBarChart: FC<{ buckets: RevenueBucket[]; width: number }> = ({ buck
               width={barWidth}
               height={Math.max(barHeight, bucket.amount > 0 ? 2 : 0)}
               rx={3}
-              fill={bucket.amount > 0 ? colors.palette.tailorGold : colors.palette.neutral300}
+              fill={bucket.amount > 0 ? colors.accent : colors.palette.neutral300}
             />
             {bucket.amount > 0 && barWidth >= 18 && (
               <SvgText
                 x={x + barWidth / 2}
                 y={y - 5}
                 fontSize={9}
-                fill={colors.palette.neutral600}
+                fill={colors.textDim}
                 textAnchor="middle"
               >
                 {formatNaira(bucket.amount)}
@@ -433,7 +433,7 @@ export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            tintColor={colors.palette.tailorGold}
+            tintColor={colors.accent}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -527,7 +527,7 @@ export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
 
 const $root: ViewStyle = {
   flex: 1,
-  backgroundColor: colors.palette.neutral100,
+  backgroundColor: colors.background,
 }
 
 // Screen's fixed preset gives its inner container no height; without flex the
@@ -538,15 +538,13 @@ const $screenContent: ViewStyle = {
 
 const $header: ViewStyle = {
   padding: spacing.lg,
-  backgroundColor: colors.palette.warmIvory,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
+  
 }
 
 const $title: TextStyle = {
   fontSize: 24,
   fontWeight: "700",
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
 }
 
 const $scroll: ViewStyle = {
@@ -567,26 +565,26 @@ const $periodRow: ViewStyle = {
 const $periodChip: ViewStyle = {
   flex: 1,
   paddingVertical: spacing.xs,
-  borderRadius: 16,
-  backgroundColor: colors.palette.neutral200,
+  borderRadius: 999,
+  backgroundColor: colors.surface,
   borderWidth: 1,
-  borderColor: colors.palette.neutral300,
+  borderColor: colors.border,
   alignItems: "center",
 }
 
 const $periodChipActive: ViewStyle = {
-  backgroundColor: colors.palette.tailorGold,
-  borderColor: colors.palette.tailorGold,
+  backgroundColor: colors.accent,
+  borderColor: colors.accent,
 }
 
 const $periodChipText: TextStyle = {
   fontSize: 12,
   fontWeight: "500",
-  color: colors.palette.deepCharcoal,
+  color: colors.textDim,
 }
 
 const $periodChipTextActive: TextStyle = {
-  color: colors.palette.warmIvory,
+  color: colors.palette.neutral100,
   fontWeight: "600",
 }
 
@@ -599,22 +597,22 @@ const $tileGrid: ViewStyle = {
 const $tile: ViewStyle = {
   flexBasis: "47%",
   flexGrow: 1,
-  backgroundColor: colors.palette.warmIvory,
-  borderRadius: 12,
+  backgroundColor: colors.surface,
+  borderRadius: 16,
   padding: spacing.md,
   borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+  borderColor: colors.border,
 }
 
 const $tileValue: TextStyle = {
   fontSize: 20,
   fontWeight: "700",
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
 }
 
 const $tileLabel: TextStyle = {
   fontSize: 12,
-  color: colors.palette.threadBlue,
+  color: colors.textDim,
   marginTop: spacing.xxs,
 }
 
@@ -625,18 +623,18 @@ const $tileSub: TextStyle = {
 }
 
 const $card: ViewStyle = {
-  backgroundColor: colors.palette.warmIvory,
-  borderRadius: 12,
+  backgroundColor: colors.surface,
+  borderRadius: 16,
   padding: spacing.md,
   borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+  borderColor: colors.border,
   gap: spacing.sm,
 }
 
 const $cardTitle: TextStyle = {
   fontSize: 14,
   fontWeight: "700",
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
 }
 
 const $chartEmpty: ViewStyle = {
@@ -654,7 +652,7 @@ const $garmentRow: ViewStyle = {
 const $garmentLabel: TextStyle = {
   width: 110,
   fontSize: 13,
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
 }
 
 const $garmentBarTrack: ViewStyle = {
@@ -668,14 +666,14 @@ const $garmentBarTrack: ViewStyle = {
 const $garmentBarFill: ViewStyle = {
   height: "100%",
   borderRadius: 4,
-  backgroundColor: colors.palette.threadBlue,
+  backgroundColor: colors.accent,
 }
 
 const $garmentCount: TextStyle = {
   width: 24,
   fontSize: 13,
   fontWeight: "600",
-  color: colors.palette.neutral600,
+  color: colors.textDim,
   textAlign: "right",
 }
 
@@ -688,7 +686,7 @@ const $centerState: ViewStyle = {
 const $emptyTitle: TextStyle = {
   fontSize: 16,
   fontWeight: "600",
-  color: colors.palette.deepCharcoal,
+  color: colors.text,
 }
 
 const $emptyText: TextStyle = {

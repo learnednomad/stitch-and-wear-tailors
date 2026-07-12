@@ -2,7 +2,16 @@ import React, { FC, useCallback, useEffect, useState } from "react"
 import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle, Alert, Modal } from "react-native"
 import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon, Text, TextField, StatusUpdateSheet } from "app/components"
+import {
+  Button,
+  Screen,
+  Icon,
+  Text,
+  TextField,
+  StatusUpdateSheet,
+  Chip,
+  statusTone,
+} from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "app/theme"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
@@ -294,7 +303,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
   if (isLoading || !order) {
     return (
       <Screen
-        backgroundColor={colors.palette.neutral100}
+        backgroundColor={colors.background}
         safeAreaEdges={["top"]}
         preset="fixed"
         statusBarStyle="dark"
@@ -336,7 +345,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
       case "completed":
         return colors.palette.success500
       case "current":
-        return colors.palette.primary500
+        return colors.accent
       default:
         return colors.palette.neutral400
     }
@@ -382,7 +391,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
 
   return (
     <Screen
-      backgroundColor={colors.palette.neutral100}
+      backgroundColor={colors.background}
       safeAreaEdges={["top"]}
       preset="scroll"
       statusBarStyle="dark"
@@ -408,11 +417,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
           <View style={$orderSummaryCard}>
             <View style={$orderHeader}>
               <Text style={$orderIdText}>#{orderDetail.id}</Text>
-              <View style={[$statusBadge, { backgroundColor: colors.palette.primary500 + "20" }]}>
-                <Text style={[$statusText, { color: colors.palette.primary500 }]}>
-                  {orderDetail.status}
-                </Text>
-              </View>
+              <Chip text={orderDetail.status} tone={statusTone(order.status)} />
             </View>
             <Text style={$orderTitle}>{orderDetail.measurementName}</Text>
             <View style={$orderDetailsGrid}>
@@ -449,7 +454,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
           <View style={$section}>
             <Text style={$sectionTitle}>Special Instructions</Text>
             <View style={$instructionsCard}>
-              <Icon icon="view" size={20} color={colors.palette.primary500} />
+              <Icon icon="view" size={20} color={colors.accent} />
               <Text style={$instructionsText}>{orderDetail.specialInstructions}</Text>
             </View>
           </View>
@@ -488,7 +493,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
                 accessibilityLabel={`Message ${isTailorViewer ? "client" : "tailor"}${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
                 accessibilityRole="button"
               >
-                <Icon icon="menu" size={20} color={colors.palette.primary500} />
+                <Icon icon="menu" size={20} color={colors.accent} />
                 <Text style={$contactButtonText}>
                   {isTailorViewer ? "Message Client" : "Message Tailor"}
                 </Text>
@@ -500,7 +505,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
               </TouchableOpacity>
             )}
             <TouchableOpacity style={$contactButton}>
-              <Icon icon="bell" size={20} color={colors.palette.primary500} />
+              <Icon icon="bell" size={20} color={colors.accent} />
               <Text style={$contactButtonText}>Call Shop</Text>
             </TouchableOpacity>
           </View>
@@ -685,7 +690,7 @@ const $header: ViewStyle = {
   paddingHorizontal: spacing.lg,
   paddingVertical: spacing.md,
   borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
+  borderBottomColor: colors.border,
 }
 
 const $backButton: ViewStyle = {
@@ -724,7 +729,7 @@ const $orderSummaryCard: ViewStyle = {
   borderRadius: 12,
   padding: spacing.lg,
   borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+  borderColor: colors.border,
   shadowColor: colors.palette.neutral900,
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.05,
@@ -792,7 +797,7 @@ const $progressContainer: ViewStyle = {
   borderRadius: 12,
   padding: spacing.lg,
   borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+  borderColor: colors.border,
 }
 
 const $progressStepContainer: ViewStyle = {
@@ -848,7 +853,7 @@ const $progressLine: ViewStyle = {
 
 const $instructionsCard: ViewStyle = {
   flexDirection: "row",
-  backgroundColor: colors.palette.primary100,
+  backgroundColor: colors.accentSoft,
   borderRadius: 8,
   padding: spacing.md,
   alignItems: "flex-start",
@@ -857,7 +862,7 @@ const $instructionsCard: ViewStyle = {
 const $instructionsText: TextStyle = {
   flex: 1,
   fontSize: 14,
-  color: colors.palette.primary700,
+  color: colors.palette.emerald600,
   marginLeft: spacing.sm,
   lineHeight: 20,
 }
@@ -867,7 +872,7 @@ const $timelineCard: ViewStyle = {
   borderRadius: 12,
   padding: spacing.lg,
   borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+  borderColor: colors.border,
 }
 
 const $timelineItem: ViewStyle = {
@@ -897,7 +902,7 @@ const $contactButton: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: colors.palette.primary100,
+  backgroundColor: colors.accentSoft,
   borderRadius: 8,
   padding: spacing.md,
   marginHorizontal: spacing.xs,
@@ -906,7 +911,7 @@ const $contactButton: ViewStyle = {
 const $contactButtonText: TextStyle = {
   fontSize: 14,
   fontWeight: "500",
-  color: colors.palette.primary700,
+  color: colors.palette.emerald600,
   marginLeft: spacing.xs,
 }
 
@@ -917,7 +922,7 @@ const $bottomContainer: ViewStyle = {
   gap: spacing.sm,
   backgroundColor: colors.palette.neutral100,
   borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral200,
+  borderTopColor: colors.border,
 }
 
 const $actionRow: ViewStyle = {
@@ -942,10 +947,10 @@ const $rejectButtonText: TextStyle = {
 }
 
 const $primaryButton: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
+  backgroundColor: colors.accent,
   borderRadius: 12,
   paddingVertical: spacing.md,
-  shadowColor: colors.palette.primary900,
+  shadowColor: colors.palette.emerald700,
   shadowOffset: { width: 0, height: 4 },
   shadowOpacity: 0.2,
   shadowRadius: 8,
@@ -1056,8 +1061,8 @@ const $reasonChip: ViewStyle = {
 }
 
 const $reasonChipSelected: ViewStyle = {
-  borderColor: colors.palette.primary500,
-  backgroundColor: colors.palette.primary100,
+  borderColor: colors.accent,
+  backgroundColor: colors.accentSoft,
 }
 
 const $reasonChipText: TextStyle = {
@@ -1067,7 +1072,7 @@ const $reasonChipText: TextStyle = {
 
 const $reasonChipTextSelected: TextStyle = {
   fontWeight: "600",
-  color: colors.palette.primary700,
+  color: colors.palette.emerald600,
 }
 
 const $reasonDetailField: ViewStyle = {

@@ -5,15 +5,26 @@ import {
   TouchableOpacity,
   ViewStyle,
   TextStyle,
-  ImageStyle,
   RefreshControl,
 } from "react-native"
 import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon, AutoImage, Text, ThemeToggle, IconTypes } from "app/components"
+import {
+  Button,
+  Screen,
+  Icon,
+  Text,
+  ThemeToggle,
+  IconTypes,
+  StatTile,
+  SectionHeader,
+  Chip,
+  statusTone,
+  statusLabel,
+} from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "app/utils/useAppTheme"
-import { colors, spacing } from "app/theme"
+import type { ThemedStyle } from "app/theme"
 import { useStores } from "app/models"
 import { useNavigation } from "@react-navigation/native"
 import { appointmentApi, PBAppointment } from "app/services/api/appointment-api"
@@ -26,7 +37,7 @@ const getGreeting = () => {
 }
 
 export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
-  const { theme } = useAppTheme()
+  const { theme, themed } = useAppTheme()
   const navigation = useNavigation()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const [greeting] = React.useState(getGreeting())
@@ -40,7 +51,6 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   const currentUser = authStore.user
   const userProfile = currentUser?.profile
   const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : "Welcome User"
-  const userAvatar = userProfile?.avatar
 
   const unreadNotifications = notificationStore.unreadCount || 0
 
@@ -92,25 +102,6 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
     setIsRefreshing(false)
   }, [loadDashboardData])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-      case "delivered":
-      case "ready":
-        // dark palette variant lacks these keys — fall back to static palette
-        return (theme.colors.palette as any).success600 || colors.palette.sageGreen
-      case "in_progress":
-      case "confirmed":
-        return theme.colors.palette.primary500 || colors.palette.threadBlue
-      case "pending":
-        return (theme.colors.palette as any).warning600 || colors.palette.tailorGold
-      case "cancelled":
-        return (theme.colors.palette as any).alertRed || colors.palette.alertRed
-      default:
-        return theme.colors.palette.neutral600
-    }
-  }
-
   // Helper function to format Nigerian currency
   const formatCurrency = (amount: number) => {
     return `₦${amount.toLocaleString()}`
@@ -125,51 +116,34 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
     })
   }
 
-  const renderQuickAction = ({
-    item,
-  }: {
-    item: { title: string; subtitle: string; icon: IconTypes; onPress: () => void }
-  }) => (
-    <TouchableOpacity
-      style={$quickActionCard}
-      onPress={item.onPress}
-      accessible
-      accessibilityLabel={item.title}
-      accessibilityRole="button"
-    >
-      <View style={$quickActionIconContainer}>
-        <Icon icon={item.icon} size={20} color={theme.colors.palette.primary600} />
-      </View>
-      <Text style={$quickActionTitle} text={item.title} />
-      <Text style={$quickActionSubtitle}>{item.subtitle}</Text>
-    </TouchableOpacity>
-  )
-
   const renderOrder = ({ item }: { item: any }) => (
     <TouchableOpacity
-      style={$orderCard}
+      style={themed($orderCard)}
       onPress={() => (navigation as any).navigate("OrderDetail", { orderId: item.id })}
       accessible
       accessibilityLabel={`Order: ${item.orderNumber}`}
       accessibilityRole="button"
+      activeOpacity={0.7}
     >
-      <View style={$orderHeader}>
-        <Text style={$orderId}>#{item.orderNumber}</Text>
-        <View style={[$statusBadge, { backgroundColor: getStatusColor(item.status) + "20" }]}>
-          <Text style={[$statusText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
-        </View>
+      <View style={themed($orderHeader)}>
+        <Text style={themed($orderId)} numberOfLines={1}>
+          #{item.orderNumber}
+        </Text>
+        <Chip text={statusLabel(item.status)} tone={statusTone(item.status)} />
       </View>
-      <Text style={$orderTitle}>
+      <Text weight="semiBold" style={themed($orderTitle)} numberOfLines={1}>
         {item.items?.[0]?.garmentType
           ? (orderStore.getTranslation
               ? orderStore.getTranslation("garments", item.items[0].garmentType)
               : item.items[0].garmentType) || item.items[0].garmentType
           : "Custom Order"}
       </Text>
-      <Text style={$orderText}>
-        Due: {item.estimatedDeliveryDate ? formatDate(item.estimatedDeliveryDate) : "TBD"}
+      <Text style={themed($orderText)}>
+        Due {item.estimatedDeliveryDate ? formatDate(item.estimatedDeliveryDate) : "TBD"}
       </Text>
-      <Text style={$orderText}>Total: {formatCurrency(item.pricing?.totalPrice || 0)}</Text>
+      <Text weight="semiBold" style={themed($orderAmount)}>
+        {formatCurrency(item.pricing?.totalPrice || 0)}
+      </Text>
     </TouchableOpacity>
   )
 
@@ -206,6 +180,36 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
     },
   ]
 
+  const renderQuickAction = (item: {
+    title: string
+    subtitle: string
+    icon: IconTypes
+    onPress: () => void
+  }) => (
+    <TouchableOpacity
+      key={item.title}
+      style={themed($quickActionCard)}
+      onPress={item.onPress}
+      accessible
+      accessibilityLabel={item.title}
+      accessibilityRole="button"
+      activeOpacity={0.7}
+    >
+      <View style={themed($quickActionIconWell)}>
+        <Icon icon={item.icon} size={18} color={theme.colors.accent} />
+      </View>
+      <Text weight="semiBold" style={themed($quickActionTitle)} text={item.title} />
+      <Text style={themed($quickActionSubtitle)}>{item.subtitle}</Text>
+    </TouchableOpacity>
+  )
+
+  const nextFittingLabel = nextAppointment
+    ? new Date(nextAppointment.scheduledAt).toLocaleDateString("en-NG", {
+        month: "short",
+        day: "numeric",
+      })
+    : "—"
+
   return (
     <Screen
       backgroundColor={theme.colors.background}
@@ -217,189 +221,129 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            tintColor={theme.colors.palette.primary500 || colors.palette.threadBlue}
+            tintColor={theme.colors.accent}
           />
         ),
       }}
     >
       <View style={$container}>
-        {/* Modern Header with Gradient Background */}
-        <View style={$header}>
-          <View style={$headerGradient}>
-            <View style={$profileContainer}>
-              <TouchableOpacity
-                style={$profileImage}
-                onPress={() => navigation.navigate("Settings" as never)}
-                accessible
-                accessibilityLabel="Profile settings"
-              >
-                <AutoImage
-                  source={require("../../../assets/images/stock/camera-1846696_1280.jpg")}
-                  style={$image}
-                />
-                <View style={$profileImageOverlay} />
-              </TouchableOpacity>
-              <View style={$stats}>
-                <Text style={$greetingText} accessibilityLabel={greeting}>
-                  {greeting},
-                </Text>
-                <Text style={$nameText} accessibilityLabel="Client Name">
-                  {userName}
-                </Text>
-                <View style={$statusIndicator}>
-                  <View style={$onlineStatusDot} />
-                  <Text style={$statusText}>Online</Text>
-                </View>
-              </View>
-              <View style={$headerActions}>
-                <TouchableOpacity style={$modernButton}>
-                  <ThemeToggle size={22} style={$themeToggle} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={$modernNotificationButton}
-                  onPress={() => navigation.navigate("ClientNotifications" as never)}
-                  accessible
-                  accessibilityLabel="Notifications"
-                >
-                  <Icon icon="bell" size={22} color={theme.colors.palette.neutral100} />
-                  {unreadNotifications > 0 && (
-                    <View style={$modernNotificationBadge}>
-                      <Text style={$notificationBadgeText}>
-                        {unreadNotifications > 99 ? "99+" : unreadNotifications}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </View>
+        {/* Greeting header */}
+        <View style={themed($header)}>
+          <View style={$headerTextGroup}>
+            <Text style={themed($greetingText)} accessibilityLabel={greeting}>
+              {greeting},
+            </Text>
+            <Text
+              weight="bold"
+              style={themed($nameText)}
+              numberOfLines={1}
+              accessibilityLabel="Client Name"
+            >
+              {userName}
+            </Text>
+          </View>
+          <View style={themed($headerActions)}>
+            <View style={themed($iconButton)}>
+              <ThemeToggle size={20} />
             </View>
+            <TouchableOpacity
+              style={themed($iconButton)}
+              onPress={() => navigation.navigate("ClientNotifications" as never)}
+              accessible
+              accessibilityLabel="Notifications"
+            >
+              <Icon icon="bell" size={20} color={theme.colors.text} />
+              {unreadNotifications > 0 && (
+                <View style={themed($notificationBadge)}>
+                  <Text style={themed($notificationBadgeText)}>
+                    {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Modern Glass Morphism Welcome Card */}
-        <View style={$welcomeCard}>
-          <View style={$welcomeCardGradient}>
-            <Text style={$welcomeTitle}>Kaabo! Welcome Back!</Text>
-            <Text style={$welcomeSubtitle}>
-              Your luxury garments are being crafted with excellence
-            </Text>
-            <View style={$welcomeMetrics}>
-              <View style={$metricItem}>
-                <Text style={$metricNumber} numberOfLines={1} adjustsFontSizeToFit>
-                  {activeOrdersCount}
-                </Text>
-                <Text style={$metricLabel}>Active Orders</Text>
-              </View>
-              <View style={$metricDivider} />
-              <View style={$metricItem}>
-                <Text style={$metricNumber} numberOfLines={1} adjustsFontSizeToFit>
-                  {formatCurrency(outstandingBalance)}
-                </Text>
-                <Text style={$metricLabel}>Outstanding</Text>
-              </View>
-              <View style={$metricDivider} />
-              <View style={$metricItem}>
-                <Text style={$metricNumber} numberOfLines={1} adjustsFontSizeToFit>
-                  {nextAppointment
-                    ? new Date(nextAppointment.scheduledAt).toLocaleDateString("en-NG", {
-                        month: "short",
-                        day: "numeric",
-                      })
-                    : "—"}
-                </Text>
-                <Text style={$metricLabel}>Next Fitting</Text>
-              </View>
-            </View>
-          </View>
+        {/* Stat tiles */}
+        <View style={themed($statRow)}>
+          <StatTile icon="sew" value={String(activeOrdersCount)} label="Active Orders" />
+          <StatTile icon="money" value={formatCurrency(outstandingBalance)} label="Outstanding" />
+          <StatTile icon="appointment" value={nextFittingLabel} label="Next Fitting" />
         </View>
 
         {/* Quick Actions */}
-        <View style={$section}>
-          <View style={$sectionHeader}>
-            <Text style={$sectionTitle}>Quick Actions</Text>
+        <View style={themed($section)}>
+          <SectionHeader title="Quick Actions" style={themed($sectionHeader)} />
+          <View style={themed($quickActionGrid)} accessibilityLabel="Quick Actions List">
+            {quickActions.map(renderQuickAction)}
           </View>
-          <FlatList
-            data={quickActions}
-            renderItem={renderQuickAction}
-            keyExtractor={(item) => item.title}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={128}
-            decelerationRate="fast"
-            contentContainerStyle={$quickActionListContent}
-            accessibilityLabel="Quick Actions List"
-          />
         </View>
 
         {/* Recent Orders */}
-        <View style={$section}>
-          <View style={$sectionHeader}>
-            <Text style={$sectionTitle}>Recent Orders</Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Orders" as never)}
-              accessible
-              accessibilityLabel="View all orders"
-            >
-              <Text style={$viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={themed($section)}>
+          <SectionHeader
+            title="Recent Orders"
+            actionText="View All"
+            onActionPress={() => navigation.navigate("Orders" as never)}
+            style={themed($sectionHeader)}
+          />
           <FlatList
             data={recentOrders}
             renderItem={renderOrder}
             keyExtractor={(item) => item.id}
             horizontal
             showsHorizontalScrollIndicator={false}
-            snapToInterval={200}
+            snapToInterval={252}
             decelerationRate="fast"
-            contentContainerStyle={$orderListContent}
+            contentContainerStyle={themed($orderListContent)}
             accessibilityLabel="Recent Orders List"
           />
         </View>
 
         {/* Recent Measurements */}
-        <View style={$section}>
-          <View style={$sectionHeader}>
-            <Text style={$sectionTitle}>Recent Measurements</Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Measurement" as never)}
-              accessible
-              accessibilityLabel="View all measurements"
-            >
-              <Text style={$viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={themed($section)}>
+          <SectionHeader
+            title="Recent Measurements"
+            actionText="View All"
+            onActionPress={() => navigation.navigate("Measurement" as never)}
+            style={themed($sectionHeader)}
+          />
           {recentMeasurements.map((item) => (
             <TouchableOpacity
               key={item.id}
-              style={$measurementCard}
+              style={themed($measurementCard)}
               onPress={() => console.log(`Navigate to Measurement Details: ${item.id}`)}
               accessible
               accessibilityLabel={`Measurement: ${item.type || "Custom"}`}
               accessibilityRole="button"
+              activeOpacity={0.7}
             >
-              <View style={$measurementHeader}>
+              <View style={themed($measurementHeader)}>
                 <View style={$measurementInfo}>
-                  <Text style={$measurementTitle}>{item.type || "Custom Measurement"}</Text>
-                  <Text style={$measurementCategory}>
-                    {item.garmentType || "General"} • {item.status || "Active"}
+                  <Text weight="semiBold" style={themed($measurementTitle)}>
+                    {item.type || "Custom Measurement"}
+                  </Text>
+                  <Text style={themed($measurementCategory)}>
+                    {item.garmentType || "General"} · {item.status || "Active"}
                   </Text>
                 </View>
-                <Icon icon="caretRight" size={20} color={theme.colors.palette.neutral500} />
+                <Icon icon="caretRight" size={18} color={theme.colors.palette.gray500} />
               </View>
-              <View style={$measurementDetails}>
-                <View style={$measurementItem}>
-                  <Text style={$measurementLabel}>Chest</Text>
-                  <Text style={$measurementValue}>{item.measurements?.chest || 0} cm</Text>
-                </View>
-                <View style={$measurementItem}>
-                  <Text style={$measurementLabel}>Waist</Text>
-                  <Text style={$measurementValue}>{item.measurements?.waist || 0} cm</Text>
-                </View>
-                <View style={$measurementItem}>
-                  <Text style={$measurementLabel}>Length</Text>
-                  <Text style={$measurementValue}>{item.measurements?.length || 0} cm</Text>
-                </View>
+              <View style={themed($measurementDetails)}>
+                {[
+                  { label: "Chest", value: item.measurements?.chest },
+                  { label: "Waist", value: item.measurements?.waist },
+                  { label: "Length", value: item.measurements?.length },
+                ].map(({ label, value }) => (
+                  <View key={label} style={$measurementItem}>
+                    <Text style={themed($measurementLabel)}>{label}</Text>
+                    <Text weight="semiBold" style={themed($measurementValue)}>
+                      {value || 0} cm
+                    </Text>
+                  </View>
+                ))}
               </View>
-              <Text style={$measurementDate}>
+              <Text style={themed($measurementDate)}>
                 Measured on {item.createdAt ? formatDate(item.createdAt) : "Unknown"}
               </Text>
             </TouchableOpacity>
@@ -407,11 +351,12 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
         </View>
 
         {/* CTA Button */}
-        <View style={[$bottomContainer, $bottomContainerInsets]}>
+        <View style={[themed($bottomContainer), $bottomContainerInsets]}>
           <Button
             text="Add Measurement"
-            style={$primaryButton}
-            textStyle={$primaryButtonText}
+            style={themed($primaryButton)}
+            pressedStyle={themed($primaryButtonPressed)}
+            textStyle={themed($primaryButtonText)}
             onPress={() => navigation.navigate("Measurement" as never)}
             accessible
             accessibilityLabel="Add new measurement"
@@ -428,462 +373,259 @@ const $container: ViewStyle = {
   flex: 1,
 }
 
-const $header: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.sm,
-  paddingBottom: spacing.lg,
-}
-
-const $headerGradient: ViewStyle = {
-  backgroundColor: "#2B5D2F",
-  borderRadius: 24,
-  padding: spacing.lg,
-  shadowColor: "#1A4A1E",
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.3,
-  shadowRadius: 20,
-  elevation: 12,
-}
-
-const $profileContainer: ViewStyle = {
+const $header: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "space-between",
-  width: "100%",
-}
-
-const $profileImage: ViewStyle = {
-  width: 64,
-  height: 64,
-  borderRadius: 32,
-  overflow: "hidden",
-  borderWidth: 3,
-  borderColor: colors.palette.neutral100,
-  shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.2,
-  shadowRadius: 8,
-  elevation: 4,
-}
-
-const $profileImageOverlay: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: "rgba(255, 255, 255, 0.1)",
-  borderRadius: 32,
-}
-
-const $image: ImageStyle = {
-  width: "100%",
-  height: "100%",
-}
-
-const $stats: ViewStyle = {
-  flex: 1,
   paddingHorizontal: spacing.md,
+  paddingTop: spacing.sm,
+  marginBottom: spacing.lg,
+})
+
+const $headerTextGroup: ViewStyle = {
+  flex: 1,
+  marginRight: 12,
 }
 
-const $greetingText: TextStyle = {
+const $greetingText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 14,
-  fontWeight: "400",
-  color: colors.palette.neutral100,
-  opacity: 0.9,
-}
+  lineHeight: 20,
+  color: colors.textDim,
+})
 
-const $nameText: TextStyle = {
+const $nameText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 24,
-  fontWeight: "700",
-  color: colors.palette.neutral100,
-  marginTop: spacing.xxs,
-  letterSpacing: 0.5,
-}
+  lineHeight: 32,
+  color: colors.text,
+})
 
-const $statusIndicator: ViewStyle = {
+const $headerActions: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
   alignItems: "center",
-  marginTop: spacing.xs,
-}
+  gap: spacing.xs,
+})
 
-const $onlineStatusDot: ViewStyle = {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-  backgroundColor: "#4ADE80",
-  marginRight: spacing.xs,
-}
-
-const $statusText: TextStyle = {
-  fontSize: 12,
-  fontWeight: "500",
-  color: colors.palette.neutral100,
-  opacity: 0.8,
-}
-
-const $headerActions: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.sm,
-}
-
-const $modernButton: ViewStyle = {
-  width: 44,
-  height: 44,
-  borderRadius: 22,
-  backgroundColor: "rgba(255, 255, 255, 0.15)",
+const $iconButton: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: colors.surface,
+  borderWidth: 1,
+  borderColor: colors.border,
   justifyContent: "center",
   alignItems: "center",
-  borderWidth: 1,
-  borderColor: "rgba(255, 255, 255, 0.2)",
-}
+})
 
-const $modernNotificationButton: ViewStyle = {
-  width: 44,
-  height: 44,
-  borderRadius: 22,
-  backgroundColor: "rgba(255, 255, 255, 0.15)",
-  justifyContent: "center",
-  alignItems: "center",
-  borderWidth: 1,
-  borderColor: "rgba(255, 255, 255, 0.2)",
-}
-
-const $themeToggle: ViewStyle = {
-  // Theme toggle styling handled by modernButton
-}
-
-const $modernNotificationBadge: ViewStyle = {
+const $notificationBadge: ThemedStyle<ViewStyle> = ({ colors }) => ({
   position: "absolute",
   top: -4,
   right: -4,
-  backgroundColor: "#FF4757",
-  borderRadius: 12,
-  width: 20,
-  height: 20,
+  minWidth: 18,
+  height: 18,
+  borderRadius: 9,
+  paddingHorizontal: 4,
+  backgroundColor: colors.error,
   justifyContent: "center",
   alignItems: "center",
-  zIndex: 10,
   borderWidth: 2,
-  borderColor: colors.palette.neutral100,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-  elevation: 4,
-}
+  borderColor: colors.background,
+})
 
-const $notificationBadgeText: TextStyle = {
+const $notificationBadgeText: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
   color: colors.palette.neutral100,
   fontSize: 10,
-  fontWeight: "600",
-}
+  lineHeight: 12,
+  fontFamily: typography.primary.semiBold,
+})
 
-const $welcomeCard: ViewStyle = {
-  marginHorizontal: spacing.lg,
-  marginVertical: spacing.md,
-  borderRadius: 24,
-  overflow: "hidden",
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.15,
-  shadowRadius: 24,
-  elevation: 12,
-}
-
-const $welcomeCardGradient: ViewStyle = {
-  backgroundColor: "#2B5D2F",
-  padding: spacing.xl,
-  borderRadius: 24,
-  borderWidth: 1,
-  borderColor: "rgba(255, 255, 255, 0.1)",
-}
-
-const $welcomeTitle: TextStyle = {
-  fontSize: 28,
-  fontWeight: "800",
-  color: colors.palette.neutral100,
-  marginBottom: spacing.xs,
-  letterSpacing: 0.8,
-}
-
-const $welcomeSubtitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "400",
-  color: colors.palette.neutral100,
-  opacity: 0.9,
-  lineHeight: 22,
-  marginBottom: spacing.lg,
-}
-
-const $welcomeMetrics: ViewStyle = {
+const $statRow: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  backgroundColor: "rgba(255, 255, 255, 0.1)",
-  borderRadius: 16,
-  paddingVertical: spacing.md,
-  paddingHorizontal: spacing.lg,
-}
-
-const $metricItem: ViewStyle = {
-  alignItems: "center",
-  flex: 1,
-}
-
-const $metricNumber: TextStyle = {
-  fontSize: 24,
-  fontWeight: "800",
-  color: colors.palette.neutral100,
-  marginBottom: spacing.xxs,
-}
-
-const $metricLabel: TextStyle = {
-  fontSize: 12,
-  fontWeight: "500",
-  color: colors.palette.neutral100,
-  opacity: 0.8,
-  textAlign: "center",
-}
-
-const $metricDivider: ViewStyle = {
-  width: 1,
-  height: 32,
-  backgroundColor: "rgba(255, 255, 255, 0.2)",
-  marginHorizontal: spacing.sm,
-}
-
-const $section: ViewStyle = {
+  gap: spacing.xs,
+  paddingHorizontal: spacing.md,
   marginBottom: spacing.xl,
-}
+})
 
-const $sectionHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
+const $section: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginBottom: spacing.xl,
+})
+
+const $sectionHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  paddingHorizontal: spacing.md,
   marginBottom: spacing.sm,
-}
+})
 
-const $sectionTitle: TextStyle = {
-  fontSize: 20,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-  letterSpacing: 0.3,
-}
+const $quickActionGrid: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  flexWrap: "wrap",
+  paddingHorizontal: spacing.md,
+  gap: spacing.xs,
+})
 
-const $viewAllText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.primary500,
-}
-
-const $quickActionListContent: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-}
-
-const $quickActionCard: ViewStyle = {
-  // wide enough that "Measurement" doesn't break mid-word
-  width: 116,
-  backgroundColor: colors.palette.neutral100,
+const $quickActionCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  flexBasis: "31%",
+  flexGrow: 1,
+  backgroundColor: colors.surface,
   borderRadius: 16,
-  padding: spacing.sm,
-  marginRight: spacing.sm,
-  alignItems: "center",
-  shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  elevation: 6,
   borderWidth: 1,
-  borderColor: "rgba(255, 255, 255, 0.8)",
-  transform: [{ scale: 1 }],
-}
+  borderColor: colors.border,
+  padding: spacing.sm,
+})
 
-const $quickActionIconContainer: ViewStyle = {
-  width: 44,
-  height: 44,
-  borderRadius: 22,
-  backgroundColor: "#2B5D2F",
+const $quickActionIconWell: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  width: 34,
+  height: 34,
+  borderRadius: 17,
+  backgroundColor: colors.accentSoft,
   justifyContent: "center",
   alignItems: "center",
-  marginBottom: spacing.sm,
-  shadowColor: "#2B5D2F",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.25,
-  shadowRadius: 6,
-  elevation: 3,
-}
-
-const $quickActionTitle: TextStyle = {
-  fontSize: 12,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-  textAlign: "center",
-  marginBottom: spacing.xxs,
-  letterSpacing: 0.2,
-}
-
-const $quickActionSubtitle: TextStyle = {
-  fontSize: 10,
-  fontWeight: "400",
-  color: colors.palette.neutral600,
-  textAlign: "center",
-  lineHeight: 14,
-}
-
-const $orderListContent: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-}
-
-const $orderCard: ViewStyle = {
-  width: 220,
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 20,
-  padding: spacing.lg,
-  marginRight: spacing.md,
-  shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 10 },
-  shadowOpacity: 0.08,
-  shadowRadius: 20,
-  elevation: 10,
-  borderWidth: 1,
-  borderColor: "rgba(255, 255, 255, 0.9)",
-}
-
-const $orderHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.md,
-}
-
-const $orderId: TextStyle = {
-  fontSize: 12,
-  fontWeight: "600",
-  color: colors.palette.neutral500,
-  letterSpacing: 0.5,
-}
-
-const $statusBadge: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-  borderRadius: 12,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  elevation: 2,
-}
-//
-// const $statusText: TextStyle = {
-//   fontSize: 11,
-//   fontWeight: "700",
-//   letterSpacing: 0.3,
-// }
-
-const $orderTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.sm,
-  letterSpacing: 0.3,
-}
-
-const $orderText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "500",
-  color: colors.palette.neutral600,
   marginBottom: spacing.xs,
+})
+
+const $quickActionTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 13,
   lineHeight: 18,
-}
+  color: colors.text,
+})
 
-const $measurementCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
+const $quickActionSubtitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 11,
+  lineHeight: 15,
+  color: colors.textDim,
+})
+
+const $orderListContent: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  paddingHorizontal: spacing.md,
+  gap: spacing.sm,
+})
+
+const $orderCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  width: 240,
+  backgroundColor: colors.surface,
   borderRadius: 16,
-  padding: spacing.lg,
-  marginHorizontal: spacing.lg,
-  marginBottom: spacing.md,
-  shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.1,
-  shadowRadius: 12,
-  elevation: 4,
-}
+  borderWidth: 1,
+  borderColor: colors.border,
+  padding: spacing.md,
+})
 
-const $measurementHeader: ViewStyle = {
+const $orderHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
   marginBottom: spacing.sm,
-}
+  gap: spacing.xs,
+})
+
+const $orderId: ThemedStyle<TextStyle> = ({ colors }) => ({
+  flexShrink: 1,
+  fontSize: 12,
+  lineHeight: 16,
+  color: colors.palette.gray500,
+  letterSpacing: 0.4,
+})
+
+const $orderTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  fontSize: 16,
+  lineHeight: 22,
+  color: colors.text,
+  marginBottom: spacing.xxs,
+})
+
+const $orderText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  fontSize: 13,
+  lineHeight: 18,
+  color: colors.textDim,
+  marginBottom: spacing.xs,
+})
+
+const $orderAmount: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 16,
+  lineHeight: 22,
+  color: colors.accent,
+})
+
+const $measurementCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.surface,
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: colors.border,
+  padding: spacing.md,
+  marginHorizontal: spacing.md,
+  marginBottom: spacing.sm,
+})
+
+const $measurementHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: spacing.sm,
+})
 
 const $measurementInfo: ViewStyle = {
   flex: 1,
 }
 
-const $measurementTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xs,
-}
+const $measurementTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 15,
+  lineHeight: 21,
+  color: colors.text,
+})
 
-const $measurementCategory: TextStyle = {
+const $measurementCategory: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 12,
-  color: colors.palette.neutral600,
-}
+  lineHeight: 17,
+  color: colors.textDim,
+})
 
-const $measurementDetails: ViewStyle = {
+const $measurementDetails: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   flexDirection: "row",
   justifyContent: "space-between",
-  paddingVertical: spacing.xs,
-}
+  paddingVertical: spacing.sm,
+  borderTopWidth: 1,
+  borderColor: colors.separator,
+})
 
 const $measurementItem: ViewStyle = {
   alignItems: "center",
+  flex: 1,
 }
 
-const $measurementLabel: TextStyle = {
+const $measurementLabel: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   fontSize: 12,
-  color: colors.palette.neutral600,
+  lineHeight: 17,
+  color: colors.textDim,
   marginBottom: spacing.xxs,
-}
+})
 
-const $measurementValue: TextStyle = {
+const $measurementValue: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-}
+  lineHeight: 20,
+  color: colors.text,
+})
 
-const $measurementDate: TextStyle = {
+const $measurementDate: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 12,
-  color: colors.palette.neutral500,
-  marginTop: spacing.xs,
-}
+  lineHeight: 17,
+  color: colors.palette.gray500,
+})
 
-const $bottomContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-}
+const $bottomContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  paddingHorizontal: spacing.md,
+  paddingBottom: spacing.md,
+})
 
-const $primaryButton: ViewStyle = {
-  backgroundColor: "#2B5D2F",
-  borderRadius: 16,
-  paddingVertical: spacing.md,
-  paddingHorizontal: spacing.lg,
-  shadowColor: "#1A4A1E",
-  shadowOffset: { width: 0, height: 6 },
-  shadowOpacity: 0.2,
-  shadowRadius: 12,
-  elevation: 6,
-}
+const $primaryButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.accent,
+  borderWidth: 0,
+  borderRadius: 14,
+  paddingVertical: spacing.sm,
+  minHeight: 52,
+})
 
-const $primaryButtonText: TextStyle = {
-  fontSize: 17,
-  fontWeight: "700",
+const $primaryButtonPressed: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  backgroundColor: colors.palette.emerald600,
+})
+
+const $primaryButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 16,
   color: colors.palette.neutral100,
-  textAlign: "center",
-  letterSpacing: 0.5,
-}
+})

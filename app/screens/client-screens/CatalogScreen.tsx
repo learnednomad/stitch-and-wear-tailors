@@ -117,7 +117,7 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
           accessibilityLabel="Browse styles by group"
           accessibilityRole="button"
         >
-          <Text style={[$browseLinkText, { color: theme.colors.tint }]} text="Styles by Group" />
+          <Text style={[$browseLinkText, { color: theme.colors.accent }]} text="Styles by Group" />
         </TouchableOpacity>
         <TouchableOpacity
           style={[$browseLink, { borderColor: theme.colors.border }]}
@@ -126,7 +126,7 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
           accessibilityLabel="Browse fabrics"
           accessibilityRole="button"
         >
-          <Text style={[$browseLinkText, { color: theme.colors.tint }]} text="Fabrics" />
+          <Text style={[$browseLinkText, { color: theme.colors.accent }]} text="Fabrics" />
         </TouchableOpacity>
       </View>
 
@@ -150,7 +150,7 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
               style={[
                 $chip,
                 {
-                  backgroundColor: active ? theme.colors.tint : theme.colors.palette.neutral100,
+                  backgroundColor: active ? theme.colors.accent : theme.colors.surface,
                   borderColor: theme.colors.border,
                 },
               ]}
@@ -198,7 +198,7 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
                   <Text style={$modalDescription} text={selected.description} />
                 )}
                 <Text
-                  style={[$modalPrice, { color: theme.colors.tint }]}
+                  style={[$modalPrice, { color: theme.colors.accent }]}
                   text={`From ${formatNaira(selected.basePrice)}`}
                 />
                 <Button text="Start Order" onPress={handleStartOrder} style={$modalButton} />

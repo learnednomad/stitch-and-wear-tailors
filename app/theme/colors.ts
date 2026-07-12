@@ -7,18 +7,34 @@ const palette = {
   blushPink: "#E8D5D0",
   sageGreen: "#8B9D83",
 
+  // Brand emerald (Nigerian green) — primary action + accent scale
+  emerald100: "#E9F1EA",
+  emerald200: "#CDE0D0",
+  emerald300: "#9BC0A0",
+  emerald400: "#3E7A44",
+  emerald500: "#2B5D2F",
+  emerald600: "#224B26",
+  emerald700: "#19381C",
+
+  // Warm neutrals for text/borders/surfaces
+  sand100: "#F6F2EB",
+  sand200: "#F0EAE0",
+  sand300: "#E6DED2",
+  gray500: "#8C877C",
+  gray600: "#6C675E",
+
   // Functional Colors
   alertRed: "#C85450",
   successGreen: "#6B8E6B",
   warningAmber: "#E8B04B",
 
-  // Neutral scale (based on brand colors)
+  // Neutral scale (true warm neutrals — brand colors live under their own names)
   neutral100: "#FFFFFF",
   neutral200: "#FAF7F2", // warmIvory
-  neutral300: "#E8D5D0", // blushPink
-  neutral400: "#D4A574", // tailorGold
-  neutral500: "#8B9D83", // sageGreen
-  neutral600: "#4A6B8C", // threadBlue
+  neutral300: "#E6DED2", // warm sand border
+  neutral400: "#C9C2B4", // muted sand
+  neutral500: "#8C877C", // warm gray
+  neutral600: "#6C675E", // deep warm gray
   neutral700: "#2C2E33", // deepCharcoal
   neutral800: "#1A1B1E", // darker charcoal
   neutral900: "#000000",
@@ -88,7 +104,7 @@ export const colors = {
   /**
    * Secondary text information.
    */
-  textDim: palette.threadBlue,
+  textDim: palette.gray600,
   /**
    * The default color of the screen background.
    */
@@ -96,7 +112,7 @@ export const colors = {
   /**
    * The default border color.
    */
-  border: palette.blushPink,
+  border: palette.sand300,
   /**
    * The main tinting color.
    */
@@ -108,7 +124,30 @@ export const colors = {
   /**
    * A subtle color used for lines.
    */
-  separator: palette.blushPink,
+  separator: palette.sand300,
+  /**
+   * Card/tile surface color, sits on top of `background`.
+   */
+  surface: palette.neutral100,
+  /**
+   * Muted surface for icon wells, input backgrounds, subtle fills.
+   */
+  surfaceMuted: palette.sand100,
+  /**
+   * Primary brand action color (buttons, active states).
+   */
+  accent: palette.emerald500,
+  /**
+   * Soft tint of the accent for icon wells and selected chips.
+   */
+  accentSoft: palette.emerald100,
+  /**
+   * Success + warning semantic pairs.
+   */
+  success: palette.success600,
+  successBackground: palette.success100,
+  warning: palette.warning600,
+  warningBackground: palette.warning100,
   /**
    * Error messages.
    */
