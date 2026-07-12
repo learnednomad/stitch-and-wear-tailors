@@ -41,6 +41,15 @@ export async function invoicesByOrder(orderId: string): Promise<Invoice[]> {
   });
 }
 
+/** All invoices addressed to the signed-in customer, newest first. */
+export async function listByCustomer(): Promise<Invoice[]> {
+  const pb = getPb();
+  return pb.collection(COLLECTIONS.invoices).getFullList<Invoice>({
+    filter: pb.filter("customer = {:uid}", { uid: authedUserId() }),
+    sort: "-created",
+  });
+}
+
 export async function getInvoice(id: string): Promise<Invoice> {
   return getPb().collection(COLLECTIONS.invoices).getOne<Invoice>(id, {
     expand: "order,customer,tailor",

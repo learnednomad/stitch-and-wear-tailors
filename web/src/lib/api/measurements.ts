@@ -32,7 +32,8 @@ export async function createMeasurement(
 ): Promise<Measurement> {
   return getPb().collection(COLLECTIONS.measurements).create<Measurement>({
     unit: "cm",
-    measurementType: "full_body",
+    // Schema enum: suit | shirt | trouser | dress | traditional.
+    measurementType: "traditional",
     ...input,
     user: authedUserId(),
   });

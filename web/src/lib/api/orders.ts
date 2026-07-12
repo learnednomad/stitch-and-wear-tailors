@@ -21,6 +21,8 @@ export interface OrderListFilters {
   perPage?: number;
   /** Which side of the order the current user is on. Default "customer". */
   role?: "customer" | "tailor";
+  /** Tailor-side only: also include unassigned pending orders (tailor = ""). */
+  includeUnassigned?: boolean;
 }
 
 export async function listOrders(
@@ -38,7 +40,13 @@ export async function listOrders(
     role = "customer",
   } = filters;
 
-  const parts: string[] = [pb.filter(`${role} = {:uid}`, { uid })];
+  const parts: string[] = [
+    role === "tailor" && filters.includeUnassigned
+      ? pb.filter('(tailor = {:uid} || (tailor = "" && status = "pending"))', {
+          uid,
+        })
+      : pb.filter(`${role} = {:uid}`, { uid }),
+  ];
 
   if (status && status.length > 0) {
     parts.push(

@@ -179,6 +179,7 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
       safeAreaEdges={["top"]}
       preset="fixed"
       statusBarStyle="dark"
+      contentContainerStyle={$screenContent}
     >
       {/* Header */}
       <View style={$header}>
@@ -286,6 +287,12 @@ const $headerSubtitle: TextStyle = {
 
 const $headerSpacer: ViewStyle = {
   width: 40,
+}
+
+// Screen's fixed preset gives its inner container no height; without flex the
+// message list collapses and the composer renders directly under the header.
+const $screenContent: ViewStyle = {
+  flex: 1,
 }
 
 const $list: ViewStyle = {

@@ -243,7 +243,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
   }
 
   return (
-    <Screen style={$root} preset="fixed">
+    <Screen style={$root} contentContainerStyle={$screenContent} preset="fixed">
       <View style={$header}>
         <Text style={$title}>My Orders</Text>
         <TouchableOpacity
@@ -298,6 +298,12 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
 const $root: ViewStyle = {
   flex: 1,
   backgroundColor: colors.palette.neutral100,
+}
+
+// Screen's fixed preset does not give its inner container a height; without
+// flex the content area (and the orders list inside it) collapses to zero.
+const $screenContent: ViewStyle = {
+  flex: 1,
 }
 
 const $header: ViewStyle = {

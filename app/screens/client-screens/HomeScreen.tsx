@@ -182,13 +182,13 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
       title: "Add Measurement",
       subtitle: "Submit new sizes",
       icon: "profile" as const,
-      onPress: () => navigation.navigate("MeasurementCapture" as never),
+      onPress: () => navigation.navigate("Measurement" as never),
     },
     {
       title: "Browse Fabrics",
       subtitle: "Choose materials",
       icon: "view" as const,
-      onPress: () => navigation.navigate("FabricCatalog" as never),
+      onPress: () => navigation.navigate("FabricSearch" as never),
     },
     {
       title: "Track Orders",
@@ -200,7 +200,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
       title: "Give Feedback",
       subtitle: "Share thoughts",
       icon: "feedback" as const,
-      onPress: () => navigation.navigate("Feedback" as never),
+      onPress: () => navigation.navigate("Catalog" as never),
     },
   ]
 
@@ -354,7 +354,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
           <View style={$sectionHeader}>
             <Text style={$sectionTitle}>Recent Measurements</Text>
             <TouchableOpacity
-              onPress={() => navigation.navigate("MeasurementList" as never)}
+              onPress={() => navigation.navigate("Measurement" as never)}
               accessible
               accessibilityLabel="View all measurements"
             >
@@ -406,7 +406,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
             text="Add Measurement"
             style={$primaryButton}
             textStyle={$primaryButtonText}
-            onPress={() => navigation.navigate("MeasurementCapture" as never)}
+            onPress={() => navigation.navigate("Measurement" as never)}
             accessible
             accessibilityLabel="Add new measurement"
           />

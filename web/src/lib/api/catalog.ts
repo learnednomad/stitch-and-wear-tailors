@@ -96,3 +96,11 @@ export async function listTailors(
     sort: "businessName,firstName",
   });
 }
+
+export async function getStyle(id: string): Promise<CatalogStyle> {
+  return getPb().collection(COLLECTIONS.catalogStyles).getOne<CatalogStyle>(id);
+}
+
+export async function getFabric(id: string): Promise<Fabric> {
+  return getPb().collection(COLLECTIONS.fabrics).getOne<Fabric>(id);
+}
