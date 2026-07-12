@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState } from "react"
+import { FC, useEffect, useMemo, useState } from "react"
 import {
   View,
   ScrollView,
@@ -14,14 +14,16 @@ import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button } from "@/components"
 import { colors, spacing } from "@/theme"
+import { errorMessage } from "@/api/common"
 import {
-  invoiceApi,
-  formatMoney,
-  InvoiceStatus,
-  PBInvoiceRecord,
-} from "@/services/api/invoice-api"
-import { paymentApi, PBPaymentRecord } from "@/services/api/payment-api"
-import { getPocketBaseAdapter, filters, COLLECTIONS } from "@/services/api/pocketbase-api-adapter"
+  useConfirmClaim,
+  useOrderItemsForOrders,
+  usePendingClaims,
+  useRejectClaim,
+  useTailorInvoices,
+} from "@/api/invoices"
+import { formatMoney, InvoiceStatus } from "@/services/api/invoice-api"
+import { PBPaymentRecord } from "@/services/api/payment-api"
 import {
   INVOICE_STATUSES,
   STATUS_LABELS,
@@ -40,73 +42,69 @@ interface InvoicesScreenProps extends AppStackScreenProps<"Invoices"> {}
 export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function InvoicesScreen() {
   const navigation = useNavigation<any>()
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [invoices, setInvoices] = useState<PBInvoiceRecord[]>([])
-  const [claims, setClaims] = useState<PBPaymentRecord[]>([])
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all")
-  const [error, setError] = useState<string | null>(null)
-  const [actingClaimId, setActingClaimId] = useState<string | null>(null)
-  const [nameMap, setNameMap] = useState<Record<string, string>>({})
 
-  const load = useCallback(async () => {
-    setError(null)
-    const [invoicesResult, claimsResult] = await Promise.all([
-      invoiceApi.listByTailor(),
-      paymentApi.listPendingClaims(),
-    ])
-    if (invoicesResult.success) {
-      setInvoices(invoicesResult.data)
-      loadNameMap(invoicesResult.data)
-    } else {
-      setError(invoicesResult.message ?? "Failed to load invoices")
-    }
-    if (claimsResult.success) setClaims(claimsResult.data)
-    setIsLoading(false)
-    setIsRefreshing(false)
-  }, [])
+  const invoicesQuery = useTailorInvoices()
+  const claimsQuery = usePendingClaims()
+  const confirmClaim = useConfirmClaim()
+  const rejectClaim = useRejectClaim()
+
+  const invoices = useMemo(() => invoicesQuery.data ?? [], [invoicesQuery.data])
+  const claims = claimsQuery.data ?? []
+  const isLoading = invoicesQuery.isLoading
+  const error = invoicesQuery.error ? errorMessage(invoicesQuery.error) : null
 
   // Customer user records are usually not readable by tailors, so fall back
-  // to the customer name captured in order_items specifications JSON.
-  const loadNameMap = async (loadedInvoices: PBInvoiceRecord[]) => {
-    const unnamed = loadedInvoices.filter(
-      (inv) => !inv.expand?.customer?.name && !inv.expand?.customer?.firstName,
-    )
-    const orderIds = [...new Set(unnamed.map((inv) => inv.order).filter(Boolean))]
-    if (orderIds.length === 0) return
-    const itemsResult = await getPocketBaseAdapter().fullList<any>(COLLECTIONS.ORDER_ITEMS, {
-      filter: filters.in("order", orderIds),
-      sort: "created",
-    })
-    if (!itemsResult.success) return
+  // to the customer name captured in order_items specifications JSON —
+  // a dependent query keyed on the order ids of invoices missing a name.
+  const unnamed = useMemo(
+    () => invoices.filter((inv) => !inv.expand?.customer?.name && !inv.expand?.customer?.firstName),
+    [invoices],
+  )
+  const orderIds = useMemo(
+    () => [...new Set(unnamed.map((inv) => inv.order).filter(Boolean))].sort(),
+    [unnamed],
+  )
+  const orderItemsQuery = useOrderItemsForOrders(orderIds)
+  const nameMap = useMemo(() => {
+    if (!orderItemsQuery.data) return {}
     const orderCustomer: Record<string, string> = {}
     for (const inv of unnamed) orderCustomer[inv.order] = inv.customer
-    setNameMap(nameMapFromOrderItems(itemsResult.data, orderCustomer))
-  }
+    return nameMapFromOrderItems(orderItemsQuery.data, orderCustomer)
+  }, [orderItemsQuery.data, unnamed])
 
-  // Reload whenever the screen regains focus (after create/detail actions)
+  // Refetch whenever the screen regains focus (after create/detail actions)
   useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", load)
+    const unsubscribe = navigation.addListener("focus", () => {
+      invoicesQuery.refetch()
+      claimsQuery.refetch()
+    })
     return unsubscribe
-  }, [navigation, load])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation])
 
+  const isRefreshing = invoicesQuery.isRefetching || claimsQuery.isRefetching
   const onRefresh = () => {
-    setIsRefreshing(true)
-    load()
+    invoicesQuery.refetch()
+    claimsQuery.refetch()
   }
 
-  const handleClaim = async (claim: PBPaymentRecord, action: "confirm" | "reject") => {
-    setActingClaimId(claim.id)
-    const result =
-      action === "confirm"
-        ? await paymentApi.confirmClaim(claim.id)
-        : await paymentApi.rejectClaim(claim.id)
-    setActingClaimId(null)
-    if (result.success) {
-      load()
-    } else {
-      Alert.alert("Action Failed", result.message ?? `Could not ${action} the payment claim.`)
-    }
+  const actingClaimId = confirmClaim.isPending
+    ? confirmClaim.variables
+    : rejectClaim.isPending
+      ? rejectClaim.variables
+      : null
+
+  const handleClaim = (claim: PBPaymentRecord, action: "confirm" | "reject") => {
+    const mutation = action === "confirm" ? confirmClaim : rejectClaim
+    mutation.mutate(claim.id, {
+      onError: (mutationError) => {
+        Alert.alert(
+          "Action Failed",
+          errorMessage(mutationError) || `Could not ${action} the payment claim.`,
+        )
+      },
+    })
   }
 
   const filtered =
@@ -178,9 +176,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
               {claims.map((claim) => (
                 <View key={claim.id} style={$claimCard}>
                   <View style={$claimInfo}>
-                    <Text style={$claimAmount}>
-                      {formatMoney(claim.amount, claim.currency)}
-                    </Text>
+                    <Text style={$claimAmount}>{formatMoney(claim.amount, claim.currency)}</Text>
                     <Text style={$claimMeta}>
                       Order {claim.expand?.order?.orderNumber ?? claim.order} ·{" "}
                       {claim.method.replace("_", " ")}
@@ -230,9 +226,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
                 style={[$filterChip, statusFilter === status && $selectedFilterChip]}
                 onPress={() => setStatusFilter(status)}
               >
-                <Text
-                  style={[$filterChipText, statusFilter === status && $selectedFilterChipText]}
-                >
+                <Text style={[$filterChipText, statusFilter === status && $selectedFilterChipText]}>
                   {status === "all" ? "All" : STATUS_LABELS[status]}
                 </Text>
               </TouchableOpacity>

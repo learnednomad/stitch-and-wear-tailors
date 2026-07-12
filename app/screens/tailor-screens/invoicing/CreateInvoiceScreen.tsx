@@ -1,10 +1,11 @@
-import React, { FC, useCallback, useEffect, useState } from "react"
+import { FC, useEffect, useMemo, useState } from "react"
 import {
   View,
   ScrollView,
   TouchableOpacity,
   ViewStyle,
   TextStyle,
+  // eslint-disable-next-line no-restricted-imports -- legacy custom-styled raw inputs; wrapper swap planned with the RHF conversion
   TextInput,
   Alert,
   ActivityIndicator,
@@ -14,8 +15,9 @@ import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button } from "@/components"
 import { colors, spacing } from "@/theme"
-import { getPocketBaseAdapter, filters, COLLECTIONS } from "@/services/api/pocketbase-api-adapter"
-import { invoiceApi, formatMoney, InvoiceLineItem } from "@/services/api/invoice-api"
+import { errorMessage } from "@/api/common"
+import { useCreateInvoice, useUninvoicedOrders } from "@/api/invoices"
+import { formatMoney, InvoiceLineItem } from "@/services/api/invoice-api"
 import { formatDate } from "./invoicing-shared"
 
 interface LineItemDraft {
@@ -36,8 +38,6 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
   function CreateInvoiceScreen() {
     const navigation = useNavigation<any>()
 
-    const [isLoading, setIsLoading] = useState(true)
-    const [orders, setOrders] = useState<any[]>([])
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
     const [lineItems, setLineItems] = useState<LineItemDraft[]>([
       { description: "", quantity: "1", amount: "" },
@@ -48,33 +48,19 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
     const [dueAtText, setDueAtText] = useState("")
     const [notes, setNotes] = useState("")
     const [sendNow, setSendNow] = useState(true)
-    const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const load = useCallback(async () => {
-      const adapter = getPocketBaseAdapter()
-      const [ordersResult, invoicedResult] = await Promise.all([
-        adapter.fullList<any>(COLLECTIONS.ORDERS, {
-          filter: filters.eq("tailor", adapter.currentUserId),
-          sort: "-created",
-        }),
-        invoiceApi.listInvoicedOrderIds(),
-      ])
-      if (ordersResult.success) {
-        const invoiced = new Set(invoicedResult.success ? invoicedResult.data : [])
-        setOrders(
-          ordersResult.data.filter(
-            (o) => !invoiced.has(o.id) && !["cancelled", "rejected"].includes(o.status),
-          ),
-        )
-      } else {
-        Alert.alert("Error", ordersResult.message ?? "Failed to load orders")
-      }
-      setIsLoading(false)
-    }, [])
+    const ordersQuery = useUninvoicedOrders()
+    const createInvoice = useCreateInvoice()
+    const orders = useMemo(() => ordersQuery.data ?? [], [ordersQuery.data])
+    const isLoading = ordersQuery.isLoading
+    const isSubmitting = createInvoice.isPending
 
+    // The original screen alerted when the order list failed to load
     useEffect(() => {
-      load()
-    }, [load])
+      if (ordersQuery.error) {
+        Alert.alert("Error", errorMessage(ordersQuery.error) || "Failed to load orders")
+      }
+    }, [ordersQuery.error])
 
     const selectedOrder = orders.find((o) => o.id === selectedOrderId) ?? null
 
@@ -131,7 +117,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
       return undefined
     }
 
-    const handleCreate = async () => {
+    const handleCreate = () => {
       if (!selectedOrder) {
         Alert.alert("Select an Order", "Please choose the order this invoice is for.")
         return
@@ -140,7 +126,13 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
       for (const draft of lineItems) {
         const quantity = parseFloat(draft.quantity)
         const amount = parseFloat(draft.amount)
-        if (!draft.description.trim() || isNaN(quantity) || quantity <= 0 || isNaN(amount) || amount <= 0) {
+        if (
+          !draft.description.trim() ||
+          isNaN(quantity) ||
+          quantity <= 0 ||
+          isNaN(amount) ||
+          amount <= 0
+        ) {
           Alert.alert(
             "Invalid Line Items",
             "Every line item needs a description, quantity and amount.",
@@ -163,28 +155,30 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
         return
       }
 
-      setIsSubmitting(true)
-      const result = await invoiceApi.create({
-        orderId: selectedOrder.id,
-        customerId: selectedOrder.customer,
-        lineItems: items,
-        depositRequired: deposit,
-        currency: selectedOrder.currency || "NGN",
-        status: sendNow ? "sent" : "draft",
-        dueAt: resolveDueAt(),
-        notes: notes.trim() || undefined,
-      })
-      setIsSubmitting(false)
-
-      if (result.success) {
-        Alert.alert(
-          "Invoice Created",
-          `${result.data.invoiceNumber} has been ${sendNow ? "sent" : "saved as a draft"}.`,
-          [{ text: "OK", onPress: () => navigation.goBack() }],
-        )
-      } else {
-        Alert.alert("Create Failed", result.message ?? "Could not create the invoice.")
-      }
+      createInvoice.mutate(
+        {
+          orderId: selectedOrder.id,
+          customerId: selectedOrder.customer,
+          lineItems: items,
+          depositRequired: deposit,
+          currency: selectedOrder.currency || "NGN",
+          status: sendNow ? "sent" : "draft",
+          dueAt: resolveDueAt(),
+          notes: notes.trim() || undefined,
+        },
+        {
+          onSuccess: (created) => {
+            Alert.alert(
+              "Invoice Created",
+              `${created.invoiceNumber} has been ${sendNow ? "sent" : "saved as a draft"}.`,
+              [{ text: "OK", onPress: () => navigation.goBack() }],
+            )
+          },
+          onError: (error) => {
+            Alert.alert("Create Failed", errorMessage(error) || "Could not create the invoice.")
+          },
+        },
+      )
     }
 
     return (
@@ -220,9 +214,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
             <View style={$section}>
               <Text style={$sectionTitle}>Order</Text>
               {orders.length === 0 ? (
-                <Text style={$emptyText}>
-                  All your active orders already have an invoice.
-                </Text>
+                <Text style={$emptyText}>All your active orders already have an invoice.</Text>
               ) : (
                 orders.map((order) => (
                   <TouchableOpacity
@@ -236,9 +228,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
                         {order.status} · {formatMoney(order.totalAmount ?? 0, order.currency)}
                       </Text>
                     </View>
-                    <View
-                      style={[$radio, selectedOrderId === order.id && $radioSelected]}
-                    />
+                    <View style={[$radio, selectedOrderId === order.id && $radioSelected]} />
                   </TouchableOpacity>
                 ))
               )}

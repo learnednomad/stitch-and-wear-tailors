@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState } from "react"
+import { FC, useEffect, useMemo, useState } from "react"
 import {
   View,
   ScrollView,
@@ -14,9 +14,15 @@ import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button, RecordPaymentModal } from "@/components"
 import { colors, spacing } from "@/theme"
-import { getPocketBaseAdapter, filters, COLLECTIONS } from "@/services/api/pocketbase-api-adapter"
-import { invoiceApi, formatMoney, PBInvoiceRecord } from "@/services/api/invoice-api"
-import { paymentApi, PBPaymentRecord } from "@/services/api/payment-api"
+import { errorMessage } from "@/api/common"
+import {
+  useInvoice,
+  useInvoiceOrder,
+  useOrderItemsForOrders,
+  usePaymentsByOrder,
+  useUpdateInvoiceStatus,
+} from "@/api/invoices"
+import { formatMoney } from "@/services/api/invoice-api"
 import {
   STATUS_LABELS,
   STATUS_COLORS,
@@ -41,65 +47,57 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
     const navigation = useNavigation<any>()
     const { invoiceId } = route.params
 
-    const [isLoading, setIsLoading] = useState(true)
-    const [isRefreshing, setIsRefreshing] = useState(false)
-    const [invoice, setInvoice] = useState<PBInvoiceRecord | null>(null)
-    const [order, setOrder] = useState<any | null>(null)
-    const [payments, setPayments] = useState<PBPaymentRecord[]>([])
     const [showPaymentModal, setShowPaymentModal] = useState(false)
-    const [nameMap, setNameMap] = useState<Record<string, string>>({})
 
-    const load = useCallback(async () => {
-      const invoiceResult = await invoiceApi.getOne(invoiceId)
-      if (!invoiceResult.success) {
-        Alert.alert("Error", invoiceResult.message ?? "Failed to load invoice")
-        setIsLoading(false)
-        setIsRefreshing(false)
-        return
-      }
-      const loadedInvoice = invoiceResult.data
-      setInvoice(loadedInvoice)
+    const invoiceQuery = useInvoice(invoiceId)
+    const invoice = invoiceQuery.data ?? null
 
-      // Fresh order money fields + payment history in parallel
-      const [orderResult, paymentsResult] = await Promise.all([
-        getPocketBaseAdapter().getOne<any>(COLLECTIONS.ORDERS, loadedInvoice.order),
-        paymentApi.listByOrder(loadedInvoice.order),
-      ])
-      if (orderResult.success) setOrder(orderResult.data)
-      if (paymentsResult.success) setPayments(paymentsResult.data)
-      setIsLoading(false)
-      setIsRefreshing(false)
+    // Fresh order money fields + payment history — dependent on the invoice
+    const orderQuery = useInvoiceOrder(invoice?.order)
+    const paymentsQuery = usePaymentsByOrder(invoice?.order)
+    const order = orderQuery.data ?? null
+    const payments = paymentsQuery.data ?? []
 
-      // Customer user records are usually not readable by tailors, so fall
-      // back to the name in the order's order_items specifications JSON.
-      if (!loadedInvoice.expand?.customer?.name && !loadedInvoice.expand?.customer?.firstName) {
-        const itemsResult = await getPocketBaseAdapter().fullList<any>(COLLECTIONS.ORDER_ITEMS, {
-          filter: filters.eq("order", loadedInvoice.order),
-          sort: "created",
-        })
-        if (itemsResult.success) {
-          setNameMap(
-            nameMapFromOrderItems(itemsResult.data, {
-              [loadedInvoice.order]: loadedInvoice.customer,
-            }),
-          )
-        }
-      }
-    }, [invoiceId])
+    // Customer user records are usually not readable by tailors, so fall
+    // back to the name in the order's order_items specifications JSON —
+    // a dependent query enabled only when the expanded customer is unnamed.
+    const needsNameFallback =
+      !!invoice && !invoice.expand?.customer?.name && !invoice.expand?.customer?.firstName
+    const orderItemsQuery = useOrderItemsForOrders(
+      needsNameFallback && invoice ? [invoice.order] : [],
+    )
+    const nameMap = useMemo(() => {
+      if (!invoice || !orderItemsQuery.data) return {}
+      return nameMapFromOrderItems(orderItemsQuery.data, { [invoice.order]: invoice.customer })
+    }, [invoice, orderItemsQuery.data])
 
+    const updateStatus = useUpdateInvoiceStatus()
+
+    // The original screen alerted when the invoice failed to load
     useEffect(() => {
-      load()
-    }, [load])
+      if (invoiceQuery.error) {
+        Alert.alert("Error", errorMessage(invoiceQuery.error) || "Failed to load invoice")
+      }
+    }, [invoiceQuery.error])
 
-    const onRefresh = () => {
-      setIsRefreshing(true)
-      load()
+    const isLoading = invoiceQuery.isLoading
+    const isRefreshing =
+      invoiceQuery.isRefetching || orderQuery.isRefetching || paymentsQuery.isRefetching
+
+    const refetchAll = () => {
+      invoiceQuery.refetch()
+      orderQuery.refetch()
+      paymentsQuery.refetch()
     }
 
-    const handleMarkSent = async () => {
-      const result = await invoiceApi.updateStatus(invoiceId, "sent")
-      if (result.success) load()
-      else Alert.alert("Update Failed", result.message ?? "Could not update the invoice.")
+    const handleMarkSent = () => {
+      updateStatus.mutate(
+        { invoiceId, status: "sent" },
+        {
+          onError: (error) =>
+            Alert.alert("Update Failed", errorMessage(error) || "Could not update the invoice."),
+        },
+      )
     }
 
     const handleVoid = () => {
@@ -108,11 +106,14 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
         {
           text: "Void",
           style: "destructive",
-          onPress: async () => {
-            const result = await invoiceApi.updateStatus(invoiceId, "void")
-            if (result.success) load()
-            else Alert.alert("Void Failed", result.message ?? "Could not void the invoice.")
-          },
+          onPress: () =>
+            updateStatus.mutate(
+              { invoiceId, status: "void" },
+              {
+                onError: (error) =>
+                  Alert.alert("Void Failed", errorMessage(error) || "Could not void the invoice."),
+              },
+            ),
         },
       ])
     }
@@ -156,7 +157,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
-                onRefresh={onRefresh}
+                onRefresh={refetchAll}
                 tintColor={colors.accent}
               />
             }
@@ -217,9 +218,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
                 {/* Totals */}
                 <View style={$totalRow}>
                   <Text style={$totalLabel}>Subtotal</Text>
-                  <Text style={$totalValue}>
-                    {formatMoney(invoice.subtotal, invoice.currency)}
-                  </Text>
+                  <Text style={$totalValue}>{formatMoney(invoice.subtotal, invoice.currency)}</Text>
                 </View>
                 <View style={$totalRow}>
                   <Text style={$totalLabel}>Deposit required</Text>
@@ -231,9 +230,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
                   <>
                     <View style={$totalRow}>
                       <Text style={$totalLabel}>Paid so far</Text>
-                      <Text style={$totalValue}>
-                        {formatMoney(paidAmount, invoice.currency)}
-                      </Text>
+                      <Text style={$totalValue}>{formatMoney(paidAmount, invoice.currency)}</Text>
                     </View>
                     <View style={$totalRow}>
                       <Text style={$balanceLabel}>Balance due</Text>
@@ -267,8 +264,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
                         {formatMoney(payment.amount, payment.currency)}
                       </Text>
                       <Text style={$paymentMeta}>
-                        {payment.paymentType.replace("_", " ")} ·{" "}
-                        {payment.method.replace("_", " ")}
+                        {payment.paymentType.replace("_", " ")} · {payment.method.replace("_", " ")}
                         {payment.reference ? ` · ${payment.reference}` : ""}
                       </Text>
                     </View>
@@ -332,7 +328,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
               : null
           }
           onClose={() => setShowPaymentModal(false)}
-          onDone={load}
+          onDone={refetchAll}
         />
       </Screen>
     )

@@ -101,11 +101,42 @@ export function useOrderItemsForOrders(orderIds: string[]) {
   })
 }
 
+/**
+ * The tailor's active orders that don't already carry a non-void invoice
+ * (CreateInvoiceScreen's order picker). A failed invoiced-ids lookup is
+ * tolerated (treated as "nothing invoiced yet"), matching the legacy screen.
+ */
+export function useUninvoicedOrders() {
+  return useQuery({
+    queryKey: ["orders", "list", { uninvoiced: true }] as const,
+    queryFn: async () => {
+      const adapter = getPocketBaseAdapter()
+      const [orders, invoicedResult] = await Promise.all([
+        unwrap(
+          adapter.fullList<Record<string, any>>(COLLECTIONS.ORDERS, {
+            filter: filters.eq("tailor", adapter.currentUserId),
+            sort: "-created",
+          }),
+        ),
+        invoiceApi.listInvoicedOrderIds(),
+      ])
+      const invoiced = new Set(invoicedResult.success ? invoicedResult.data : [])
+      return orders.filter(
+        (o) => !invoiced.has(o.id) && !["cancelled", "rejected"].includes(o.status),
+      )
+    },
+  })
+}
+
 export function useCreateInvoice() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateInvoiceInput) => unwrap(invoiceApi.create(input)),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: invoiceKeys.all }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.all })
+      // an order with a new invoice leaves the uninvoiced-orders picker
+      queryClient.invalidateQueries({ queryKey: orderKeys.all })
+    },
   })
 }
 
@@ -116,7 +147,11 @@ export function useUpdateInvoiceStatus() {
       invoiceId: string
       status: Extract<InvoiceStatus, "draft" | "sent" | "void">
     }) => unwrap(invoiceApi.updateStatus(variables.invoiceId, variables.status)),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: invoiceKeys.all }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.all })
+      // voiding an invoice returns its order to the uninvoiced-orders picker
+      queryClient.invalidateQueries({ queryKey: orderKeys.all })
+    },
   })
 }
 
