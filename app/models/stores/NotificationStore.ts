@@ -7,6 +7,7 @@ import { types, flow, Instance, SnapshotOut } from "mobx-state-tree"
 import { createAsyncAction, createCollectionModel, generateId, createTimestamp } from "../mst"
 import { Notification, NotificationType, NotificationPriority } from "../types"
 import { validateNotification } from "../schemas"
+import { notificationApi, PBNotification } from "../../services/api/notification-api"
 
 /**
  * MST model for notification preferences
@@ -408,9 +409,10 @@ export const NotificationStoreModel = types
           notification.dismissedAt = createTimestamp()
           notification.updatedAt = createTimestamp()
 
-          // Also mark as read if not already
+          // Also mark as read if not already (action exists at runtime;
+          // TS can't see same-block actions on `self`)
           if (!notification.isRead) {
-            self.markAsRead(notificationId)
+            ;(self as any).markAsRead(notificationId)
           }
         }
       },
@@ -426,9 +428,9 @@ export const NotificationStoreModel = types
           notification.clickCount += 1
           notification.updatedAt = createTimestamp()
 
-          // Mark as read if not already
+          // Mark as read if not already (action exists at runtime)
           if (!notification.isRead) {
-            self.markAsRead(notificationId)
+            ;(self as any).markAsRead(notificationId)
           }
         }
       },
@@ -469,7 +471,7 @@ export const NotificationStoreModel = types
       ) {
         const notification = self.notifications.findById(notificationId)
         if (notification) {
-          const existing = notification.deliveryStatus.find((ds) => ds.channel === channel)
+          const existing = notification.deliveryStatus.find((ds: any) => ds.channel === channel)
           if (existing) {
             existing.status = status as any
             if (status === "sent") existing.sentAt = createTimestamp()
@@ -726,7 +728,7 @@ export const NotificationStoreModel = types
         }
 
         try {
-          return yield self.sendNotification(notificationData)
+          return yield (self as any).sendNotification(notificationData)
         } catch (error) {
           throw error
         }
@@ -753,7 +755,7 @@ export const NotificationStoreModel = types
         }
 
         try {
-          return yield self.sendNotification(notificationData)
+          return yield (self as any).sendNotification(notificationData)
         } catch (error) {
           throw error
         }
@@ -805,7 +807,7 @@ export const NotificationStoreModel = types
     isTypeEnabled(type: NotificationType) {
       if (!self.preferences) return true
 
-      switch (type) {
+      switch (type as string) {
         case "order_update":
           return self.preferences.orderUpdates
         case "appointment_reminder":
@@ -877,6 +879,98 @@ export const NotificationStoreModel = types
       return new Date(self.lastFetched).getTime() < fiveMinutesAgo
     },
   }))
+  // -------------------------------------------------------------------------
+  // PocketBase wiring. The legacy model above targets an unwired REST mock —
+  // the live backend keeps raw PB notification records in volatile state and
+  // maintains the persisted `unreadCount` used for badges.
+  // -------------------------------------------------------------------------
+  .volatile(() => ({
+    /** raw PocketBase records for the current user, newest first */
+    serverNotifications: [] as PBNotification[],
+  }))
+  .actions((self) => {
+    const recomputeUnread = () => {
+      self.unreadCount = self.serverNotifications.filter((n) => !n.isRead).length
+    }
+
+    return {
+      /**
+       * Replace the live notification list.
+       */
+      setServerNotifications(items: PBNotification[]) {
+        self.serverNotifications = items
+        recomputeUnread()
+      },
+
+      /**
+       * Load the current user's notifications from PocketBase.
+       */
+      loadServerNotifications: flow(function* () {
+        self.isLoading = true
+        self.error = null
+        try {
+          const result: Awaited<ReturnType<typeof notificationApi.listMine>> =
+            yield notificationApi.listMine()
+          if (result.success) {
+            self.serverNotifications = result.data
+            self.unreadCount = result.data.filter((n) => !n.isRead).length
+            self.lastFetched = createTimestamp()
+          } else {
+            self.error = result.message ?? "Failed to load notifications"
+          }
+          return result
+        } finally {
+          self.isLoading = false
+        }
+      }),
+
+      /**
+       * Mark one notification read (optimistic, then server).
+       */
+      markServerNotificationRead: flow(function* (notificationId: string) {
+        const existing = self.serverNotifications.find((n) => n.id === notificationId)
+        if (existing && !existing.isRead) {
+          self.serverNotifications = self.serverNotifications.map((n) =>
+            n.id === notificationId ? { ...n, isRead: true, readAt: createTimestamp() } : n,
+          )
+          recomputeUnread()
+          yield notificationApi.markRead(notificationId)
+        }
+      }),
+
+      /**
+       * Mark everything read (optimistic, then server).
+       */
+      markAllServerNotificationsRead: flow(function* () {
+        const readAt = createTimestamp()
+        self.serverNotifications = self.serverNotifications.map((n) =>
+          n.isRead ? n : { ...n, isRead: true, readAt },
+        )
+        self.unreadCount = 0
+        self.lastReadAt = readAt
+        yield notificationApi.markAllRead()
+      }),
+
+      /**
+       * Fold a realtime event into the live list (create/update/delete).
+       */
+      applyRealtimeNotification(action: string, record: PBNotification) {
+        if (action === "create") {
+          self.serverNotifications = [
+            record,
+            ...self.serverNotifications.filter((n) => n.id !== record.id),
+          ]
+        } else if (action === "update") {
+          self.serverNotifications = self.serverNotifications.map((n) =>
+            n.id === record.id ? record : n,
+          )
+        } else if (action === "delete") {
+          self.serverNotifications = self.serverNotifications.filter((n) => n.id !== record.id)
+        }
+        recomputeUnread()
+      },
+    }
+  })
 
 /**
  * Type definitions for NotificationStore

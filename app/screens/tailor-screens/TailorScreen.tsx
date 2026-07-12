@@ -1,179 +1,128 @@
-import React, { FC, useState, useEffect } from "react"
+/**
+ * Tailor Dashboard Screen
+ *
+ * Greeting, live stat tiles (new requests / in progress / ready / revenue
+ * this month), quick links to the tailor tabs and the five most recent
+ * orders — all backed by orderApi data for the logged-in tailor.
+ */
+
+import { FC, useCallback, useState } from "react"
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
-  StyleSheet,
+  ScrollView,
   ViewStyle,
   TextStyle,
-  ScrollView,
-  Dimensions,
 } from "react-native"
-import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon } from "app/components"
+import { observer } from "mobx-react-lite"
+import { useNavigation, useFocusEffect } from "@react-navigation/native"
+import { Screen, Icon, Text, IconTypes } from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "app/theme"
+import { useStores } from "@/models"
+import { orderApi } from "@/services/api/order-api"
+import { formatRelativeTime } from "@/utils/formatRelativeTime"
 
-const { width } = Dimensions.get("window")
+/** Mapped domain order snapshot (loosely typed — mapper guarantees shape) */
+type DomainOrder = Record<string, any>
 
-// Enhanced interfaces with better typing
-interface Measurement {
-  id: string
-  name: string
-  chest: number
-  waist: number
-  length: number
-  style: string
-  dateCollected: string
-  status: "completed" | "pending" | "in-progress"
-  imageUrl?: string
-}
-
-interface Order {
-  id: string
-  measurementName: string
-  status: "pending" | "cutting" | "sewing" | "finishing" | "ready" | "delivered"
-  dueDate: string
-  paymentStatus: "pending" | "partial" | "paid"
-  priority: "low" | "medium" | "high"
-  estimatedProgress: number // 0-100
-}
-
-interface DashboardStats {
-  totalOrders: number
-  completedOrders: number
-  pendingPayments: number
-  upcomingDeadlines: number
-}
-
-interface TailorScreenProps extends AppStackScreenProps<"Tailor"> {}
-
-const getGreeting = () => {
-  const currentHour = new Date().getHours()
-  const name = "Alhaji Bello" // Nigerian tailor name
-  if (currentHour < 12) return `Good Morning, ${name}`
-  if (currentHour < 18) return `Good Afternoon, ${name}`
-  return `Good Evening, ${name}`
-}
-
-const getStatusColor = (status: Order["status"]) => {
-  const statusColors = {
-    pending: colors.palette.orange300,
-    cutting: colors.palette.blue300,
-    sewing: colors.palette.purple300,
-    finishing: colors.palette.yellow300,
-    ready: colors.palette.green300,
-    delivered: colors.palette.green500,
+const getStatusColor = (status: string) => {
+  const statusColors: Record<string, string> = {
+    pending: colors.palette.warning500,
+    confirmed: colors.palette.secondary400,
+    in_progress: colors.palette.secondary500,
+    ready: colors.palette.success500,
+    delivered: colors.palette.success600,
+    cancelled: colors.palette.error500,
   }
   return statusColors[status] || colors.palette.neutral400
 }
 
-const getPriorityColor = (priority: Order["priority"]) => {
-  const priorityColors = {
-    low: colors.palette.green500,
-    medium: colors.palette.orange500,
-    high: colors.palette.red500,
+const getPriorityColor = (priority: string) => {
+  const priorityColors: Record<string, string> = {
+    low: colors.palette.success500,
+    normal: colors.palette.secondary400,
+    high: colors.palette.warning500,
+    urgent: colors.palette.error500,
   }
-  return priorityColors[priority]
+  return priorityColors[priority] || colors.palette.neutral500
 }
 
-export const TailorScreen: FC<TailorScreenProps> = () => {
+export const TailorScreen: FC = observer(function TailorScreen() {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const [greeting, setGreeting] = useState(getGreeting())
+  const navigation = useNavigation()
+  const { authStore } = useStores()
+
+  const [orders, setOrders] = useState<DomainOrder[]>([])
   const [activeTab, setActiveTab] = useState<"all" | "urgent">("all")
 
-  // Enhanced dummy data with more realistic information
-  const dashboardStats: DashboardStats = {
-    totalOrders: 12,
-    completedOrders: 8,
-    pendingPayments: 3,
-    upcomingDeadlines: 2,
-  }
+  // Time-of-day greeting with the tailor's real name
+  const tailorName = authStore.user
+    ? `${authStore.user.profile.firstName} ${authStore.user.profile.lastName}`.trim()
+    : "Tailor"
+  const currentHour = new Date().getHours()
+  const greeting =
+    currentHour < 12
+      ? `Good Morning, ${tailorName}`
+      : currentHour < 18
+        ? `Good Afternoon, ${tailorName}`
+        : `Good Evening, ${tailorName}`
 
-  const measurements: Measurement[] = [
-    {
-      id: "1",
-      name: "Summer Kaftan",
-      chest: 100,
-      waist: 80,
-      length: 120,
-      style: "Plain Kaftan",
-      dateCollected: "2025-06-01",
-      status: "completed",
-    },
-    {
-      id: "2",
-      name: "Wedding Agbada",
-      chest: 110,
-      waist: 90,
-      length: 130,
-      style: "Traditional Agbada",
-      dateCollected: "2025-06-05",
-      status: "completed",
-    },
-    {
-      id: "3",
-      name: "Business Suit",
-      chest: 105,
-      waist: 85,
-      length: 125,
-      style: "Two-piece Suit",
-      dateCollected: "2025-06-12",
-      status: "in-progress",
-    },
-  ]
+  // Own orders + unassigned pending requests, refreshed on focus
+  const loadDashboard = useCallback(async () => {
+    const tailorId = authStore.user?.id
+    if (!tailorId) return
+    const [mine, unassigned] = await Promise.all([
+      orderApi.fetchOrders({ tailorId, perPage: 100 }),
+      orderApi.fetchOrders({ unassigned: true, status: "pending", perPage: 50 }),
+    ])
+    const merged = new Map<string, DomainOrder>()
+    for (const order of mine.success ? mine.data.orders : []) merged.set(order.id, order)
+    for (const order of unassigned.success ? unassigned.data.orders : []) {
+      merged.set(order.id, order)
+    }
+    setOrders(
+      [...merged.values()].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
+    )
+  }, [authStore.user?.id])
 
-  const orders: Order[] = [
-    {
-      id: "ORD001",
-      measurementName: "Summer Kaftan",
-      status: "ready",
-      dueDate: "2025-06-20",
-      paymentStatus: "paid",
-      priority: "medium",
-      estimatedProgress: 100,
-    },
-    {
-      id: "ORD002",
-      measurementName: "Wedding Agbada",
-      status: "sewing",
-      dueDate: "2025-06-22",
-      paymentStatus: "partial",
-      priority: "high",
-      estimatedProgress: 65,
-    },
-    {
-      id: "ORD003",
-      measurementName: "Business Suit",
-      status: "cutting",
-      dueDate: "2025-06-25",
-      paymentStatus: "pending",
-      priority: "low",
-      estimatedProgress: 25,
-    },
-    {
-      id: "ORD004",
-      measurementName: "Casual Shirt",
-      status: "finishing",
-      dueDate: "2025-06-19",
-      paymentStatus: "paid",
-      priority: "high",
-      estimatedProgress: 90,
-    },
-  ]
+  useFocusEffect(
+    useCallback(() => {
+      loadDashboard()
+    }, [loadDashboard]),
+  )
 
-  const unreadNotifications = 5
+  // Dashboard stats derived from the loaded orders
+  const newRequestsCount = orders.filter((o) => o.status === "pending").length
+  const inProgressCount = orders.filter((o) =>
+    ["confirmed", "in_progress"].includes(o.status),
+  ).length
+  const readyCount = orders.filter((o) => o.status === "ready").length
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
+  const revenueThisMonth = orders
+    .filter((o) => {
+      if (o.status !== "delivered") return false
+      const deliveredAt = new Date(o.actualDeliveryDate ?? o.updatedAt)
+      return !Number.isNaN(deliveredAt.getTime()) && deliveredAt >= monthStart
+    })
+    .reduce((sum, o) => sum + (o.pricing?.totalPrice ?? 0), 0)
 
-  // Filter orders based on active tab
-  const filteredOrders =
+  // Recent orders: top 5, urgent tab narrows to high-priority or due soon
+  const recentOrders = (
     activeTab === "urgent"
       ? orders.filter(
-          (order) =>
-            order.priority === "high" ||
-            new Date(order.dueDate) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+          (o) =>
+            ["high", "urgent"].includes(o.priority) ||
+            new Date(o.estimatedDeliveryDate) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
         )
       : orders
+  ).slice(0, 5)
+
+  const titleCase = (value: string) =>
+    value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase())
 
   // Dashboard stats cards
   const renderStatsCard = ({
@@ -183,8 +132,8 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
     color,
   }: {
     title: string
-    value: number
-    icon: string
+    value: string
+    icon: IconTypes
     color: string
   }) => (
     <View style={[$statsCard, { borderLeftColor: color }]}>
@@ -204,7 +153,7 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
   const renderQuickAction = ({
     item,
   }: {
-    item: { title: string; icon: string; color: string; onPress: () => void }
+    item: { title: string; icon: IconTypes; color: string; onPress: () => void }
   }) => (
     <TouchableOpacity
       style={$quickActionCard}
@@ -219,187 +168,108 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
     </TouchableOpacity>
   )
 
-  // Enhanced order card with progress indicator
-  const renderOrder = ({ item }: { item: Order }) => (
-    <TouchableOpacity
-      style={$orderCard}
-      onPress={() => console.log(`Navigate to Order Details: ${item.id}`)}
-      accessible
-      accessibilityLabel={`Order: ${item.id}`}
-    >
-      <View style={$orderHeader}>
-        <Text style={$orderTitle}>#{item.id}</Text>
-        <View style={[$priorityBadge, { backgroundColor: getPriorityColor(item.priority) }]}>
-          <Text style={$priorityText}>{item.priority.toUpperCase()}</Text>
+  // Order card with progress indicator (real order data)
+  const renderOrder = ({ item }: { item: DomainOrder }) => {
+    const customerName =
+      `${item.customerInfo?.firstName ?? ""} ${item.customerInfo?.lastName ?? ""}`.trim() ||
+      "Customer"
+    const progressPercentage = item.progress?.percentage ?? 0
+    return (
+      <TouchableOpacity
+        style={$orderCard}
+        onPress={() => (navigation as any).navigate("OrderDetail", { orderId: item.id })}
+        accessible
+        accessibilityLabel={`Order: ${item.orderNumber}`}
+      >
+        <View style={$orderHeader}>
+          <Text style={$orderTitle}>#{item.orderNumber}</Text>
+          <View style={[$priorityBadge, { backgroundColor: getPriorityColor(item.priority) }]}>
+            <Text style={$priorityText}>{String(item.priority).toUpperCase()}</Text>
+          </View>
         </View>
-      </View>
 
-      <Text style={$orderMeasurement}>{item.measurementName}</Text>
+        <Text style={$orderMeasurement}>
+          {customerName} • {titleCase(item.garmentType ?? "custom")}
+        </Text>
 
-      <View style={$orderStatusContainer}>
-        <View style={[$statusIndicator, { backgroundColor: getStatusColor(item.status) }]} />
-        <Text style={$orderStatus}>{item.status.replace("-", " ").toUpperCase()}</Text>
-      </View>
-
-      <View style={$progressContainer}>
-        <View style={$progressBar}>
-          <View style={[$progressFill, { width: `${item.estimatedProgress}%` }]} />
+        <View style={$orderStatusContainer}>
+          <View style={[$statusIndicator, { backgroundColor: getStatusColor(item.status) }]} />
+          <Text style={$orderStatus}>{titleCase(item.status)}</Text>
         </View>
-        <Text style={$progressText}>{item.estimatedProgress}%</Text>
-      </View>
 
-      <View style={$orderFooter}>
-        <Text style={$orderDueDate}>Due: {new Date(item.dueDate).toLocaleDateString()}</Text>
-        <View
-          style={[
-            $paymentStatus,
-            {
-              backgroundColor:
-                item.paymentStatus === "paid"
-                  ? colors.palette.green100
-                  : item.paymentStatus === "partial"
-                    ? colors.palette.orange100
-                    : colors.palette.red100,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              $paymentStatusText,
-              {
-                color:
-                  item.paymentStatus === "paid"
-                    ? colors.palette.green700
-                    : item.paymentStatus === "partial"
-                      ? colors.palette.orange700
-                      : colors.palette.red700,
-              },
-            ]}
-          >
-            {item.paymentStatus.toUpperCase()}
+        <View style={$progressContainer}>
+          <View style={$progressBar}>
+            <View style={[$progressFill, { width: `${progressPercentage}%` }]} />
+          </View>
+          <Text style={$progressText}>{progressPercentage}%</Text>
+        </View>
+
+        <View style={$orderFooter}>
+          <Text style={$orderDueDate}>
+            Due: {new Date(item.estimatedDeliveryDate).toLocaleDateString()}
           </Text>
+          <Text style={$orderCreated}>{formatRelativeTime(item.createdAt)}</Text>
         </View>
-      </View>
-    </TouchableOpacity>
-  )
 
-  // Enhanced measurement card
-  const renderMeasurement = (item: Measurement) => (
-    <TouchableOpacity
-      key={item.id}
-      style={$measurementCard}
-      onPress={() => console.log(`Navigate to Measurement Details: ${item.id}`)}
-      accessible
-      accessibilityLabel={`Measurement: ${item.name}`}
-    >
-      <View style={$measurementHeader}>
-        <Text style={$measurementTitle}>{item.name}</Text>
-        <View
-          style={[
-            $measurementStatusBadge,
-            {
-              backgroundColor:
-                item.status === "completed"
-                  ? colors.palette.green100
-                  : item.status === "in-progress"
-                    ? colors.palette.blue100
-                    : colors.palette.orange100,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              $measurementStatusText,
-              {
-                color:
-                  item.status === "completed"
-                    ? colors.palette.green700
-                    : item.status === "in-progress"
-                      ? colors.palette.blue700
-                      : colors.palette.orange700,
-              },
-            ]}
-          >
-            {item.status.replace("-", " ").toUpperCase()}
-          </Text>
+        <View style={$orderAmountRow}>
+          <Text style={$orderAmount}>₦{(item.pricing?.totalPrice ?? 0).toLocaleString()}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
+    )
+  }
 
-      <Text style={$measurementStyle}>{item.style}</Text>
-
-      <View style={$measurementDetails}>
-        <View style={$measurementDetailItem}>
-          <Icon icon="ruler" size={16} color={colors.palette.neutral600} />
-          <Text style={$measurementText}>C: {item.chest}cm</Text>
-        </View>
-        <View style={$measurementDetailItem}>
-          <Icon icon="ruler" size={16} color={colors.palette.neutral600} />
-          <Text style={$measurementText}>W: {item.waist}cm</Text>
-        </View>
-        <View style={$measurementDetailItem}>
-          <Icon icon="ruler" size={16} color={colors.palette.neutral600} />
-          <Text style={$measurementText}>L: {item.length}cm</Text>
-        </View>
-      </View>
-
-      <Text style={$measurementDate}>
-        Collected: {new Date(item.dateCollected).toLocaleDateString()}
-      </Text>
-    </TouchableOpacity>
-  )
-
-  // Enhanced quick actions with colors
-  const quickActions = [
+  // Quick links into the tailor tabs
+  const quickActions: { title: string; icon: IconTypes; color: string; onPress: () => void }[] = [
     {
-      title: "New Order",
-      icon: "plus",
+      title: "Orders",
+      icon: "sew",
       color: colors.palette.primary500,
-      onPress: () => console.log("Navigate to New Order"),
+      onPress: () => (navigation as any).navigate("TailorOrders", {}),
     },
     {
       title: "Measurements",
-      icon: "ruler",
-      color: colors.palette.blue500,
-      onPress: () => console.log("Navigate to Measurements"),
+      icon: "profile",
+      color: colors.palette.secondary400,
+      onPress: () => (navigation as any).navigate("Measurements"),
     },
     {
-      title: "Fabrics",
-      icon: "palette",
-      color: colors.palette.purple500,
-      onPress: () => console.log("Navigate to Fabric Catalog"),
+      title: "Analytics",
+      icon: "view",
+      color: colors.palette.accent500,
+      onPress: () => (navigation as any).navigate("Analytics"),
     },
     {
-      title: "Calendar",
-      icon: "calendar",
-      color: colors.palette.orange500,
-      onPress: () => console.log("Navigate to Calendar"),
+      title: "Settings",
+      icon: "settings",
+      color: colors.palette.warning500,
+      onPress: () => (navigation as any).navigate("Settings"),
     },
   ]
 
-  const statsData = [
+  const statsData: { title: string; value: string; icon: IconTypes; color: string }[] = [
     {
-      title: "Total Orders",
-      value: dashboardStats.totalOrders,
-      icon: "list",
-      color: colors.palette.blue500,
+      title: "New Requests",
+      value: String(newRequestsCount),
+      icon: "bell",
+      color: colors.palette.warning500,
     },
     {
-      title: "Completed",
-      value: dashboardStats.completedOrders,
+      title: "In Progress",
+      value: String(inProgressCount),
+      icon: "sew",
+      color: colors.palette.secondary400,
+    },
+    {
+      title: "Ready",
+      value: String(readyCount),
       icon: "check",
-      color: colors.palette.green500,
+      color: colors.palette.success500,
     },
     {
-      title: "Pending Payment",
-      value: dashboardStats.pendingPayments,
-      icon: "credit-card",
-      color: colors.palette.orange500,
-    },
-    {
-      title: "Due Soon",
-      value: dashboardStats.upcomingDeadlines,
-      icon: "clock",
-      color: colors.palette.red500,
+      title: "Revenue (Month)",
+      value: `₦${revenueThisMonth.toLocaleString()}`,
+      icon: "money",
+      color: colors.palette.tailorGold,
     },
   ]
 
@@ -424,18 +294,11 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
           </View>
           <TouchableOpacity
             style={$notificationIcon}
-            onPress={() => console.log("Navigate to Notifications")}
+            onPress={() => (navigation as any).navigate("TailorNotifications")}
             accessible
             accessibilityLabel="Notifications"
           >
             <Icon icon="bell" size={24} color="#ffffff" />
-            {unreadNotifications > 0 && (
-              <View style={$notificationBadge}>
-                <Text style={$notificationBadgeText}>
-                  {unreadNotifications > 99 ? "99+" : unreadNotifications}
-                </Text>
-              </View>
-            )}
           </TouchableOpacity>
         </View>
 
@@ -465,10 +328,10 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
           />
         </View>
 
-        {/* Orders Section with Tabs */}
+        {/* Recent Orders with Tabs */}
         <View style={$ordersContainer}>
           <View style={$ordersHeader}>
-            <Text style={$sectionTitle}>Orders</Text>
+            <Text style={$sectionTitle}>Recent Orders</Text>
             <View style={$tabContainer}>
               <TouchableOpacity
                 style={[$tab, activeTab === "all" && $activeTab]}
@@ -484,33 +347,36 @@ export const TailorScreen: FC<TailorScreenProps> = () => {
               </TouchableOpacity>
             </View>
           </View>
-          <FlatList
-            data={filteredOrders}
-            renderItem={renderOrder}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={$orderListContent}
-            accessibilityLabel="Orders List"
-          />
-        </View>
-
-        {/* Recent Measurements */}
-        <View style={$measurementsContainer}>
-          <View style={$measurementsHeader}>
-            <Text style={$sectionTitle}>Recent Measurements</Text>
-            <TouchableOpacity onPress={() => console.log("View all measurements")}>
-              <Text style={$viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          {measurements.slice(0, 3).map(renderMeasurement)}
+          {recentOrders.length === 0 ? (
+            <View style={$emptyOrders}>
+              <Icon icon="sew" size={32} color={colors.palette.neutral400} />
+              <Text style={$emptyOrdersText}>No orders yet</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={recentOrders}
+              renderItem={renderOrder}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={$orderListContent}
+              accessibilityLabel="Orders List"
+            />
+          )}
+          <TouchableOpacity
+            style={$viewAllOrders}
+            onPress={() => (navigation as any).navigate("TailorOrders", {})}
+          >
+            <Text style={$viewAllText}>View All Orders</Text>
+            <Icon icon="caretRight" size={16} color={colors.palette.primary500} />
+          </TouchableOpacity>
         </View>
 
         <View style={$bottomContainerInsets} />
       </ScrollView>
     </Screen>
   )
-}
+})
 
 // Enhanced Styles
 const $root: ViewStyle = {
@@ -555,25 +421,6 @@ const $notificationIcon: ViewStyle = {
   borderRadius: 12,
 }
 
-const $notificationBadge: ViewStyle = {
-  position: "absolute",
-  top: -2,
-  right: -2,
-  backgroundColor: colors.error,
-  borderRadius: 10,
-  minWidth: 20,
-  height: 20,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingHorizontal: spacing.xs,
-}
-
-const $notificationBadgeText: TextStyle = {
-  color: colors.palette.neutral100,
-  fontSize: 11,
-  fontWeight: "bold",
-}
-
 // Stats styles
 const $statsContainer: ViewStyle = {
   marginBottom: spacing.lg,
@@ -616,7 +463,7 @@ const $statsTextContainer: ViewStyle = {
 }
 
 const $statsValue: TextStyle = {
-  fontSize: 20,
+  fontSize: 18,
   fontWeight: "bold",
   color: colors.palette.neutral900,
 }
@@ -676,7 +523,7 @@ const $quickActionText: TextStyle = {
 
 // Orders styles
 const $ordersContainer: ViewStyle = {
-  marginBottom: spacing.lg,
+  marginBottom: spacing.xl,
 }
 
 const $ordersHeader: ViewStyle = {
@@ -819,97 +666,45 @@ const $orderDueDate: TextStyle = {
   color: colors.palette.neutral600,
 }
 
-const $paymentStatus: ViewStyle = {
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-  borderRadius: 4,
+const $orderCreated: TextStyle = {
+  fontSize: 11,
+  color: colors.palette.neutral500,
 }
 
-const $paymentStatusText: TextStyle = {
-  fontSize: 10,
-  fontWeight: "600",
+const $orderAmountRow: ViewStyle = {
+  marginTop: spacing.xs,
+  paddingTop: spacing.xs,
+  borderTopWidth: 1,
+  borderTopColor: colors.palette.neutral300,
 }
 
-// Measurements styles
-const $measurementsContainer: ViewStyle = {
-  marginBottom: spacing.xl,
+const $orderAmount: TextStyle = {
+  fontSize: 14,
+  fontWeight: "700",
+  color: colors.palette.accent500,
 }
 
-const $measurementsHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
+const $emptyOrders: ViewStyle = {
   alignItems: "center",
-  marginBottom: spacing.md,
+  padding: spacing.lg,
+  gap: spacing.sm,
+}
+
+const $emptyOrdersText: TextStyle = {
+  fontSize: 13,
+  color: colors.palette.neutral500,
+}
+
+const $viewAllOrders: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: spacing.xxs,
+  paddingVertical: spacing.sm,
 }
 
 const $viewAllText: TextStyle = {
   fontSize: 14,
   color: colors.palette.primary500,
   fontWeight: "600",
-}
-
-const $measurementCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 16,
-  padding: spacing.md,
-  marginBottom: spacing.sm,
-  shadowColor: colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  elevation: 2,
-}
-
-const $measurementHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-}
-
-const $measurementTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "bold",
-  color: colors.palette.neutral900,
-  flex: 1,
-}
-
-const $measurementStatusBadge: ViewStyle = {
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-  borderRadius: 4,
-}
-
-const $measurementStatusText: TextStyle = {
-  fontSize: 10,
-  fontWeight: "600",
-}
-
-const $measurementStyle: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.sm,
-}
-
-const $measurementDetails: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-around",
-  marginBottom: spacing.sm,
-}
-
-const $measurementDetailItem: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $measurementText: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral700,
-  marginLeft: spacing.xs,
-  fontWeight: "500",
-}
-
-const $measurementDate: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral500,
 }

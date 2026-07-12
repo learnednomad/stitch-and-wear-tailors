@@ -702,19 +702,58 @@ export const orderApi = {
 
   /**
    * Transition an order to a new PB status. Stage records and timestamp
-   * stamping happen in server hooks. A note is only persisted for
-   * cancellations (as cancellationReason) in v1.
+   * stamping happen in server hooks. Notes: the server hook only copies
+   * cancellationReason onto stage records, so for cancellations the note goes
+   * there; for every other transition the note is appended to the order's
+   * internalNotes with a timestamped status prefix (v1 decision — per-stage
+   * notes need a server hook change).
    */
   async updateOrderStatus(
     orderId: string,
     status: string,
     note?: string,
   ): Promise<ServiceResult<Record<string, any>>> {
+    const adapter = getPocketBaseAdapter()
     const updates: Record<string, any> = { status }
-    if (status === "cancelled" && note) {
-      updates.cancellationReason = note
+    if (note) {
+      if (status === "cancelled") {
+        updates.cancellationReason = note
+      } else {
+        // Append to internalNotes, preserving any existing notes
+        const current = await adapter.getOne<PBOrderRecord>(COLLECTIONS.ORDERS, orderId)
+        const existing = current.success ? (current.data.internalNotes ?? "") : ""
+        const stamped = `[${new Date().toISOString()} → ${status}] ${note}`
+        updates.internalNotes = existing ? `${existing}\n${stamped}` : stamped
+      }
     }
     return this.updateOrder(orderId, updates)
+  },
+
+  /**
+   * Tailor accepts an unassigned (or self-assigned) pending order: claims it
+   * and moves it to "accepted" in a single update, matching the server rule
+   * that allows tailor="" → tailor=self.
+   */
+  async acceptOrder(orderId: string): Promise<ServiceResult<Record<string, any>>> {
+    const adapter = getPocketBaseAdapter()
+    if (!adapter.currentUserId) {
+      return {
+        success: false,
+        problem: { kind: "unauthorized" },
+        message: "You must be logged in to accept an order",
+      }
+    }
+    return this.updateOrder(orderId, { tailor: adapter.currentUserId, status: "accepted" })
+  },
+
+  /**
+   * Tailor rejects a pending order (reason appended to internalNotes).
+   */
+  async rejectOrder(
+    orderId: string,
+    reason?: string,
+  ): Promise<ServiceResult<Record<string, any>>> {
+    return this.updateOrderStatus(orderId, "rejected", reason)
   },
 
   /**

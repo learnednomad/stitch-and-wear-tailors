@@ -81,7 +81,7 @@ export function TailorTabNavigator() {
       />
       <Tab.Screen
         name="Measurements"
-        component={TailorMeasurementScreen}
+        component={TailorMeasurementScreen as any}
         options={{
           tabBarLabel: "Measurements",
           tabBarIcon: ({ focused }) => (

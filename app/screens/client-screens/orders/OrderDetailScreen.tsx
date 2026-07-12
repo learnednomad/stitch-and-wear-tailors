@@ -1,12 +1,37 @@
 import React, { FC, useEffect, useState } from "react"
-import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle } from "react-native"
+import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle, Alert } from "react-native"
 import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon, Text } from "app/components"
+import { Button, Screen, Icon, Text, StatusUpdateSheet } from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "app/theme"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
+import { orderApi } from "@/services/api/order-api"
+
+/** Derive the current PocketBase status from the mapped domain order */
+const domainToCurrentPBStatus = (order: {
+  status: string
+  progress: { currentStage: string }
+}): string => {
+  if (order.status === "in_progress") {
+    const stageMap: Record<string, string> = {
+      measured: "measuring",
+      cutting: "cutting",
+      sewing: "sewing",
+      finishing: "finishing",
+    }
+    return stageMap[order.progress.currentStage] ?? "sewing"
+  }
+  const statusMap: Record<string, string> = {
+    pending: "pending",
+    confirmed: "accepted",
+    ready: "ready",
+    delivered: "delivered",
+    cancelled: "cancelled",
+  }
+  return statusMap[order.status] ?? "pending"
+}
 
 interface ProgressStep {
   id: string
@@ -32,9 +57,11 @@ interface OrderDetailScreenProps extends AppStackScreenProps<"OrderDetail"> {}
 export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }) => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
-  const { orderStore } = useStores()
+  const { orderStore, authStore } = useStores()
 
   const [isLoading, setIsLoading] = useState(true)
+  const [isStatusSheetVisible, setIsStatusSheetVisible] = useState(false)
+  const [isActing, setIsActing] = useState(false)
 
   // Extract order ID from route params
   const { orderId } = route?.params || { orderId: "" }
@@ -62,6 +89,68 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
   }, [orderId, orderStore])
 
   const order = orderStore.currentOrder
+
+  // Tailor-facing action flags: the assigned tailor (or any tailor viewing an
+  // unassigned order) gets accept/reject and status-update controls
+  const viewerId = authStore.user?.id
+  const isTailorViewer = authStore.user?.role === "tailor"
+  const isAssignedTailor = isTailorViewer && !!order?.tailorId && order.tailorId === viewerId
+  const canAcceptOrReject =
+    isTailorViewer &&
+    order?.status === "pending" &&
+    (!order.tailorId || order.tailorId === viewerId)
+  const canUpdateStatus =
+    isAssignedTailor && ["confirmed", "in_progress", "ready"].includes(order?.status ?? "")
+
+  const reloadOrder = async () => {
+    if (orderId) await orderStore.loadNigerianOrder(orderId)
+  }
+
+  const handleAccept = async () => {
+    if (!order) return
+    setIsActing(true)
+    const result = await orderApi.acceptOrder(order.id)
+    setIsActing(false)
+    if (result.success) {
+      await reloadOrder()
+    } else {
+      Alert.alert("Error", result.message || "Failed to accept order")
+    }
+  }
+
+  const handleReject = () => {
+    if (!order) return
+    Alert.alert("Reject Order", "Are you sure you want to reject this order?", [
+      { text: "Keep Order", style: "cancel" },
+      {
+        text: "Reject",
+        style: "destructive",
+        onPress: async () => {
+          setIsActing(true)
+          const result = await orderApi.rejectOrder(order.id)
+          setIsActing(false)
+          if (result.success) {
+            await reloadOrder()
+          } else {
+            Alert.alert("Error", result.message || "Failed to reject order")
+          }
+        },
+      },
+    ])
+  }
+
+  const handleStatusUpdate = async (status: string, note?: string) => {
+    if (!order) return
+    setIsActing(true)
+    const result = await orderApi.updateOrderStatus(order.id, status, note)
+    setIsActing(false)
+    setIsStatusSheetVisible(false)
+    if (result.success) {
+      await reloadOrder()
+    } else {
+      Alert.alert("Error", result.message || "Failed to update status")
+    }
+  }
 
   const formatDate = (dateString?: string | null) => {
     if (!dateString) return "N/A"
@@ -312,7 +401,45 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
 
       {/* Bottom Actions */}
       <View style={[$bottomContainer, $bottomContainerInsets]}>
-        {orderDetail.paymentStatus === "Pending" && (
+        {/* Tailor actions: accept/reject a pending order */}
+        {canAcceptOrReject && (
+          <View style={$actionRow}>
+            <Button
+              text={isActing ? "Working..." : "Accept Order"}
+              style={[$primaryButton, $actionRowButton]}
+              textStyle={$primaryButtonText}
+              disabled={isActing}
+              onPress={handleAccept}
+            />
+            <Button
+              text="Reject"
+              style={[$rejectButton, $actionRowButton]}
+              textStyle={$rejectButtonText}
+              disabled={isActing}
+              onPress={handleReject}
+            />
+          </View>
+        )}
+        {/* Tailor action: advance the work pipeline */}
+        {canUpdateStatus && (
+          <Button
+            text="Update Status"
+            style={$primaryButton}
+            textStyle={$primaryButtonText}
+            disabled={isActing}
+            onPress={() => setIsStatusSheetVisible(true)}
+          />
+        )}
+        {/* Client actions */}
+        {!isTailorViewer && (
+          <Button
+            text="Track Order"
+            style={$secondaryButton}
+            textStyle={$secondaryButtonText}
+            onPress={() => (navigation as any).navigate("OrderTracking", { orderId: order.id })}
+          />
+        )}
+        {!isTailorViewer && orderDetail.paymentStatus === "Pending" && (
           <Button
             text="Pay Now"
             style={$primaryButton}
@@ -320,7 +447,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
             onPress={handlePayNow}
           />
         )}
-        {orderDetail.status === "Ready" && (
+        {!isTailorViewer && orderDetail.status === "Ready" && (
           <Button
             text="Schedule Pickup"
             style={$secondaryButton}
@@ -329,6 +456,15 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
           />
         )}
       </View>
+
+      {/* Status update bottom sheet (tailor) */}
+      <StatusUpdateSheet
+        visible={isStatusSheetVisible}
+        currentStatus={domainToCurrentPBStatus(order)}
+        onClose={() => setIsStatusSheetVisible(false)}
+        onSubmit={handleStatusUpdate}
+        isSubmitting={isActing}
+      />
     </Screen>
   )
 })
@@ -585,9 +721,31 @@ const $bottomContainer: ViewStyle = {
   paddingHorizontal: spacing.lg,
   paddingTop: spacing.md,
   paddingBottom: spacing.md,
+  gap: spacing.sm,
   backgroundColor: colors.palette.neutral100,
   borderTopWidth: 1,
   borderTopColor: colors.palette.neutral200,
+}
+
+const $actionRow: ViewStyle = {
+  flexDirection: "row",
+  gap: spacing.sm,
+}
+
+const $actionRowButton: ViewStyle = {
+  flex: 1,
+}
+
+const $rejectButton: ViewStyle = {
+  backgroundColor: colors.palette.error100,
+  borderRadius: 12,
+  paddingVertical: spacing.md,
+}
+
+const $rejectButtonText: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
+  color: colors.palette.error500,
 }
 
 const $primaryButton: ViewStyle = {

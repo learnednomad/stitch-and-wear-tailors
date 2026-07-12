@@ -8,6 +8,96 @@
 import { BaseApiService, ServiceResult } from "./base-api-service"
 import { IAppointmentApiService } from "./service-types"
 import { CreateAppointmentRequest, AppointmentListParams, ApiResponse } from "./api.types"
+import { getPocketBaseAdapter, filters, COLLECTIONS } from "./pocketbase-api-adapter"
+
+// ---------------------------------------------------------------------------
+// PocketBase-backed appointment calls (used by BookFittingScreen). The legacy
+// AppointmentApiService class below still targets the unwired REST endpoints
+// expected by the service registry, so the PB surface lives alongside it.
+// ---------------------------------------------------------------------------
+
+/**
+ * Raw PocketBase appointment record.
+ */
+export interface PBAppointment {
+  id: string
+  customer: string
+  tailor: string
+  order: string
+  type: "fitting" | "consultation" | "measurement" | "pickup" | "delivery"
+  scheduledAt: string
+  durationMinutes: number
+  status: "requested" | "confirmed" | "completed" | "cancelled" | "rescheduled"
+  location: string
+  notes: string
+  created: string
+  updated: string
+  expand?: { tailor?: Record<string, any>; customer?: Record<string, any> }
+}
+
+export interface CreatePBAppointmentInput {
+  tailor: string
+  type: PBAppointment["type"]
+  scheduledAt: string
+  durationMinutes?: number
+  location?: string
+  notes?: string
+  order?: string
+}
+
+export const appointmentApi = {
+  /**
+   * Create an appointment request as the current client. The server hook
+   * notifies the tailor.
+   */
+  async createAppointment(input: CreatePBAppointmentInput): Promise<ServiceResult<PBAppointment>> {
+    const adapter = getPocketBaseAdapter()
+    if (!adapter.currentUserId) {
+      return { success: false, problem: { kind: "unauthorized" }, message: "Not logged in" }
+    }
+    return adapter.create<PBAppointment>(COLLECTIONS.APPOINTMENTS, {
+      customer: adapter.currentUserId,
+      tailor: input.tailor,
+      type: input.type,
+      scheduledAt: input.scheduledAt,
+      durationMinutes: input.durationMinutes ?? 60,
+      status: "requested",
+      location: input.location ?? "",
+      notes: input.notes ?? "",
+      ...(input.order ? { order: input.order } : {}),
+    })
+  },
+
+  /**
+   * The current user's upcoming (not yet past, not cancelled) appointments,
+   * soonest first.
+   */
+  async listUpcoming(): Promise<ServiceResult<PBAppointment[]>> {
+    const adapter = getPocketBaseAdapter()
+    if (!adapter.currentUserId) {
+      return { success: false, problem: { kind: "unauthorized" }, message: "Not logged in" }
+    }
+    return adapter.fullList<PBAppointment>(COLLECTIONS.APPOINTMENTS, {
+      filter: filters.and(
+        filters.eq("customer", adapter.currentUserId),
+        filters.gte("scheduledAt", new Date().toISOString()),
+      ),
+      sort: "scheduledAt",
+      expand: "tailor",
+    })
+  },
+
+  /**
+   * Cancel one of the current user's appointments.
+   */
+  async cancelAppointment(appointmentId: string): Promise<ServiceResult<PBAppointment>> {
+    return getPocketBaseAdapter().update<PBAppointment>(COLLECTIONS.APPOINTMENTS, appointmentId, {
+      status: "cancelled",
+    })
+  },
+}
+
+export type PBAppointmentApi = typeof appointmentApi
 
 /**
  * AppointmentAPI Service Implementation

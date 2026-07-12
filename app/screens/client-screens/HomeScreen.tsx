@@ -77,15 +77,14 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
     if (!currentUser?.id) return
 
     try {
-      // Load data from all relevant stores - for now just log, actual API calls will be implemented later
-      console.log("Loading dashboard data for user:", currentUser.id)
-      // TODO: Implement actual API calls when backend is ready
+      // Refresh notifications from PocketBase so the bell badge is live.
+      // TODO: wire the remaining store loads when their backends are ready
       // await Promise.all([
       //   orderStore.loadNigerianOrders(currentUser.id),
       //   measurementStore.loadUserMeasurements(currentUser.id),
       //   appointmentStore.loadUserAppointments(currentUser.id),
-      //   notificationStore.loadUnreadNotifications(currentUser.id),
       // ])
+      await notificationStore.loadServerNotifications()
     } catch (error) {
       console.error("Failed to load dashboard data:", error)
     }
@@ -102,14 +101,15 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
       case "completed":
       case "delivered":
       case "ready":
-        return theme.colors.palette.success600 || colors.palette.sageGreen
+        // dark palette variant lacks these keys — fall back to static palette
+        return (theme.colors.palette as any).success600 || colors.palette.sageGreen
       case "in_progress":
       case "confirmed":
         return theme.colors.palette.primary500 || colors.palette.threadBlue
       case "pending":
-        return theme.colors.palette.warning600 || colors.palette.tailorGold
+        return (theme.colors.palette as any).warning600 || colors.palette.tailorGold
       case "cancelled":
-        return theme.colors.palette.alertRed
+        return (theme.colors.palette as any).alertRed || colors.palette.alertRed
       default:
         return theme.colors.palette.neutral600
     }
@@ -210,13 +210,15 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
       safeAreaEdges={["top"]}
       preset="scroll"
       statusBarStyle={theme.isDark ? "light" : "dark"}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={handleRefresh}
-          tintColor={theme.colors.palette.primary500 || colors.palette.threadBlue}
-        />
-      }
+      ScrollViewProps={{
+        refreshControl: (
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={theme.colors.palette.primary500 || colors.palette.threadBlue}
+          />
+        ),
+      }}
     >
       <View style={$container}>
         {/* Modern Header with Gradient Background */}
@@ -253,7 +255,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={$modernNotificationButton}
-                  onPress={() => navigation.navigate("Notifications" as never)}
+                  onPress={() => navigation.navigate("ClientNotifications" as never)}
                   accessible
                   accessibilityLabel="Notifications"
                 >
@@ -427,7 +429,6 @@ const $header: ViewStyle = {
 }
 
 const $headerGradient: ViewStyle = {
-  background: "linear-gradient(135deg, #2B5D2F 0%, #1A4A1E 100%)",
   backgroundColor: "#2B5D2F",
   borderRadius: 24,
   padding: spacing.lg,
@@ -526,7 +527,6 @@ const $modernButton: ViewStyle = {
   height: 44,
   borderRadius: 22,
   backgroundColor: "rgba(255, 255, 255, 0.15)",
-  backdropFilter: "blur(10px)",
   justifyContent: "center",
   alignItems: "center",
   borderWidth: 1,
@@ -538,7 +538,6 @@ const $modernNotificationButton: ViewStyle = {
   height: 44,
   borderRadius: 22,
   backgroundColor: "rgba(255, 255, 255, 0.15)",
-  backdropFilter: "blur(10px)",
   justifyContent: "center",
   alignItems: "center",
   borderWidth: 1,
@@ -588,7 +587,6 @@ const $welcomeCard: ViewStyle = {
 }
 
 const $welcomeCardGradient: ViewStyle = {
-  background: "linear-gradient(135deg, #2B5D2F 0%, #1A4A1E 100%)",
   backgroundColor: "#2B5D2F",
   padding: spacing.xl,
   borderRadius: 24,
@@ -621,7 +619,6 @@ const $welcomeMetrics: ViewStyle = {
   borderRadius: 16,
   paddingVertical: spacing.md,
   paddingHorizontal: spacing.lg,
-  backdropFilter: "blur(10px)",
 }
 
 const $metricItem: ViewStyle = {

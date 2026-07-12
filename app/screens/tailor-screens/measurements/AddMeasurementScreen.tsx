@@ -1,28 +1,15 @@
 import { FC } from "react"
 import { observer } from "mobx-react-lite"
-import { ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
-import { Screen, Text } from "@/components"
-// import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "@/models"
+import { MeasurementForm } from "./MeasurementForm"
 
 interface AddMeasurementScreenProps extends AppStackScreenProps<"AddMeasurement"> {}
 
+/**
+ * Create a new measurement template owned by the tailor.
+ */
 export const AddMeasurementScreen: FC<AddMeasurementScreenProps> = observer(
   function AddMeasurementScreen() {
-    // Pull in one of our MST stores
-    // const { someStore, anotherStore } = useStores()
-
-    // Pull in navigation via hook
-    // const navigation = useNavigation()
-    return (
-      <Screen style={$root} preset="scroll">
-        <Text text="addMeasurement" />
-      </Screen>
-    )
+    return <MeasurementForm mode="add" />
   },
 )
-
-const $root: ViewStyle = {
-  flex: 1,
-}

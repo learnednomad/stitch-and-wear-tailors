@@ -103,16 +103,32 @@ export function handlePocketBaseError(error: any): string {
 /**
  * Subscribe to realtime changes on a collection (or a single record by
  * passing recordId). Returns an unsubscribe function.
+ *
+ * Optional lifecycle hooks let callers (e.g. RealtimeManager) observe whether
+ * the underlying SSE subscription was actually established or failed, without
+ * changing the fire-and-forget default behavior.
  */
 export function subscribeToCollection(
   collection: CollectionName,
   callback: (event: { action: string; record: any }) => void,
-  options?: { recordId?: string; filter?: string },
+  options?: {
+    recordId?: string
+    filter?: string
+    /** called once the SSE subscription is confirmed by the server */
+    onEstablished?: () => void
+    /** called when the SSE subscription could not be established */
+    onError?: (error: any) => void
+  },
 ): () => void {
   const topic = options?.recordId || "*"
   const subscribePromise = pb
     .collection(collection)
     .subscribe(topic, callback, options?.filter ? { filter: options.filter } : undefined)
+
+  subscribePromise.then(
+    () => options?.onEstablished?.(),
+    (error) => options?.onError?.(error),
+  )
 
   return () => {
     subscribePromise

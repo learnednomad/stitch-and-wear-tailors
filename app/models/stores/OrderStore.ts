@@ -33,7 +33,16 @@ import {
 import { orderTranslations, nigerianBusinessConfig } from "../../i18n/nigerian-languages"
 import { orderApi, domainStatusToPB } from "../../services/api/order-api"
 import { getPocketBaseAdapter, filters, COLLECTIONS } from "../../services/api/pocketbase-api-adapter"
-import { subscribeToCollection } from "../../services/pocketbase/pocketbase-client"
+import { realtimeManager } from "../../services/realtime/RealtimeManager"
+
+/**
+ * Garment pricing configs keyed loosely — not every NigerianGarmentType has
+ * an entry, so index through a safe record type with an undefined fallback.
+ */
+const garmentConfigs: Record<
+  string,
+  { basePrice: number; complexityLevel: number; estimatedDays: number } | undefined
+> = nigerianBusinessConfig.traditionalGarments
 
 /**
  * MST model for Nigerian garment order items
@@ -403,6 +412,90 @@ export const OrderStoreModel = types
       self.lastFetched = timestamp
     }
 
+    /**
+     * Calculate Nigerian pricing based on city and garment type
+     * (hoisted so sibling actions in this block can call it directly)
+     */
+    const calculateNigerianPricing = (
+      garmentType: NigerianGarmentType,
+      city: NigerianCity,
+      isRush: boolean = false,
+    ): PricingBreakdown => {
+      // Fall back to a generic config for garment types without an entry
+      const garmentConfig = garmentConfigs[garmentType] ?? {
+        basePrice: 20000,
+        complexityLevel: 2,
+        estimatedDays: 7,
+      }
+      const cityConfig = nigerianBusinessConfig.cities[city] ?? nigerianBusinessConfig.cities.lagos
+
+      const basePrice = garmentConfig.basePrice
+      const fabricCost = self.orderCreationData?.fabricSelection?.totalPrice || 0
+      const complexityMultiplier = garmentConfig.complexityLevel * 0.2 + 1
+      const urgencyFee = isRush ? basePrice * (cityConfig.rushFeeMultiplier - 1) : 0
+      const totalPrice = (basePrice + fabricCost) * complexityMultiplier + urgencyFee
+      const depositRequired = totalPrice * 0.5 // 50% deposit
+      const balanceAmount = totalPrice - depositRequired
+
+      return {
+        basePrice,
+        fabricCost,
+        complexityMultiplier,
+        urgencyFee,
+        totalPrice,
+        depositRequired,
+        balanceAmount,
+        currency: "NGN",
+        city,
+      }
+    }
+
+    /**
+     * Keep draft pricing totals in sync with its items (after item removal)
+     */
+    const recalculateDraftTotals = () => {
+      const draft = self.draftOrder
+      if (!draft) return
+      const itemsTotal = draft.items.reduce((sum, item) => sum + item.totalPrice, 0)
+      draft.pricing.fabricCost = itemsTotal
+      draft.pricing.totalPrice =
+        (draft.pricing.basePrice + itemsTotal) * draft.pricing.complexityMultiplier +
+        draft.pricing.urgencyFee
+      draft.pricing.depositRequired = draft.pricing.totalPrice * 0.5
+      draft.pricing.balanceAmount = draft.pricing.totalPrice - draft.pricing.depositRequired
+    }
+
+    /**
+     * Update Nigerian order status
+     * (hoisted so sibling actions in this block can call it directly)
+     */
+    const updateNigerianOrderStatus = (orderId: string, status: OrderStatus, notes?: string) => {
+      const order = self.orders.findById(orderId)
+      if (order) {
+        order.status = status
+        order.progress.status = status
+        order.progress.lastUpdated = createTimestamp()
+        order.updatedAt = createTimestamp()
+
+        // Update progress percentage based on status
+        const statusPercentages: Record<string, number> = {
+          pending: 10,
+          confirmed: 20,
+          in_progress: 50,
+          ready: 90,
+          delivered: 100,
+          cancelled: 0,
+        }
+
+        order.progress.percentage = statusPercentages[status] || 0
+
+        // Set delivery date if delivered
+        if (status === "delivered" && !order.actualDeliveryDate) {
+          order.actualDeliveryDate = createTimestamp()
+        }
+      }
+    }
+
     return {
       setLoading,
       setError,
@@ -508,39 +601,7 @@ export const OrderStoreModel = types
       /**
        * Calculate Nigerian pricing based on city and garment type
        */
-      calculateNigerianPricing(
-        garmentType: NigerianGarmentType,
-        city: NigerianCity,
-        isRush: boolean = false,
-      ): PricingBreakdown {
-        // Fall back to a generic config for garment types without an entry
-        const garmentConfig = nigerianBusinessConfig.traditionalGarments[garmentType] ?? {
-          basePrice: 20000,
-          complexityLevel: 2,
-          estimatedDays: 7,
-        }
-        const cityConfig = nigerianBusinessConfig.cities[city] ?? nigerianBusinessConfig.cities.lagos
-
-        const basePrice = garmentConfig.basePrice
-        const fabricCost = self.orderCreationData?.fabricSelection?.totalPrice || 0
-        const complexityMultiplier = garmentConfig.complexityLevel * 0.2 + 1
-        const urgencyFee = isRush ? basePrice * (cityConfig.rushFeeMultiplier - 1) : 0
-        const totalPrice = (basePrice + fabricCost) * complexityMultiplier + urgencyFee
-        const depositRequired = totalPrice * 0.5 // 50% deposit
-        const balanceAmount = totalPrice - depositRequired
-
-        return {
-          basePrice,
-          fabricCost,
-          complexityMultiplier,
-          urgencyFee,
-          totalPrice,
-          depositRequired,
-          balanceAmount,
-          currency: "NGN",
-          city,
-        }
-      },
+      calculateNigerianPricing,
 
       /**
        * Create Nigerian draft order from creation data
@@ -551,15 +612,15 @@ export const OrderStoreModel = types
         }
 
         const orderNumber = `NGR-${Date.now().toString(36).toUpperCase()}`
-        const garmentType = self.orderCreationData.styleConfig.garmentType
-        const city = self.orderCreationData.customerInfo.city
+        const garmentType = self.orderCreationData.styleConfig.garmentType as NigerianGarmentType
+        const city = self.orderCreationData.customerInfo.city as NigerianCity
         const isRush = self.orderCreationData.priority === "urgent"
 
         // Calculate pricing
-        const pricing = self.calculateNigerianPricing(garmentType, city, isRush)
+        const pricing = calculateNigerianPricing(garmentType, city, isRush)
 
         // Calculate estimated delivery
-        const garmentConfig = nigerianBusinessConfig.traditionalGarments[garmentType]
+        const garmentConfig = garmentConfigs[garmentType]
         const estimatedDays = garmentConfig?.estimatedDays || 7
         const rushMultiplier = isRush ? 0.5 : 1
         const actualDays = Math.ceil(estimatedDays * rushMultiplier)
@@ -647,8 +708,7 @@ export const OrderStoreModel = types
           culturalSpecifications: itemData.culturalSpecifications || null,
           notes: itemData.notes || null,
           status: "received",
-          estimatedDays:
-            nigerianBusinessConfig.traditionalGarments[itemData.garmentType]?.estimatedDays || 7,
+          estimatedDays: garmentConfigs[itemData.garmentType]?.estimatedDays || 7,
           actualDays: null,
           tailorId: null,
           qualityScore: null,
@@ -680,7 +740,7 @@ export const OrderStoreModel = types
         const index = self.draftOrder.items.findIndex((i) => i.id === itemId)
         if (index !== -1) {
           self.draftOrder.items.splice(index, 1)
-          self.recalculateDraftTotals()
+          recalculateDraftTotals()
         }
       },
 
@@ -766,32 +826,7 @@ export const OrderStoreModel = types
       /**
        * Update Nigerian order status
        */
-      updateNigerianOrderStatus(orderId: string, status: OrderStatus, notes?: string) {
-        const order = self.orders.findById(orderId)
-        if (order) {
-          order.status = status
-          order.progress.status = status
-          order.progress.lastUpdated = createTimestamp()
-          order.updatedAt = createTimestamp()
-
-          // Update progress percentage based on status
-          const statusPercentages: Record<OrderStatus, number> = {
-            pending: 10,
-            confirmed: 20,
-            in_progress: 50,
-            ready: 90,
-            delivered: 100,
-            cancelled: 0,
-          }
-
-          order.progress.percentage = statusPercentages[status] || 0
-
-          // Set delivery date if delivered
-          if (status === "delivered" && !order.actualDeliveryDate) {
-            order.actualDeliveryDate = createTimestamp()
-          }
-        }
-      },
+      updateNigerianOrderStatus,
 
       /**
        * Assign tailor to Nigerian order
@@ -801,7 +836,7 @@ export const OrderStoreModel = types
         if (order) {
           order.tailorId = tailorId
           order.updatedAt = createTimestamp()
-          self.updateNigerianOrderStatus(orderId, "confirmed", `Tailor assigned: ${tailorId}`)
+          updateNigerianOrderStatus(orderId, "confirmed", `Tailor assigned: ${tailorId}`)
         }
       },
 
@@ -824,7 +859,10 @@ export const OrderStoreModel = types
       },
 
       /**
-       * Initialize PocketBase realtime subscription for orders
+       * Initialize realtime order updates through the RealtimeManager (SSE
+       * with automatic retry and a 20s polling fallback). Preserves previous
+       * behavior: upsert via orderApi.fetchOrder on create/update, remove on
+       * delete.
        */
       initializeRealtime(userId: string) {
         // Unsubscribe from previous subscription if exists
@@ -832,28 +870,17 @@ export const OrderStoreModel = types
           ;(self.realtimeUnsubscribe as () => void)()
         }
 
-        // Subscribe to orders collection changes
-        const unsubscribe = subscribeToCollection(COLLECTIONS.ORDERS, (event) => {
-          const record = event.record
-          if (!record) return
-
-          // Only react to this user's orders (as customer or assigned tailor)
-          if (record.customer !== userId && record.tailor !== userId) return
-
-          if (event.action === "delete") {
-            self.orders.removeItem(record.id)
-            return
-          }
-
-          // create/update: re-fetch the single order so its items and stage
-          // history are included, then upsert the mapped domain result
+        // Re-fetch a single order (items + stage history included) and
+        // upsert the mapped domain result. Collection mutations go through
+        // the collection model's own actions, so async callbacks are safe.
+        const upsertFromServer = (orderId: string) => {
           orderApi
-            .fetchOrder(record.id)
+            .fetchOrder(orderId)
             .then((result) => {
               if (!result.success) return
-              const existingOrder = self.orders.findById(record.id)
+              const existingOrder = self.orders.findById(orderId)
               if (existingOrder) {
-                self.orders.updateItem(record.id, result.data)
+                self.orders.updateItem(orderId, result.data)
               } else {
                 self.orders.addItem(NigerianOrderModel.create(result.data as any))
               }
@@ -861,7 +888,46 @@ export const OrderStoreModel = types
             .catch(() => {
               // ignore transient realtime refresh failures
             })
-        })
+        }
+
+        const unsubscribe = realtimeManager.subscribe(
+          "orders",
+          COLLECTIONS.ORDERS,
+          (event) => {
+            const record = event.record
+            if (!record) return
+
+            // Only react to this user's orders (as customer or assigned tailor)
+            if (record.customer !== userId && record.tailor !== userId) return
+
+            if (event.action === "delete") {
+              self.orders.removeItem(record.id)
+              return
+            }
+
+            upsertFromServer(record.id)
+          },
+          {
+            // While SSE is unavailable, refresh the first page for the user
+            // in both roles so the local collection stays reasonably fresh
+            fallbackPoll: async () => {
+              const [asCustomer, asTailor] = await Promise.all([
+                orderApi.fetchOrders({ customerId: userId, perPage: 25 }),
+                orderApi.fetchOrders({ tailorId: userId, perPage: 25 }),
+              ])
+              for (const result of [asCustomer, asTailor]) {
+                if (!result.success) continue
+                for (const order of result.data.orders) {
+                  if (self.orders.findById(order.id)) {
+                    self.orders.updateItem(order.id, order)
+                  } else {
+                    self.orders.addItem(NigerianOrderModel.create(order as any))
+                  }
+                }
+              }
+            },
+          },
+        )
 
         self.realtimeUnsubscribe = unsubscribe
       },
@@ -1116,7 +1182,8 @@ export const OrderStoreModel = types
             internalNotes: `Cancelled: ${reason}`,
           }
 
-          yield self.saveNigerianOrder(orderId, updates)
+          // sibling action in this block — typed on the instance at runtime
+          yield (self as any).saveNigerianOrder(orderId, updates)
           self.updateNigerianOrderStatus(orderId, "cancelled", reason)
         } catch (error) {
           throw error
@@ -1142,7 +1209,7 @@ export const OrderStoreModel = types
       searchNigerianOrders: flow(function* (query: string, filters: any = {}) {
         self.search.setQuery(query)
         Object.entries(filters).forEach(([key, value]) => {
-          self.search.setFilter(key, value)
+          self.search.setFilter(key, value as string | number | boolean)
         })
 
         try {
@@ -1358,10 +1425,12 @@ export const OrderStoreModel = types
      * Get Nigerian orders requiring attention
      */
     get nigerianOrdersRequiringAttention() {
+      // sibling views in this block — typed on the instance at runtime
+      const views = self as any
       return [
-        ...self.urgentNigerianOrders,
-        ...self.overdueNigerianOrders,
-        ...self.ordersReadyForDelivery,
+        ...views.urgentNigerianOrders,
+        ...views.overdueNigerianOrders,
+        ...views.ordersReadyForDelivery,
       ].filter((order, index, arr) => arr.findIndex((o) => o.id === order.id) === index)
     },
 
@@ -1400,7 +1469,7 @@ export const OrderStoreModel = types
      * Get garment configuration
      */
     getGarmentConfig(garmentType: NigerianGarmentType) {
-      return nigerianBusinessConfig.traditionalGarments[garmentType]
+      return garmentConfigs[garmentType]
     },
   }))
 

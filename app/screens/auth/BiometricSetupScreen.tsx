@@ -15,15 +15,34 @@ import {
   Image,
   Platform,
 } from "react-native"
+import { TextStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import { Icon } from "@/components"
-import { colors, spacing, typography } from "@/theme"
+import { Icon, IconTypes } from "@/components"
+import { colors as themeColors, spacing, typography as themeTypography } from "@/theme"
 import BiometricAuthService from "@/services/auth/BiometricAuthService"
 import { useStores } from "@/models"
 
+// Local aliases mapping this screen's legacy color/typography names onto the
+// app theme (the theme has no primary/card/warning entries or text presets).
+const colors = {
+  ...themeColors,
+  primary: themeColors.tint,
+  card: themeColors.palette.neutral100,
+  success: themeColors.palette.success500,
+  warning: themeColors.palette.warning500,
+  warningLight: themeColors.palette.warning100,
+}
+
+const typography = {
+  body: { fontSize: 16, fontFamily: themeTypography.primary.normal } as TextStyle,
+  caption: { fontSize: 13, fontFamily: themeTypography.primary.normal } as TextStyle,
+  heading: { fontSize: 22, fontFamily: themeTypography.primary.bold } as TextStyle,
+  subheading: { fontSize: 16, fontFamily: themeTypography.primary.medium } as TextStyle,
+}
+
 export function BiometricSetupScreen() {
   const navigation = useNavigation()
-  const { authenticationStore } = useStores()
+  const { authStore } = useStores()
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
   const [biometricAvailable, setBiometricAvailable] = useState(false)
@@ -48,7 +67,7 @@ export function BiometricSetupScreen() {
       setBiometricType(availability.biometricType)
 
       // Check if already enabled for user
-      const userId = authenticationStore.authUserId
+      const userId = authStore.user?.id
       if (userId) {
         const enabled = await biometricService.isBiometricEnabled(userId)
         setBiometricEnabled(enabled)
@@ -64,8 +83,8 @@ export function BiometricSetupScreen() {
     try {
       setLoading(true)
 
-      const userId = authenticationStore.authUserId
-      const email = authenticationStore.userEmail
+      const userId = authStore.user?.id
+      const email = authStore.user?.email
 
       if (!userId || !email) {
         Alert.alert("Error", "User not authenticated")
@@ -81,7 +100,7 @@ export function BiometricSetupScreen() {
           { text: "Cancel", style: "cancel" },
           {
             text: "Enable",
-            onPress: async (password) => {
+            onPress: async (password?: string) => {
               if (!password) {
                 Alert.alert("Error", "Password is required")
                 return
@@ -122,7 +141,7 @@ export function BiometricSetupScreen() {
           onPress: async () => {
             try {
               setLoading(true)
-              const userId = authenticationStore.authUserId
+              const userId = authStore.user?.id
 
               if (!userId) {
                 Alert.alert("Error", "User not authenticated")
@@ -150,7 +169,7 @@ export function BiometricSetupScreen() {
 
   const testBiometric = async () => {
     try {
-      const userId = authenticationStore.authUserId
+      const userId = authStore.user?.id
 
       if (!userId) {
         Alert.alert("Error", "User not authenticated")
@@ -182,16 +201,17 @@ export function BiometricSetupScreen() {
     }
   }
 
-  const getBiometricIcon = () => {
+  // icons come from the app's registered icon set (see app/components/Icon)
+  const getBiometricIcon = (): IconTypes => {
     switch (biometricType) {
       case "face":
-        return "smile"
+        return "profile"
       case "fingerprint":
-        return "fingerprint"
+        return "lock"
       case "iris":
-        return "eye"
+        return "view"
       default:
-        return "shield"
+        return "lock"
     }
   }
 
@@ -222,7 +242,7 @@ export function BiometricSetupScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon icon="arrow-left" size={24} color={colors.text} />
+          <Icon icon="back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Biometric Authentication</Text>
       </View>
@@ -230,7 +250,7 @@ export function BiometricSetupScreen() {
       <View style={styles.content}>
         <View style={styles.iconContainer}>
           <Icon
-            icon={getBiometricIcon() as any}
+            icon={getBiometricIcon()}
             size={80}
             color={biometricEnabled ? colors.success : colors.primary}
           />
@@ -277,7 +297,7 @@ export function BiometricSetupScreen() {
 
         {!biometricAvailable && (
           <View style={styles.infoBox}>
-            <Icon icon="info" size={20} color={colors.warning} />
+            <Icon icon="feedback" size={20} color={colors.warning} />
             <Text style={styles.infoText}>
               Biometric authentication is not available on this device.
             </Text>
@@ -286,7 +306,7 @@ export function BiometricSetupScreen() {
 
         {biometricAvailable && !biometricEnrolled && (
           <View style={styles.infoBox}>
-            <Icon icon="alert-circle" size={20} color={colors.warning} />
+            <Icon icon="feedback" size={20} color={colors.warning} />
             <Text style={styles.infoText}>
               Please set up {getBiometricName()} in your device settings to use this feature.
             </Text>
@@ -309,7 +329,7 @@ export function BiometricSetupScreen() {
         <View style={styles.benefits}>
           <Text style={styles.benefitsTitle}>Benefits of Biometric Login</Text>
           <View style={styles.benefit}>
-            <Icon icon="zap" size={20} color={colors.primary} />
+            <Icon icon="check" size={20} color={colors.primary} />
             <Text style={styles.benefitText}>Quick access without typing passwords</Text>
           </View>
           <View style={styles.benefit}>
@@ -317,7 +337,7 @@ export function BiometricSetupScreen() {
             <Text style={styles.benefitText}>Enhanced security with unique biometric data</Text>
           </View>
           <View style={styles.benefit}>
-            <Icon icon="shield" size={20} color={colors.primary} />
+            <Icon icon="lock" size={20} color={colors.primary} />
             <Text style={styles.benefitText}>Your biometric data never leaves your device</Text>
           </View>
         </View>

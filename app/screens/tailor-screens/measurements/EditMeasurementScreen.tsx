@@ -1,28 +1,20 @@
 import { FC } from "react"
 import { observer } from "mobx-react-lite"
-import { ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
-import { Screen, Text } from "@/components"
-// import { useNavigation } from "@react-navigation/native"
-// import { useStores } from "@/models"
+import { MeasurementForm } from "./MeasurementForm"
 
 interface EditMeasurementScreenProps extends AppStackScreenProps<"EditMeasurement"> {}
 
+/**
+ * View or edit a measurement profile. Customer-owned profiles render
+ * read-only (mode "view" or non-owned records); the tailor's own templates
+ * are editable and deletable from here.
+ */
 export const EditMeasurementScreen: FC<EditMeasurementScreenProps> = observer(
-  function EditMeasurementScreen() {
-    // Pull in one of our MST stores
-    // const { someStore, anotherStore } = useStores()
-
-    // Pull in navigation via hook
-    // const navigation = useNavigation()
+  function EditMeasurementScreen({ route }) {
+    const { measurementId, mode } = route.params ?? {}
     return (
-      <Screen style={$root} preset="scroll">
-        <Text text="editMeasurement" />
-      </Screen>
+      <MeasurementForm mode={mode === "view" ? "view" : "edit"} measurementId={measurementId} />
     )
   },
 )
-
-const $root: ViewStyle = {
-  flex: 1,
-}

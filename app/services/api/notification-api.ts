@@ -1,592 +1,264 @@
 /**
  * Notification API Service
  *
- * Handles all notification-related API operations including push notifications,
- * email/SMS delivery, preferences management, and templates following Infinite Red patterns.
+ * PocketBase-backed notifications. Notifications are created by server
+ * hooks only — the client can list its own records and mark them read.
+ *
+ * `notificationApi` is the primary surface used by NotificationStore and
+ * the notification screens. `NotificationApiService` keeps the legacy
+ * service-registry contract alive by delegating to the same PB calls and
+ * rejecting the endpoints the backend doesn't model (push devices,
+ * templates, bulk sends).
  */
 
 import { BaseApiService, ServiceResult } from "./base-api-service"
 import { INotificationApiService } from "./service-types"
 import { CreateNotificationRequest, NotificationListParams, ApiResponse } from "./api.types"
+import { getPocketBaseAdapter, filters, COLLECTIONS } from "./pocketbase-api-adapter"
 
 /**
- * NotificationAPI Service Implementation
- *
- * Provides comprehensive notification management functionality:
- * - Notification CRUD operations
- * - Multi-channel delivery (push, email, SMS, in-app)
- * - Templates and preferences management
- * - Device registration and targeting
+ * Raw PocketBase notification record.
  */
-export class NotificationApiService extends BaseApiService implements INotificationApiService {
-  /**
-   * Service health check
-   */
-  async ping(): Promise<ServiceResult<boolean>> {
-    const result = await this.get<{ status: string }>("/health")
-    if (result.success) {
-      return { success: true, data: result.data.status === "ok" }
-    }
-    return { success: false, problem: result.problem, message: result.message }
+export interface PBNotification {
+  id: string
+  user: string
+  type:
+    | "order_update"
+    | "new_message"
+    | "payment_received"
+    | "payment_claim"
+    | "appointment"
+    | "reminder"
+    | "system"
+  title: string
+  body: string
+  data: Record<string, any> | null
+  isRead: boolean
+  readAt: string
+  created: string
+  updated: string
+}
+
+function notSupported<T>(feature: string): ServiceResult<T> {
+  return {
+    success: false,
+    problem: { kind: "rejected" },
+    message: `${feature} is not supported by the PocketBase backend`,
   }
+}
+
+export const notificationApi = {
+  /**
+   * The current user's notifications, newest first.
+   */
+  async listMine(limit: number = 100): Promise<ServiceResult<PBNotification[]>> {
+    const adapter = getPocketBaseAdapter()
+    if (!adapter.currentUserId) {
+      return { success: false, problem: { kind: "unauthorized" }, message: "Not logged in" }
+    }
+    const result = await adapter.list<PBNotification>(COLLECTIONS.NOTIFICATIONS, {
+      filter: filters.eq("user", adapter.currentUserId),
+      sort: "-created",
+      perPage: limit,
+    })
+    if (!result.success) return result
+    return { success: true, data: result.data.items }
+  },
 
   /**
-   * Get service status and configuration
+   * Count of unread notifications for the current user.
    */
+  async unreadCount(): Promise<ServiceResult<number>> {
+    const adapter = getPocketBaseAdapter()
+    if (!adapter.currentUserId) {
+      return { success: false, problem: { kind: "unauthorized" }, message: "Not logged in" }
+    }
+    const result = await adapter.list<PBNotification>(COLLECTIONS.NOTIFICATIONS, {
+      filter: filters.and(
+        filters.eq("user", adapter.currentUserId),
+        filters.eq("isRead", false),
+      ),
+      perPage: 1,
+    })
+    if (!result.success) return result
+    return { success: true, data: result.data.totalItems }
+  },
+
+  /**
+   * Mark a single notification read.
+   */
+  async markRead(notificationId: string): Promise<ServiceResult<PBNotification>> {
+    return getPocketBaseAdapter().update<PBNotification>(COLLECTIONS.NOTIFICATIONS, notificationId, {
+      isRead: true,
+      readAt: new Date().toISOString(),
+    })
+  },
+
+  /**
+   * Mark every unread notification for the current user read.
+   */
+  async markAllRead(): Promise<ServiceResult<void>> {
+    const adapter = getPocketBaseAdapter()
+    const unread = await adapter.fullList<PBNotification>(COLLECTIONS.NOTIFICATIONS, {
+      filter: filters.and(
+        filters.eq("user", adapter.currentUserId),
+        filters.eq("isRead", false),
+      ),
+    })
+    if (!unread.success) return unread
+    const readAt = new Date().toISOString()
+    const results = await Promise.all(
+      unread.data.map((n) =>
+        adapter.update(COLLECTIONS.NOTIFICATIONS, n.id, { isRead: true, readAt }),
+      ),
+    )
+    const failed = results.find((r) => !r.success)
+    if (failed && !failed.success) return failed
+    return { success: true, data: undefined }
+  },
+}
+
+export type NotificationApi = typeof notificationApi
+
+/**
+ * Legacy service-registry adapter over the PB notification calls.
+ */
+export class NotificationApiService extends BaseApiService implements INotificationApiService {
+  private get adapter() {
+    return getPocketBaseAdapter()
+  }
+
+  async ping(): Promise<ServiceResult<boolean>> {
+    return this.adapter.testConnection()
+  }
+
   getStatus() {
     return {
       serviceName: "notification",
       baseEndpoint: this.baseEndpoint,
-      isAuthenticated: this.isAuthenticated(),
-      isConfigured: !!this.api,
+      isAuthenticated: !!this.adapter.currentUserId,
+      isConfigured: true,
     }
   }
 
   /**
-   * Create and send notification
+   * Notification creation is server-hook-only.
    */
-  async createNotification(
-    notificationData: CreateNotificationRequest,
-  ): Promise<ServiceResult<any>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    // Validate required fields
-    if (!notificationData.userId || !notificationData.type || !notificationData.priority) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "User ID, type, and priority are required",
-      }
-    }
-
-    if (!notificationData.title || !notificationData.body) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Title and body are required",
-      }
-    }
-
-    // Validate priority
-    const validPriorities = ["low", "medium", "high", "urgent"]
-    if (!validPriorities.includes(notificationData.priority)) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Priority must be one of: low, medium, high, urgent",
-      }
-    }
-
-    return this.post<any>("/", notificationData)
+  async createNotification(_data: CreateNotificationRequest): Promise<ServiceResult<any>> {
+    return notSupported("Client-side notification creation")
   }
 
-  /**
-   * Get notification by ID
-   */
   async getNotification(notificationId: string): Promise<ServiceResult<any>> {
     if (!notificationId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Notification ID is required",
-      }
+      return { success: false, problem: { kind: "rejected" }, message: "Notification ID is required" }
     }
-
-    return this.getById<any>(notificationId)
+    return this.adapter.getOne(COLLECTIONS.NOTIFICATIONS, notificationId)
   }
 
   /**
-   * Update notification
+   * Only read-state updates are permitted by the collection rules.
    */
   async updateNotification(notificationId: string, updates: any): Promise<ServiceResult<any>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
     if (!notificationId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Notification ID is required",
-      }
+      return { success: false, problem: { kind: "rejected" }, message: "Notification ID is required" }
     }
-
-    return this.update<any>(notificationId, updates)
+    return this.adapter.update(COLLECTIONS.NOTIFICATIONS, notificationId, updates)
   }
 
-  /**
-   * Delete notification
-   */
   async deleteNotification(notificationId: string): Promise<ServiceResult<void>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
     if (!notificationId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Notification ID is required",
-      }
+      return { success: false, problem: { kind: "rejected" }, message: "Notification ID is required" }
     }
-
-    return this.deleteById<void>(notificationId)
+    return this.adapter.remove(COLLECTIONS.NOTIFICATIONS, notificationId)
   }
 
-  /**
-   * Get notifications with filtering and pagination
-   */
   async getNotifications(
     params?: NotificationListParams,
   ): Promise<ServiceResult<ApiResponse<any[]>>> {
-    return this.getList<any>("/", params)
+    return this.getUserNotifications(this.adapter.currentUserId, params)
   }
 
-  /**
-   * Get notifications for a specific user
-   */
   async getUserNotifications(
     userId: string,
     params?: NotificationListParams,
   ): Promise<ServiceResult<ApiResponse<any[]>>> {
     if (!userId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "User ID is required",
-      }
+      return { success: false, problem: { kind: "rejected" }, message: "User ID is required" }
     }
-
-    const searchParams = {
-      ...params,
-      userId,
+    const result = await this.adapter.list<PBNotification>(COLLECTIONS.NOTIFICATIONS, {
+      filter: filters.eq("user", userId),
+      sort: "-created",
+      page: params?.page ?? 1,
+      perPage: params?.limit ?? 50,
+    })
+    if (!result.success) return result
+    return {
+      success: true,
+      data: {
+        success: true,
+        data: result.data.items,
+        meta: {
+          page: result.data.page,
+          totalPages: result.data.totalPages,
+          totalItems: result.data.totalItems,
+          hasMore: result.data.page < result.data.totalPages,
+        },
+      },
     }
-
-    return this.getList<any>("/", searchParams)
   }
 
-  /**
-   * Mark notification as read
-   */
   async markAsRead(notificationId: string): Promise<ServiceResult<void>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!notificationId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Notification ID is required",
-      }
-    }
-
-    return this.post<void>(`/${notificationId}/mark-read`)
+    const result = await notificationApi.markRead(notificationId)
+    if (!result.success) return result
+    return { success: true, data: undefined }
   }
 
-  /**
-   * Mark all notifications as read for user
-   */
-  async markAllAsRead(userId: string): Promise<ServiceResult<void>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!userId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "User ID is required",
-      }
-    }
-
-    return this.post<void>(`/users/${userId}/mark-all-read`)
+  async markAllAsRead(_userId: string): Promise<ServiceResult<void>> {
+    return notificationApi.markAllRead()
   }
 
-  /**
-   * Get user notification preferences
-   */
-  async getPreferences(userId: string): Promise<ServiceResult<any>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
+  // Preferences, devices, templates and bulk sends are not modelled in the
+  // PocketBase backend yet — surface clear rejections.
 
-    if (!userId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "User ID is required",
-      }
-    }
-
-    return this.get<any>(`/users/${userId}/preferences`)
+  async getPreferences(_userId: string): Promise<ServiceResult<any>> {
+    return notSupported("Notification preferences")
   }
 
-  /**
-   * Update user notification preferences
-   */
-  async updatePreferences(userId: string, preferences: any): Promise<ServiceResult<any>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!userId || !preferences) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "User ID and preferences are required",
-      }
-    }
-
-    return this.post<any>(`/users/${userId}/preferences`, preferences)
+  async updatePreferences(_userId: string, _preferences: any): Promise<ServiceResult<any>> {
+    return notSupported("Notification preferences")
   }
 
-  /**
-   * Register device for push notifications
-   */
   async registerDevice(
-    userId: string,
-    deviceToken: string,
-    platform: "ios" | "android",
+    _userId: string,
+    _deviceToken: string,
+    _platform: "ios" | "android",
   ): Promise<ServiceResult<void>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!userId || !deviceToken || !platform) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "User ID, device token, and platform are required",
-      }
-    }
-
-    const validPlatforms = ["ios", "android"]
-    if (!validPlatforms.includes(platform)) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Platform must be 'ios' or 'android'",
-      }
-    }
-
-    return this.post<void>("/devices/register", { userId, deviceToken, platform })
+    return notSupported("Push device registration")
   }
 
-  /**
-   * Unregister device from push notifications
-   */
-  async unregisterDevice(deviceToken: string): Promise<ServiceResult<void>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!deviceToken) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Device token is required",
-      }
-    }
-
-    return this.post<void>("/devices/unregister", { deviceToken })
+  async unregisterDevice(_deviceToken: string): Promise<ServiceResult<void>> {
+    return notSupported("Push device registration")
   }
 
-  /**
-   * Send push notification to specific user
-   */
-  async sendPushNotification(userId: string, message: any): Promise<ServiceResult<void>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!userId || !message) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "User ID and message are required",
-      }
-    }
-
-    if (!message.title || !message.body) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Message title and body are required",
-      }
-    }
-
-    return this.post<void>("/push/send", { userId, message })
+  async sendPushNotification(_userId: string, _message: any): Promise<ServiceResult<void>> {
+    return notSupported("Push notification sending")
   }
 
-  /**
-   * Get notification templates
-   */
   async getTemplates(): Promise<ServiceResult<any[]>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    return this.get<any[]>("/templates")
+    return notSupported("Notification templates")
   }
 
-  /**
-   * Create notification template
-   */
-  async createTemplate(templateData: any): Promise<ServiceResult<any>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!templateData.name || !templateData.type || !templateData.content) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Template name, type, and content are required",
-      }
-    }
-
-    return this.post<any>("/templates", templateData)
+  async createTemplate(_templateData: any): Promise<ServiceResult<any>> {
+    return notSupported("Notification templates")
   }
 
-  /**
-   * Send bulk notifications
-   */
   async sendBulkNotifications(
-    notifications: CreateNotificationRequest[],
+    _notifications: CreateNotificationRequest[],
   ): Promise<ServiceResult<any[]>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!notifications || notifications.length === 0) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "At least one notification is required",
-      }
-    }
-
-    // Validate each notification
-    for (const notification of notifications) {
-      if (!notification.userId || !notification.title || !notification.body) {
-        return {
-          success: false,
-          problem: { kind: "rejected" },
-          message: "Each notification must have userId, title, and body",
-        }
-      }
-    }
-
-    return this.post<any[]>("/bulk-send", { notifications })
+    return notSupported("Bulk notification sending")
   }
 
-  /**
-   * Delete old notifications for user
-   */
-  async deleteUserNotifications(userId: string, olderThan?: string): Promise<ServiceResult<void>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!userId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "User ID is required",
-      }
-    }
-
-    const params = olderThan ? { olderThan } : undefined
-    return this.delete<void>(`/users/${userId}/notifications`, params)
-  }
-
-  /**
-   * Get notification delivery status
-   */
-  async getDeliveryStatus(notificationId: string): Promise<
-    ServiceResult<{
-      status: "pending" | "sent" | "delivered" | "failed"
-      channels: Array<{
-        type: "push" | "email" | "sms" | "in_app"
-        status: "pending" | "sent" | "delivered" | "failed"
-        sentAt?: string
-        deliveredAt?: string
-        error?: string
-      }>
-      attempts: number
-      lastAttempt?: string
-    }>
-  > {
-    if (!notificationId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Notification ID is required",
-      }
-    }
-
-    return this.get<any>(`/${notificationId}/delivery-status`)
-  }
-
-  /**
-   * Schedule notification for future delivery
-   */
-  async scheduleNotification(
-    notificationData: CreateNotificationRequest & {
-      scheduledFor: string
-      timezone?: string
-    },
-  ): Promise<ServiceResult<any>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!notificationData.scheduledFor) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Scheduled delivery time is required",
-      }
-    }
-
-    return this.post<any>("/schedule", notificationData)
-  }
-
-  /**
-   * Cancel scheduled notification
-   */
-  async cancelScheduledNotification(notificationId: string): Promise<ServiceResult<void>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!notificationId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "Notification ID is required",
-      }
-    }
-
-    return this.post<void>(`/${notificationId}/cancel-schedule`)
-  }
-
-  /**
-   * Get notification analytics
-   */
-  async getNotificationAnalytics(params?: {
-    dateFrom?: string
-    dateTo?: string
-    type?: string
-    userId?: string
-  }): Promise<
-    ServiceResult<{
-      totalSent: number
-      deliveryRate: number
-      openRate: number
-      clickRate: number
-      channelPerformance: Record<
-        string,
-        {
-          sent: number
-          delivered: number
-          opened: number
-          clicked: number
-        }
-      >
-      typeBreakdown: Record<string, number>
-      userEngagement: {
-        activeUsers: number
-        averageNotificationsPerUser: number
-        topEngagingUsers: any[]
-      }
-    }>
-  > {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    return this.get<any>("/analytics", params)
-  }
-
-  /**
-   * Test notification delivery
-   */
-  async testNotification(testData: {
-    userId: string
-    channels: Array<"push" | "email" | "sms" | "in_app">
-    message: {
-      title: string
-      body: string
-      actionText?: string
-      actionUrl?: string
-    }
-  }): Promise<
-    ServiceResult<{
-      results: Array<{
-        channel: string
-        success: boolean
-        error?: string
-        deliveryTime?: number
-      }>
-    }>
-  > {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!testData.userId || !testData.channels || !testData.message) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "User ID, channels, and message are required",
-      }
-    }
-
-    return this.post<any>("/test", testData)
-  }
-
-  /**
-   * Get user's notification history
-   */
-  async getUserNotificationHistory(
-    userId: string,
-    params?: {
-      dateFrom?: string
-      dateTo?: string
-      type?: string
-      isRead?: boolean
-      page?: number
-      limit?: number
-    },
-  ): Promise<ServiceResult<ApiResponse<any[]>>> {
-    if (!userId) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "User ID is required",
-      }
-    }
-
-    return this.getList<any>(`/users/${userId}/history`, params)
-  }
-
-  /**
-   * Update notification channels configuration
-   */
-  async updateChannelConfiguration(config: {
-    push?: {
-      enabled: boolean
-      provider: "fcm" | "apns"
-      credentials: any
-    }
-    email?: {
-      enabled: boolean
-      provider: "smtp" | "sendgrid" | "mailgun"
-      credentials: any
-    }
-    sms?: {
-      enabled: boolean
-      provider: "twilio" | "nexmo"
-      credentials: any
-    }
-  }): Promise<ServiceResult<void>> {
-    const authCheck = this.requireAuthentication()
-    if (authCheck) return authCheck
-
-    if (!config || Object.keys(config).length === 0) {
-      return {
-        success: false,
-        problem: { kind: "rejected" },
-        message: "At least one channel configuration is required",
-      }
-    }
-
-    return this.post<void>("/config/channels", config)
+  async deleteUserNotifications(_userId: string, _olderThan?: string): Promise<ServiceResult<void>> {
+    return notSupported("Bulk notification deletion")
   }
 }

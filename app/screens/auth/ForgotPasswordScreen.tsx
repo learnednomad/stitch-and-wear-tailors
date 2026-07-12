@@ -16,11 +16,29 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native"
+import { TextStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { Icon } from "@/components"
-import { colors, spacing, typography } from "@/theme"
+import { colors as themeColors, spacing, typography as themeTypography } from "@/theme"
 import { validateEmail } from "@/utils/emailValidation"
 import AuthService from "@/services/auth/AuthService"
+
+// Local aliases mapping this screen's legacy color/typography names onto the
+// app theme (the theme has no primary/card/success entries or text presets).
+const colors = {
+  ...themeColors,
+  primary: themeColors.tint,
+  primaryLight: themeColors.palette.primary100,
+  card: themeColors.palette.neutral100,
+  success: themeColors.palette.success500,
+}
+
+const typography = {
+  body: { fontSize: 16, fontFamily: themeTypography.primary.normal } as TextStyle,
+  caption: { fontSize: 13, fontFamily: themeTypography.primary.normal } as TextStyle,
+  heading: { fontSize: 22, fontFamily: themeTypography.primary.bold } as TextStyle,
+  subheading: { fontSize: 16, fontFamily: themeTypography.primary.medium } as TextStyle,
+}
 
 export function ForgotPasswordScreen() {
   const navigation = useNavigation()
@@ -77,14 +95,14 @@ export function ForgotPasswordScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon icon="arrow-left" size={24} color={colors.text} />
+            <Icon icon="back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.title}>Password Reset</Text>
         </View>
 
         <View style={styles.successContent}>
           <View style={styles.successIcon}>
-            <Icon icon="check-circle" size={64} color={colors.success} />
+            <Icon icon="check" size={64} color={colors.success} />
           </View>
 
           <Text style={styles.successTitle}>Email Sent!</Text>
@@ -93,7 +111,7 @@ export function ForgotPasswordScreen() {
           </Text>
 
           <View style={styles.infoBox}>
-            <Icon icon="info" size={20} color={colors.primary} />
+            <Icon icon="feedback" size={20} color={colors.primary} />
             <Text style={styles.infoText}>
               Please check your email and follow the instructions to reset your password. The link
               will expire in 1 hour.
@@ -116,7 +134,7 @@ export function ForgotPasswordScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon icon="arrow-left" size={24} color={colors.text} />
+            <Icon icon="back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.title}>Reset Password</Text>
         </View>

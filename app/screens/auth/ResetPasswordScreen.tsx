@@ -16,18 +16,35 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native"
+import { TextStyle } from "react-native"
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native"
 import { Icon } from "@/components"
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator"
-import { colors, spacing, typography } from "@/theme"
+import { colors as themeColors, spacing, typography as themeTypography } from "@/theme"
 import { validatePassword } from "@/utils/passwordValidation"
 import AuthService from "@/services/auth/AuthService"
-import { AuthNavigatorParamList } from "@/navigators"
+import { AppStackParamList } from "@/navigators"
 
-type ResetPasswordScreenRouteProp = RouteProp<AuthNavigatorParamList, "ResetPassword">
+// Local aliases mapping this screen's legacy color/typography names onto the
+// app theme (the theme has no primary/card/success entries or text presets).
+const colors = {
+  ...themeColors,
+  primary: themeColors.tint,
+  card: themeColors.palette.neutral100,
+  success: themeColors.palette.success500,
+}
+
+const typography = {
+  body: { fontSize: 16, fontFamily: themeTypography.primary.normal } as TextStyle,
+  caption: { fontSize: 13, fontFamily: themeTypography.primary.normal } as TextStyle,
+  heading: { fontSize: 22, fontFamily: themeTypography.primary.bold } as TextStyle,
+  subheading: { fontSize: 16, fontFamily: themeTypography.primary.medium } as TextStyle,
+}
+
+type ResetPasswordScreenRouteProp = RouteProp<AppStackParamList, "ResetPassword">
 
 export function ResetPasswordScreen() {
-  const navigation = useNavigation()
+  const navigation = useNavigation<any>()
   const route = useRoute<ResetPasswordScreenRouteProp>()
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -39,7 +56,8 @@ export function ResetPasswordScreen() {
 
   // Extract userId and secret from route params or deep link
   const userId = route.params?.userId || ""
-  const secret = route.params?.secret || route.params?.token || ""
+  // deep links may deliver the token under either name
+  const secret = route.params?.secret || (route.params as any)?.token || ""
 
   const authService = AuthService
 
@@ -114,14 +132,14 @@ export function ResetPasswordScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.navigate("SignIn" as any)}>
-            <Icon icon="arrow-left" size={24} color={colors.text} />
+            <Icon icon="back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.title}>Create New Password</Text>
         </View>
 
         <View style={styles.content}>
           <View style={styles.iconContainer}>
-            <Icon icon="shield" size={48} color={colors.primary} />
+            <Icon icon="lock" size={48} color={colors.primary} />
           </View>
 
           <Text style={styles.description}>
@@ -148,7 +166,7 @@ export function ResetPasswordScreen() {
                 style={styles.eyeIcon}
                 onPress={() => setShowPassword(!showPassword)}
               >
-                <Icon icon={showPassword ? "eye-off" : "eye"} size={20} color={colors.textDim} />
+                <Icon icon={showPassword ? "hidden" : "view"} size={20} color={colors.textDim} />
               </TouchableOpacity>
             </View>
             {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
@@ -177,7 +195,7 @@ export function ResetPasswordScreen() {
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
               >
                 <Icon
-                  icon={showConfirmPassword ? "eye-off" : "eye"}
+                  icon={showConfirmPassword ? "hidden" : "view"}
                   size={20}
                   color={colors.textDim}
                 />

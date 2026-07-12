@@ -21,6 +21,7 @@ import { TailorTabNavigator, TailorTabParamList } from "@/navigators/TailorTabsN
 import { useAuth } from "@/contexts/AuthContext"
 import { Text, View } from "react-native"
 import * as Linking from "expo-linking"
+import * as storage from "@/utils/storage"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -49,7 +50,7 @@ export type AppStackParamList = {
   NewOrder: undefined
   Measurement: { styleId?: string; fabricId?: string; amount?: number }
   OrderHistory: undefined
-  OrderTracking: undefined
+  OrderTracking: { orderId: string }
   Payment: {
     orderId: string
     amount: number
@@ -59,9 +60,11 @@ export type AppStackParamList = {
   TailorOrder: undefined
   TailorMeasurement: undefined
   AddMeasurement: undefined
-  EditMeasurement: undefined
-  DeleteMeasurement: undefined
+  EditMeasurement: { measurementId?: string; mode?: "view" | "edit" } | undefined
+  DeleteMeasurement: { measurementId?: string } | undefined
   Invoices: undefined
+  InvoiceDetail: { invoiceId: string }
+  CreateInvoice: undefined
   FabricSearch: undefined
   BookFitting: undefined
   Styles: undefined
@@ -122,6 +125,11 @@ const AppStack = observer(function AppStack() {
   // Determine initial route based on authentication status
   const getInitialRouteName = () => {
     if (!isAuthenticated) {
+      // first launch: show the onboarding carousel once (the screen writes
+      // the "onboarding.seen" flag when completed or skipped)
+      if (!storage.loadString("onboarding.seen")) {
+        return "Onboarding"
+      }
       return "SignIn"
     }
 
@@ -150,6 +158,7 @@ const AppStack = observer(function AppStack() {
         <Stack.Screen name="VerifyEmail" component={Screens.VerifyEmailScreen} />
         <Stack.Screen name="ForgotPassword" component={Screens.ForgotPasswordScreen} />
         <Stack.Screen name="ResetPassword" component={Screens.ResetPasswordScreen} />
+        <Stack.Screen name="Onboarding" component={Screens.OnboardingScreen} />
 
         {/* Protected Screens - Only available when authenticated */}
         {isAuthenticated && (
@@ -162,13 +171,13 @@ const AppStack = observer(function AppStack() {
         {isAuthenticated && (
           <>
             <Stack.Screen name="Home" component={Screens.HomeScreen} />
-            <Stack.Screen name="Orders" component={Screens.OrdersScreen} />
+            <Stack.Screen name="Orders" component={Screens.OrdersScreen as any} />
             <Stack.Screen name="OrderDetail" component={Screens.OrderDetailScreen} />
             <Stack.Screen name="NewOrder" component={Screens.NewOrderScreen} />
             <Stack.Screen name="Measurement" component={Screens.MeasurementScreen} />
             <Stack.Screen name="OrderHistory" component={Screens.OrderHistoryScreen} />
             <Stack.Screen name="OrderTracking" component={Screens.OrderTrackingScreen} />
-            <Stack.Screen name="Payment" component={Screens.PaymentScreen} />
+            <Stack.Screen name="Payment" component={Screens.PaymentScreen as any} />
             <Stack.Screen name="Tailor" component={Screens.TailorScreen} />
             <Stack.Screen name="TailorOrder" component={Screens.TailorOrderScreen} />
             <Stack.Screen name="TailorMeasurement" component={Screens.TailorMeasurementScreen} />
@@ -176,13 +185,14 @@ const AppStack = observer(function AppStack() {
             <Stack.Screen name="EditMeasurement" component={Screens.EditMeasurementScreen} />
             <Stack.Screen name="DeleteMeasurement" component={Screens.DeleteMeasurementScreen} />
             <Stack.Screen name="Invoices" component={Screens.InvoicesScreen} />
+            <Stack.Screen name="InvoiceDetail" component={Screens.InvoiceDetailScreen} />
+            <Stack.Screen name="CreateInvoice" component={Screens.CreateInvoiceScreen} />
             <Stack.Screen name="FabricSearch" component={Screens.FabricSearchScreen} />
             <Stack.Screen name="BookFitting" component={Screens.BookFittingScreen} />
             <Stack.Screen name="Styles" component={Screens.StylesScreen} />
             <Stack.Screen name="Catalog" component={Screens.CatalogScreen} />
             <Stack.Screen name="Settings" component={Screens.SettingsScreen} />
             <Stack.Screen name="Analytics" component={Screens.AnalyticsScreen} />
-            <Stack.Screen name="Onboarding" component={Screens.OnboardingScreen} />
             <Stack.Screen name="VerifyOtp" component={Screens.VerifyOtpScreen} />
             <Stack.Screen
               name="ClientNotifications"
