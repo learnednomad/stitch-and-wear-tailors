@@ -58,7 +58,7 @@ export const ConfirmationStep: FC = observer(() => {
           {
             text: "View Order",
             onPress: () => {
-              navigation.navigate("OrderDetail" as never, { orderId: createdOrder?.id })
+              ;(navigation as any).navigate("OrderDetail", { orderId: createdOrder?.id })
             },
           },
           {
@@ -84,7 +84,7 @@ export const ConfirmationStep: FC = observer(() => {
   const getEstimatedDelivery = () => {
     if (!orderData?.styleConfig) return "N/A"
 
-    const garmentConfig = orderStore.getGarmentConfig(orderData.styleConfig.garmentType)
+    const garmentConfig = orderStore.getGarmentConfig(orderData.styleConfig.garmentType as any)
     if (!garmentConfig) return "N/A"
 
     const baseDays = garmentConfig.estimatedDays
@@ -117,12 +117,12 @@ export const ConfirmationStep: FC = observer(() => {
 
     try {
       const pricing = orderStore.calculateNigerianPricing(
-        orderData.styleConfig.garmentType,
-        orderData.customerInfo.city,
+        orderData.styleConfig.garmentType as any,
+        orderData.customerInfo.city as any,
         orderData.priority === "urgent",
       )
 
-      const cityConfig = orderStore.getCityConfig(orderData.customerInfo.city)
+      const cityConfig = orderStore.getCityConfig(orderData.customerInfo.city as any)
       const deliveryFee = cityConfig.deliveryFee
 
       return pricing.totalPrice + deliveryFee
@@ -135,7 +135,7 @@ export const ConfirmationStep: FC = observer(() => {
     return (
       <View style={$container}>
         <View style={$errorState}>
-          <Icon icon="alert-circle" size={48} color={colors.palette.alertRed} />
+          <Icon icon="x" size={48} color={colors.palette.alertRed} />
           <Text style={$errorTitle}>Order Data Missing</Text>
           <Text style={$errorDescription}>Please go back and complete all order steps.</Text>
         </View>
@@ -226,8 +226,9 @@ export const ConfirmationStep: FC = observer(() => {
             <View style={$infoRow}>
               <Text style={$infoLabel}>Fit:</Text>
               <Text style={$infoValue}>
-                {orderData.styleConfig?.fitPreference?.charAt(0).toUpperCase() +
-                  orderData.styleConfig?.fitPreference?.slice(1)}{" "}
+                {(orderData.styleConfig?.fitPreference || "regular").replace(/^\w/, (letter) =>
+                  letter.toUpperCase(),
+                )}{" "}
                 Fit
               </Text>
             </View>
@@ -288,14 +289,14 @@ export const ConfirmationStep: FC = observer(() => {
           <View style={$infoCard}>
             {orderData.measurementId ? (
               <View style={$measurementStatus}>
-                <Icon icon="checkmark-circle" size={24} color={colors.palette.sageGreen} />
+                <Icon icon="check" size={24} color={colors.palette.sageGreen} />
                 <Text style={$measurementText}>
                   Measurements saved (ID: {orderData.measurementId.slice(-8)})
                 </Text>
               </View>
             ) : (
               <View style={$measurementStatus}>
-                <Icon icon="clock" size={24} color={colors.palette.threadBlue} />
+                <Icon icon="more" size={24} color={colors.palette.threadBlue} />
                 <Text style={$measurementText}>
                   Measurements will be taken during fitting appointment
                 </Text>
@@ -355,7 +356,7 @@ export const ConfirmationStep: FC = observer(() => {
             <Button text="" style={$checkbox} onPress={() => setTermsAccepted(!termsAccepted)}>
               <View style={[$checkboxBox, termsAccepted && $checkboxChecked]}>
                 {termsAccepted && (
-                  <Icon icon="checkmark" size={16} color={colors.palette.warmIvory} />
+                  <Icon icon="check" size={16} color={colors.palette.warmIvory} />
                 )}
               </View>
             </Button>

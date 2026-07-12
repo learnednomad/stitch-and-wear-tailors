@@ -8,8 +8,6 @@
 import React, { createContext, useContext, useEffect, ReactNode } from "react"
 import { observer } from "mobx-react-lite"
 import { useStores } from "@/models"
-import { getAppwriteAuthAdapter } from "@/services/appwrite/appwrite-auth-adapter"
-import * as storage from "@/utils/storage"
 
 interface AuthContextType {
   isAuthenticated: boolean

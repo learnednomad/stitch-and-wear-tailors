@@ -8,8 +8,6 @@ import * as Keychain from "react-native-keychain"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import * as Crypto from "expo-crypto"
 import { Platform } from "react-native"
-import { appwriteDatabases } from "../appwrite/appwrite-client"
-import { ID, Query } from "appwrite"
 
 export interface BiometricConfig {
   userId: string
@@ -150,18 +148,14 @@ class BiometricAuthService {
       // Remove from keychain
       await this.removeFromKeychain(userId)
 
-      // Update database configuration
+      // Update local configuration
       const config = await this.getBiometricConfig(userId)
       if (config) {
-        await appwriteDatabases.updateDocument(
-          this.DATABASE_ID,
-          this.COLLECTION_BIOMETRIC,
-          config.$id,
-          {
-            enabled: false,
-            disabledAt: new Date().toISOString(),
-          },
-        )
+        await this.saveBiometricConfig({
+          ...config,
+          enabled: false,
+          disabledAt: new Date().toISOString(),
+        })
       }
 
       // Clear local storage
@@ -443,57 +437,33 @@ class BiometricAuthService {
   private async getDeviceId(): Promise<string> {
     let deviceId = await AsyncStorage.getItem("device_id")
     if (!deviceId) {
-      deviceId = ID.unique()
+      deviceId = Crypto.randomUUID()
       await AsyncStorage.setItem("device_id", deviceId)
     }
     return deviceId
   }
 
+  private configKey(userId: string): string {
+    return `${this.STORAGE_KEY_PREFIX}${userId}:config`
+  }
+
   private async getBiometricConfig(userId: string): Promise<any> {
     try {
-      const configs = await appwriteDatabases.listDocuments(
-        this.DATABASE_ID,
-        this.COLLECTION_BIOMETRIC,
-        [Query.equal("userId", userId), Query.equal("enabled", true)],
-      )
-      return configs.documents[0]
+      const raw = await AsyncStorage.getItem(this.configKey(userId))
+      return raw ? JSON.parse(raw) : null
     } catch {
       return null
     }
   }
 
   private async saveBiometricConfig(config: BiometricConfig): Promise<void> {
-    // Check if config exists
-    const existing = await this.getBiometricConfig(config.userId)
-
-    if (existing) {
-      await appwriteDatabases.updateDocument(
-        this.DATABASE_ID,
-        this.COLLECTION_BIOMETRIC,
-        existing.$id,
-        config,
-      )
-    } else {
-      await appwriteDatabases.createDocument(
-        this.DATABASE_ID,
-        this.COLLECTION_BIOMETRIC,
-        ID.unique(),
-        config,
-      )
-    }
+    await AsyncStorage.setItem(this.configKey(config.userId), JSON.stringify(config))
   }
 
   private async updateLastUsed(userId: string): Promise<void> {
     const config = await this.getBiometricConfig(userId)
     if (config) {
-      await appwriteDatabases.updateDocument(
-        this.DATABASE_ID,
-        this.COLLECTION_BIOMETRIC,
-        config.$id,
-        {
-          lastUsedAt: new Date().toISOString(),
-        },
-      )
+      await this.saveBiometricConfig({ ...config, lastUsedAt: new Date().toISOString() })
     }
   }
 

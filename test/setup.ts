@@ -77,46 +77,10 @@ jest.mock("expo-crypto", () => ({
   },
 }))
 
-// Mock Appwrite
-jest.mock("appwrite", () => ({
-  Client: jest.fn().mockImplementation(() => ({
-    setEndpoint: jest.fn().mockReturnThis(),
-    setProject: jest.fn().mockReturnThis(),
-    setPlatform: jest.fn().mockReturnThis(),
-  })),
-  Account: jest.fn().mockImplementation(() => ({
-    create: jest.fn(),
-    createEmailPasswordSession: jest.fn(),
-    get: jest.fn(),
-    deleteSession: jest.fn(),
-    getSession: jest.fn(),
-    updateEmail: jest.fn(),
-    updatePassword: jest.fn(),
-    createVerification: jest.fn(),
-    updateVerification: jest.fn(),
-    createRecovery: jest.fn(),
-    updateRecovery: jest.fn(),
-  })),
-  Databases: jest.fn().mockImplementation(() => ({
-    createDocument: jest.fn(),
-    getDocument: jest.fn(),
-    updateDocument: jest.fn(),
-    deleteDocument: jest.fn(),
-    listDocuments: jest.fn(),
-  })),
-  ID: {
-    unique: jest.fn(() => "unique-id-123"),
-  },
-  Query: {
-    equal: jest.fn(),
-    notEqual: jest.fn(),
-    greaterThan: jest.fn(),
-    lessThan: jest.fn(),
-    search: jest.fn(),
-    orderDesc: jest.fn(),
-    orderAsc: jest.fn(),
-    limit: jest.fn(),
-  },
+// Mock the SSE polyfill used by the PocketBase realtime client
+jest.mock("react-native-sse", () => ({
+  __esModule: true,
+  default: jest.fn(),
 }))
 
 declare const tron // eslint-disable-line @typescript-eslint/no-unused-vars

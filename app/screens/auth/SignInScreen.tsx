@@ -119,15 +119,16 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
           },
           emailVerified: result.data.user.emailVerification,
           lastLoginAt: new Date().toISOString(),
-          createdAt: new Date(result.data.user.registration).toISOString(),
-          updatedAt: new Date(result.data.user.accessedAt).toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         }
 
         authStore.setUser(userData)
         authStore.setSession({
-          accessToken: result.data.accessToken,
-          refreshToken: result.data.refreshToken,
-          expiresAt: result.data.session.expire,
+          // PocketBase issues a single stateless token
+          accessToken: result.data.token || "",
+          refreshToken: "",
+          expiresAt: "",
         })
 
         // Setup biometric keys for future authentication

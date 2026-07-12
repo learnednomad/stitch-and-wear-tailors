@@ -244,7 +244,7 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(() => {
       {
         text: "Continue",
         onPress: () => {
-          navigation.navigate("Measurement" as never, {
+          ;(navigation as any).navigate("Measurement", {
             styleId: selectedStyle,
             fabricId: selectedFabric,
             amount: totalAmount,

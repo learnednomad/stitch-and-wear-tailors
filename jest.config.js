@@ -3,10 +3,10 @@ module.exports = {
   preset: "jest-expo",
   setupFiles: ["<rootDir>/test/setup.ts"],
   transform: {
-    "^.+\\.(js|jsx|ts|tsx)$": "babel-jest",
+    "^.+\\.(mjs|js|jsx|ts|tsx)$": "babel-jest",
   },
   transformIgnorePatterns: [
-    "node_modules/(?!(jest-)?react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@unimodules|unimodules|sentry-expo|native-base|react-native-svg|react-native-appwrite|expo-.*|@shopify/flash-list)",
+    "node_modules/(?!(jest-)?pocketbase|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@unimodules|unimodules|sentry-expo|native-base|react-native-svg|expo-.*|@shopify/flash-list)",
   ],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/app/$1",

@@ -20,7 +20,6 @@ import { useNavigation, useRoute, RouteProp } from "@react-navigation/native"
 import { Icon } from "@/components"
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator"
 import { colors, spacing, typography } from "@/theme"
-import { appwriteAccount } from "@/services/appwrite/appwrite-client"
 import { validatePassword } from "@/utils/passwordValidation"
 import AuthService from "@/services/auth/AuthService"
 import { AuthNavigatorParamList } from "@/navigators"
@@ -40,9 +39,9 @@ export function ResetPasswordScreen() {
 
   // Extract userId and secret from route params or deep link
   const userId = route.params?.userId || ""
-  const secret = route.params?.secret || ""
+  const secret = route.params?.secret || route.params?.token || ""
 
-  const authService = new AuthService()
+  const authService = AuthService
 
   useEffect(() => {
     if (!userId || !secret) {

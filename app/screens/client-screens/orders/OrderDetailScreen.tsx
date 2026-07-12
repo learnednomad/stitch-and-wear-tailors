@@ -1,10 +1,12 @@
-import React, { FC } from "react"
-import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle, ImageStyle } from "react-native"
+import React, { FC, useEffect, useState } from "react"
+import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle } from "react-native"
+import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon, Text, AutoImage } from "app/components"
+import { Button, Screen, Icon, Text } from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "app/theme"
 import { useNavigation } from "@react-navigation/native"
+import { useStores } from "@/models"
 
 interface ProgressStep {
   id: string
@@ -14,89 +16,127 @@ interface ProgressStep {
   date?: string
 }
 
-interface OrderDetail {
-  id: string
-  measurementName: string
-  status: string
-  progress: string
-  dueDate: string
-  paymentStatus: "Pending" | "Partial" | "Paid"
-  amount: number
-  style: string
-  fabric: string
-  specialInstructions?: string
-  estimatedHours: number
-  actualHours?: number
-  createdAt: string
-}
+/** Ordered domain stages with their display copy */
+const STAGE_STEPS: { id: string; title: string; description: string }[] = [
+  { id: "received", title: "Received", description: "Order received and confirmed" },
+  { id: "measured", title: "Measurement", description: "Body measurements collected" },
+  { id: "cutting", title: "Cutting", description: "Fabric cut to pattern" },
+  { id: "sewing", title: "Sewing", description: "Garment construction" },
+  { id: "finishing", title: "Finishing", description: "Final details and quality check" },
+  { id: "quality_check", title: "Quality Check", description: "Final inspection" },
+  { id: "completed", title: "Completed", description: "Ready for pickup/delivery" },
+]
 
 interface OrderDetailScreenProps extends AppStackScreenProps<"OrderDetail"> {}
 
-export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
+export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }) => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
+  const { orderStore } = useStores()
+
+  const [isLoading, setIsLoading] = useState(true)
 
   // Extract order ID from route params
-  const { orderId } = route?.params || { orderId: "TLR-2025-001" }
+  const { orderId } = route?.params || { orderId: "" }
 
-  // Mock order data - would come from API/store in real implementation
-  const orderDetail: OrderDetail = {
-    id: orderId,
-    measurementName: "Summer Kaftan",
-    status: "Sewing",
-    progress: "sewing",
-    dueDate: "June 10, 2025",
-    paymentStatus: "Pending",
-    amount: 45000,
-    style: "Traditional Kaftan",
-    fabric: "Ankara Cotton Blend",
-    specialInstructions: "Extra long sleeves, traditional embroidery on neckline",
-    estimatedHours: 12,
-    actualHours: 8,
-    createdAt: "May 25, 2025",
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      if (!orderId) {
+        setIsLoading(false)
+        return
+      }
+      try {
+        setIsLoading(true)
+        await orderStore.loadNigerianOrder(orderId)
+      } catch (error) {
+        console.error("Failed to load order:", error)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [orderId, orderStore])
+
+  const order = orderStore.currentOrder
+
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return "N/A"
+    const date = new Date(dateString)
+    if (Number.isNaN(date.getTime())) return "N/A"
+    return date.toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })
   }
 
-  const progressSteps: ProgressStep[] = [
-    {
-      id: "consultation",
-      title: "Consultation",
-      description: "Initial design discussion",
-      status: "completed",
-      date: "May 25, 2025",
-    },
-    {
-      id: "measuring",
-      title: "Measurement",
-      description: "Body measurements collected",
-      status: "completed",
-      date: "May 26, 2025",
-    },
-    {
-      id: "cutting",
-      title: "Cutting",
-      description: "Fabric cut to pattern",
-      status: "completed",
-      date: "May 28, 2025",
-    },
-    {
-      id: "sewing",
-      title: "Sewing",
-      description: "Garment construction",
-      status: "current",
-    },
-    {
-      id: "finishing",
-      title: "Finishing",
-      description: "Final details and quality check",
-      status: "pending",
-    },
-    {
-      id: "completed",
-      title: "Completed",
-      description: "Ready for pickup/delivery",
-      status: "pending",
-    },
-  ]
+  const titleCase = (value: string) =>
+    value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase())
+
+  // Display fields derived from the loaded order
+  const orderDetail = {
+    id: order?.orderNumber || orderId,
+    measurementName: order ? titleCase(order.garmentType) : "",
+    status: order ? titleCase(order.status) : "",
+    dueDate: formatDate(order?.estimatedDeliveryDate),
+    paymentStatus: (order?.pricing.balanceAmount ?? 0) > 0 ? "Pending" : "Paid",
+    amount: order?.pricing.totalPrice ?? 0,
+    style: order?.styleConfig.designNotes || (order ? titleCase(order.garmentType) : ""),
+    fabric: order
+      ? `${titleCase(order.fabricSelection.type)}${order.fabricSelection.color ? ` • ${order.fabricSelection.color}` : ""}`
+      : "",
+    specialInstructions: order?.notes || undefined,
+    createdAt: formatDate(order?.createdAt),
+  }
+
+  // Build progress steps from the order's stage history
+  const currentStageIndex = STAGE_STEPS.findIndex(
+    (step) => step.id === order?.progress.currentStage,
+  )
+  const progressSteps: ProgressStep[] = STAGE_STEPS.map((step, index) => {
+    const stageRecord = order?.progress.stageProgress.find((s: any) => s.stage === step.id)
+    let status: ProgressStep["status"] = "pending"
+    if (index < currentStageIndex || order?.progress.currentStage === "completed") {
+      status = "completed"
+    } else if (index === currentStageIndex) {
+      status = "current"
+    }
+    return {
+      id: step.id,
+      title: step.title,
+      description: step.description,
+      status,
+      date: stageRecord?.completedAt ? formatDate(stageRecord.completedAt) : undefined,
+    }
+  })
+
+  if (isLoading || !order) {
+    return (
+      <Screen
+        backgroundColor={colors.palette.neutral100}
+        safeAreaEdges={["top"]}
+        preset="fixed"
+        statusBarStyle="dark"
+      >
+        <View style={$header}>
+          <TouchableOpacity
+            style={$backButton}
+            onPress={() => navigation.goBack()}
+            accessible
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Icon icon="back" size={24} color={colors.palette.neutral900} />
+          </TouchableOpacity>
+          <Text style={$headerTitle}>Order Details</Text>
+          <View style={$headerSpacer} />
+        </View>
+        <View style={$loadingContainer}>
+          <Text style={$loadingText}>{isLoading ? "Loading order..." : "Order not found"}</Text>
+        </View>
+      </Screen>
+    )
+  }
 
   const getStepIcon = (status: string) => {
     switch (status) {
@@ -147,7 +187,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
   )
 
   const handlePayNow = () => {
-    navigation.navigate("Payment" as never, {
+    ;(navigation as any).navigate("Payment", {
       orderId: orderDetail.id,
       amount: orderDetail.amount,
       orderDetails: {
@@ -238,19 +278,19 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
           <Text style={$sectionTitle}>Timeline</Text>
           <View style={$timelineCard}>
             <View style={$timelineItem}>
-              <Text style={$timelineLabel}>Estimated Hours</Text>
-              <Text style={$timelineValue}>{orderDetail.estimatedHours}h</Text>
-            </View>
-            {orderDetail.actualHours && (
-              <View style={$timelineItem}>
-                <Text style={$timelineLabel}>Hours Completed</Text>
-                <Text style={$timelineValue}>{orderDetail.actualHours}h</Text>
-              </View>
-            )}
-            <View style={$timelineItem}>
               <Text style={$timelineLabel}>Order Created</Text>
               <Text style={$timelineValue}>{orderDetail.createdAt}</Text>
             </View>
+            <View style={$timelineItem}>
+              <Text style={$timelineLabel}>Estimated Delivery</Text>
+              <Text style={$timelineValue}>{orderDetail.dueDate}</Text>
+            </View>
+            {order.actualDeliveryDate && (
+              <View style={$timelineItem}>
+                <Text style={$timelineLabel}>Delivered</Text>
+                <Text style={$timelineValue}>{formatDate(order.actualDeliveryDate)}</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -291,11 +331,23 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
       </View>
     </Screen>
   )
-}
+})
 
 // Styles
 const $container: ViewStyle = {
   flex: 1,
+}
+
+const $loadingContainer: ViewStyle = {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  padding: spacing.xl,
+}
+
+const $loadingText: TextStyle = {
+  fontSize: 16,
+  color: colors.palette.neutral600,
 }
 
 const $header: ViewStyle = {

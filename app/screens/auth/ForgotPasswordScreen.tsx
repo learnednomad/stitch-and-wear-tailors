@@ -19,7 +19,6 @@ import {
 import { useNavigation } from "@react-navigation/native"
 import { Icon } from "@/components"
 import { colors, spacing, typography } from "@/theme"
-import { appwriteAccount } from "@/services/appwrite/appwrite-client"
 import { validateEmail } from "@/utils/emailValidation"
 import AuthService from "@/services/auth/AuthService"
 
@@ -34,7 +33,7 @@ export function ForgotPasswordScreen() {
   // This URL should be configured in your Appwrite console
   const RECOVERY_URL = "https://stitchandwear.com/reset-password"
 
-  const authService = new AuthService()
+  const authService = AuthService
 
   const validateForm = () => {
     const emailValidation = validateEmail(email)

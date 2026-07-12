@@ -13,6 +13,24 @@ import { Button, Screen, Icon, Text } from "app/components"
 import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "app/theme"
 import { useNavigation } from "@react-navigation/native"
+import { useStores } from "@/models"
+import { useAuth } from "@/contexts/AuthContext"
+
+/** Map the catalog style ids used by NewOrderScreen to domain garment types */
+const STYLE_TO_GARMENT: Record<string, string> = {
+  "kaftan-1": "kaftan",
+  "agbada-1": "agbada",
+  "shirt-1": "modern",
+  "dress-1": "ankara_dress",
+}
+
+/** Map the catalog fabric ids used by NewOrderScreen to domain fabric types */
+const FABRIC_TO_TYPE: Record<string, { type: string; color: string; unitPrice: number }> = {
+  "ankara-1": { type: "ankara", color: "Multicolor", unitPrice: 3500 },
+  "silk-1": { type: "silk", color: "Royal Blue", unitPrice: 8500 },
+  "lace-1": { type: "lace", color: "Cream", unitPrice: 12000 },
+  "cotton-1": { type: "cotton", color: "White", unitPrice: 2500 },
+}
 
 interface MeasurementField {
   id: string
@@ -31,17 +49,16 @@ interface MeasurementScreenProps extends AppStackScreenProps<"Measurement"> {}
 export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
+  const { orderStore } = useStores()
+  const { user } = useAuth()
 
   const [measurements, setMeasurements] = useState<MeasurementData>({})
   const [specialInstructions, setSpecialInstructions] = useState("")
   const [unit, setUnit] = useState<"cm" | "inches">("cm")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Extract order details from route params
-  const { styleId, fabricId, amount } = route?.params || {
-    styleId: "kaftan-1",
-    fabricId: "ankara-1",
-    amount: 45000,
-  }
+  const { styleId = "kaftan-1", fabricId = "ankara-1", amount = 45000 } = route?.params || {}
 
   // Different measurement fields based on style
   const getMeasurementFields = (styleId: string): MeasurementField[] => {
@@ -171,6 +188,60 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
     return true
   }
 
+  const createOrder = async () => {
+    try {
+      setIsSubmitting(true)
+
+      const fabricInfo = FABRIC_TO_TYPE[fabricId] || { type: "ankara", color: "", unitPrice: 0 }
+      const fabricQuantity = 3 // yards, matching the NewOrderScreen estimate
+
+      // Populate the store's creation workflow, then build and submit the
+      // draft — submission maps the draft to PocketBase via order-api
+      orderStore.startOrderCreation()
+      orderStore.setOrderCustomerInfo({
+        firstName: user?.firstName || user?.name || "Customer",
+        lastName: user?.lastName || "",
+        email: user?.email || "",
+        phone: user?.phone || "",
+        address: user?.location || "",
+        city: "lagos",
+        preferredLanguage: "en",
+      } as any)
+      orderStore.setOrderFabricSelection({
+        type: fabricInfo.type,
+        color: fabricInfo.color,
+        quantity: fabricQuantity,
+        unitPrice: fabricInfo.unitPrice,
+        totalPrice: fabricInfo.unitPrice * fabricQuantity,
+      } as any)
+      orderStore.setOrderStyleConfig({
+        garmentType: STYLE_TO_GARMENT[styleId] || "custom",
+        fitPreference: "regular",
+        designNotes: specialInstructions || null,
+        culturalSpecifications: null,
+      })
+      orderStore.createNigerianDraftOrder()
+
+      const createdOrder = await orderStore.submitNigerianDraftOrder()
+
+      Alert.alert(
+        "Order Created Successfully!",
+        `Your order #${createdOrder?.orderNumber} has been created. You will receive updates on the progress.`,
+        [
+          {
+            text: "View Orders",
+            onPress: () => navigation.navigate("Orders" as never),
+          },
+        ],
+      )
+    } catch (error) {
+      console.error("Failed to create order:", error)
+      Alert.alert("Order Failed", "There was an error creating your order. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const handleSubmit = () => {
     if (!validateMeasurements()) {
       return
@@ -178,25 +249,7 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
 
     Alert.alert("Create Order", "Your measurements have been collected. Create the order now?", [
       { text: "Cancel", style: "cancel" },
-      {
-        text: "Create Order",
-        onPress: () => {
-          // Here you would typically:
-          // 1. Save measurements to store/API
-          // 2. Create the order
-          // 3. Navigate to order confirmation or orders list
-          Alert.alert(
-            "Order Created Successfully!",
-            "Your custom order has been created. You will receive updates on the progress.",
-            [
-              {
-                text: "View Orders",
-                onPress: () => navigation.navigate("Orders" as never),
-              },
-            ],
-          )
-        },
-      },
+      { text: "Create Order", onPress: () => createOrder() },
     ])
   }
 
@@ -314,19 +367,19 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
           <Text style={$sectionTitle}>Measurement Tips</Text>
           <View style={$tipsContainer}>
             <View style={$tipItem}>
-              <Icon icon="check-circle" size={16} color={colors.palette.success500} />
+              <Icon icon="check" size={16} color={colors.palette.success500} />
               <Text style={$tipText}>Use a flexible measuring tape</Text>
             </View>
             <View style={$tipItem}>
-              <Icon icon="check-circle" size={16} color={colors.palette.success500} />
+              <Icon icon="check" size={16} color={colors.palette.success500} />
               <Text style={$tipText}>Measure over fitted undergarments</Text>
             </View>
             <View style={$tipItem}>
-              <Icon icon="check-circle" size={16} color={colors.palette.success500} />
+              <Icon icon="check" size={16} color={colors.palette.success500} />
               <Text style={$tipText}>Keep the tape parallel to the floor</Text>
             </View>
             <View style={$tipItem}>
-              <Icon icon="check-circle" size={16} color={colors.palette.success500} />
+              <Icon icon="check" size={16} color={colors.palette.success500} />
               <Text style={$tipText}>Don't pull the tape too tight</Text>
             </View>
           </View>
@@ -340,10 +393,11 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
           <Text style={$totalAmount}>₦{amount.toLocaleString()}</Text>
         </View>
         <Button
-          text="Create Order"
+          text={isSubmitting ? "Creating Order..." : "Create Order"}
           style={$primaryButton}
           textStyle={$primaryButtonText}
           onPress={handleSubmit}
+          disabled={isSubmitting}
         />
       </View>
     </Screen>
@@ -486,7 +540,7 @@ const $inputContainer: ViewStyle = {
   borderColor: colors.palette.neutral300,
 }
 
-const $textInput: ViewStyle = {
+const $textInput: TextStyle = {
   flex: 1,
   paddingVertical: spacing.sm,
   paddingHorizontal: spacing.md,
@@ -515,7 +569,7 @@ const $textAreaContainer: ViewStyle = {
   borderColor: colors.palette.neutral300,
 }
 
-const $textArea: ViewStyle = {
+const $textArea: TextStyle = {
   paddingVertical: spacing.md,
   paddingHorizontal: spacing.md,
   fontSize: 14,

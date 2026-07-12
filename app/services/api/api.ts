@@ -25,10 +25,10 @@ import {
 } from "./interceptors"
 
 /**
- * Configuring the apisauce instance for Appwrite integration.
+ * Configuring the apisauce instance for the PocketBase backend.
  */
 export const DEFAULT_API_CONFIG: ApiConfig = {
-  url: Config.APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1",
+  url: Config.PB_URL || "http://127.0.0.1:8090",
   timeout: 10000,
 }
 

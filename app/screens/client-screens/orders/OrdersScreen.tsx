@@ -36,6 +36,8 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "all">("all")
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   const statusOptions = [
     { value: "all" as const, label: "All Orders", color: colors.palette.neutral500 },
@@ -51,7 +53,8 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
 
     try {
       setIsLoading(true)
-      await orderStore.loadNigerianOrders(authStore.user.id)
+      setPage(1)
+      await orderStore.loadNigerianOrders({ customerId: authStore.user.id, page: 1 }, true)
     } catch (error) {
       console.error("Failed to load orders:", error)
       Alert.alert("Error", "Failed to load orders. Please try again.")
@@ -68,6 +71,21 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
     setIsRefreshing(true)
     await loadOrders()
     setIsRefreshing(false)
+  }
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || isLoading || !orderStore.orders.hasMore || !authStore.user?.id) return
+
+    try {
+      setIsLoadingMore(true)
+      const nextPage = page + 1
+      await orderStore.loadNigerianOrders({ customerId: authStore.user.id, page: nextPage })
+      setPage(nextPage)
+    } catch (error) {
+      console.error("Failed to load more orders:", error)
+    } finally {
+      setIsLoadingMore(false)
+    }
   }
 
   const filteredOrders = orderStore.orders.items.filter((order) => {
@@ -109,7 +127,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
       style={$orderCard}
       onPress={() => {
         // Navigate to order detail screen
-        navigation.navigate("OrderDetail" as never, { orderId: order.id })
+        ;(navigation as any).navigate("OrderDetail", { orderId: order.id })
       }}
     >
       <View style={$orderHeader}>
@@ -199,7 +217,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
         text="Create New Order"
         style={$createOrderButton}
         textStyle={$createOrderButtonText}
-        onPress={() => navigation.navigate("OrderCreation" as never)}
+        onPress={() => navigation.navigate("NewOrder" as never)}
       />
     </View>
   )
@@ -210,7 +228,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
         <Text style={$title}>My Orders</Text>
         <TouchableOpacity
           style={$addButton}
-          onPress={() => navigation.navigate("OrderCreation" as never)}
+          onPress={() => navigation.navigate("NewOrder" as never)}
         >
           <Icon icon="sew" size={24} color={colors.palette.warmIvory} />
         </TouchableOpacity>
@@ -267,6 +285,8 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
                 tintColor={colors.palette.tailorGold}
               />
             }
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.4}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={$listContainer}
           />

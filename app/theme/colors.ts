@@ -30,6 +30,8 @@ const palette = {
   primary400: "#D4A574", // tailorGold
   primary500: "#C1945D",
   primary600: "#A67D47",
+  primary700: "#8A6635",
+  primary900: "#553D1B",
 
   // Secondary palette (using thread blue)
   secondary100: "#E8EDF3",
@@ -50,6 +52,9 @@ const palette = {
   // Error states
   angry100: "#F7E8E7",
   angry500: "#C85450", // alertRed
+  error100: "#F7E8E7",
+  error500: "#C85450", // alertRed
+  error600: "#A93F3C",
 
   // Success states
   success100: "#EDF2ED",

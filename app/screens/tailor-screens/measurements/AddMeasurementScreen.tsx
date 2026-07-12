@@ -6,10 +6,10 @@ import { Screen, Text } from "@/components"
 // import { useNavigation } from "@react-navigation/native"
 // import { useStores } from "@/models"
 
-interface AddMeasurmentScreenProps extends AppStackScreenProps<"AddMeasurment"> {}
+interface AddMeasurementScreenProps extends AppStackScreenProps<"AddMeasurement"> {}
 
-export const AddMeasurmentScreen: FC<AddMeasurmentScreenProps> = observer(
-  function AddMeasurmentScreen() {
+export const AddMeasurementScreen: FC<AddMeasurementScreenProps> = observer(
+  function AddMeasurementScreen() {
     // Pull in one of our MST stores
     // const { someStore, anotherStore } = useStores()
 
@@ -17,7 +17,7 @@ export const AddMeasurmentScreen: FC<AddMeasurmentScreenProps> = observer(
     // const navigation = useNavigation()
     return (
       <Screen style={$root} preset="scroll">
-        <Text text="addMeasurment" />
+        <Text text="addMeasurement" />
       </Screen>
     )
   },

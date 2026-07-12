@@ -48,7 +48,6 @@ export type AppStackParamList = {
   OrderDetail: { orderId: string }
   NewOrder: undefined
   Measurement: { styleId?: string; fabricId?: string; amount?: number }
-  Order: undefined
   OrderHistory: undefined
   OrderTracking: undefined
   Payment: {
@@ -58,10 +57,10 @@ export type AppStackParamList = {
   }
   Tailor: undefined
   TailorOrder: undefined
-  Measurment: undefined
-  AddMeasurment: undefined
-  EditMeasurment: undefined
-  DeleteMeasurment: undefined
+  TailorMeasurement: undefined
+  AddMeasurement: undefined
+  EditMeasurement: undefined
+  DeleteMeasurement: undefined
   Invoices: undefined
   FabricSearch: undefined
   BookFitting: undefined
@@ -172,10 +171,10 @@ const AppStack = observer(function AppStack() {
             <Stack.Screen name="Payment" component={Screens.PaymentScreen} />
             <Stack.Screen name="Tailor" component={Screens.TailorScreen} />
             <Stack.Screen name="TailorOrder" component={Screens.TailorOrderScreen} />
-            <Stack.Screen name="Measurment" component={Screens.MeasurmentScreen} />
-            <Stack.Screen name="AddMeasurment" component={Screens.AddMeasurmentScreen} />
-            <Stack.Screen name="EditMeasurment" component={Screens.EditMeasurmentScreen} />
-            <Stack.Screen name="DeleteMeasurment" component={Screens.DeleteMeasurmentScreen} />
+            <Stack.Screen name="TailorMeasurement" component={Screens.TailorMeasurementScreen} />
+            <Stack.Screen name="AddMeasurement" component={Screens.AddMeasurementScreen} />
+            <Stack.Screen name="EditMeasurement" component={Screens.EditMeasurementScreen} />
+            <Stack.Screen name="DeleteMeasurement" component={Screens.DeleteMeasurementScreen} />
             <Stack.Screen name="Invoices" component={Screens.InvoicesScreen} />
             <Stack.Screen name="FabricSearch" component={Screens.FabricSearchScreen} />
             <Stack.Screen name="BookFitting" component={Screens.BookFittingScreen} />

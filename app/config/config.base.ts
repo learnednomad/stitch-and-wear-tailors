@@ -2,11 +2,7 @@ export interface ConfigBaseProps {
   persistNavigation: "always" | "dev" | "prod" | "never"
   catchErrors: "always" | "dev" | "prod" | "never"
   exitRoutes: string[]
-  APPWRITE_ENDPOINT?: string
-  APPWRITE_PROJECT_ID?: string
-  APPWRITE_DATABASE_ID?: string
-  APPWRITE_STORAGE_ID?: string
-  APPWRITE_API_KEY?: string
+  PB_URL?: string
   PASSWORD_RECOVERY_URL?: string
 }
 

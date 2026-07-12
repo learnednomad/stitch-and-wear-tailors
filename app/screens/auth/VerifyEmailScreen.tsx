@@ -5,7 +5,7 @@ import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Button } from "@/components"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
-import { getAppwriteAuthAdapter } from "@/services/appwrite/appwrite-auth-adapter"
+import { getPocketBaseAuthAdapter } from "@/services/pocketbase/pocketbase-auth-adapter"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
 
@@ -37,7 +37,7 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
 
     setIsLoading(true)
     try {
-      const authAdapter = getAppwriteAuthAdapter()
+      const authAdapter = getPocketBaseAuthAdapter()
       const result = await authAdapter.sendEmailVerification()
 
       if (result.success) {
@@ -60,10 +60,10 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
   const handleCheckVerification = async () => {
     setIsLoading(true)
     try {
-      const authAdapter = getAppwriteAuthAdapter()
+      const authAdapter = getPocketBaseAuthAdapter()
       const result = await authAdapter.getCurrentUser()
 
-      if (result.success && result.data?.emailVerification) {
+      if (result.success && result.data?.verified) {
         Alert.alert(
           "Email Verified!",
           "Your email has been successfully verified. Please sign in to continue.",

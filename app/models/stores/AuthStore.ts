@@ -243,14 +243,45 @@ export const AuthStoreModel = types
     }
   })
   .actions((self) => {
-    // Import Appwrite auth adapter
-    const { getAppwriteAuthAdapter } = require("../../services/appwrite/appwrite-auth-adapter")
+    // Import PocketBase auth adapter (lazy to avoid import cycles)
+    const {
+      getPocketBaseAuthAdapter,
+    } = require("../../services/pocketbase/pocketbase-auth-adapter")
+
+    /** Map a PocketBase user record to the AuthUser model shape */
+    const mapPBUser = (user: any, overrides: Partial<Record<string, any>> = {}) => ({
+      id: user.id,
+      email: user.email,
+      role: (user.userType === "admin"
+        ? "admin"
+        : user.userType === "tailor"
+          ? "tailor"
+          : "client") as UserRole,
+      status: user.status === "suspended" ? ("suspended" as const) : ("active" as const),
+      profile: {
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        phone: user.phone || null,
+        avatar: user.avatar || null,
+      },
+      preferences: {
+        notifications: { email: true, push: true, sms: false },
+        language: "en",
+        timezone: "Africa/Lagos",
+        currency: "NGN",
+      },
+      emailVerified: !!user.verified,
+      lastLoginAt: new Date().toISOString(),
+      createdAt: user.created || new Date().toISOString(),
+      updatedAt: user.updated || new Date().toISOString(),
+      ...overrides,
+    })
 
     // Async actions using our utility
     const signIn = createAsyncAction(
       self,
       async (credentials: { email: string; password: string }) => {
-        const authAdapter = getAppwriteAuthAdapter()
+        const authAdapter = getPocketBaseAuthAdapter()
         const result = await authAdapter.login(credentials.email, credentials.password)
 
         if (!result.success) {
@@ -258,32 +289,12 @@ export const AuthStoreModel = types
         }
 
         return {
-          user: {
-            id: result.data.user.$id,
-            email: result.data.user.email,
-            role: "client" as const, // Default role, will be enhanced with profile lookup
-            status: "active" as const,
-            profile: {
-              firstName: result.data.user.name.split(" ")[0] || "",
-              lastName: result.data.user.name.split(" ").slice(1).join(" ") || "",
-              phone: result.data.user.phone || null,
-              avatar: null,
-            },
-            preferences: {
-              notifications: { email: true, push: true, sms: false },
-              language: "en",
-              timezone: "UTC",
-              currency: "USD",
-            },
-            emailVerified: result.data.user.emailVerification,
-            lastLoginAt: new Date().toISOString(),
-            createdAt: result.data.user.registration,
-            updatedAt: result.data.user.accessedAt,
-          },
+          user: mapPBUser(result.data.user),
           session: {
-            accessToken: result.data.session.$id,
-            refreshToken: result.data.session.secret || result.data.session.$id,
-            expiresAt: result.data.session.expire,
+            accessToken: result.data.token,
+            refreshToken: result.data.token,
+            // PocketBase auth tokens default to ~14 days; refreshed on app start
+            expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
           },
         }
       },
@@ -296,35 +307,25 @@ export const AuthStoreModel = types
         email: string
         password: string
         role: UserRole
-        profile: { firstName: string; lastName: string }
+        profile: { firstName: string; lastName: string; phone?: string }
       }) => {
-        const authAdapter = getAppwriteAuthAdapter()
-        const fullName = `${userData.profile.firstName} ${userData.profile.lastName}`
+        const authAdapter = getPocketBaseAuthAdapter()
 
-        const result = await authAdapter.register(userData.email, userData.password, fullName)
+        const result = await authAdapter.register({
+          email: userData.email,
+          password: userData.password,
+          firstName: userData.profile.firstName,
+          lastName: userData.profile.lastName,
+          role: userData.role === "tailor" ? "tailor" : "client",
+          phone: userData.profile.phone,
+        })
 
         if (!result.success) {
           throw new Error(result.message || "Registration failed")
         }
 
         return {
-          user: {
-            id: result.data.$id,
-            email: result.data.email,
-            role: userData.role,
-            status: "active" as const,
-            profile: userData.profile,
-            preferences: {
-              notifications: { email: true, push: true, sms: false },
-              language: "en",
-              timezone: "UTC",
-              currency: "USD",
-            },
-            emailVerified: result.data.emailVerification,
-            lastLoginAt: null,
-            createdAt: result.data.registration,
-            updatedAt: result.data.registration,
-          },
+          user: mapPBUser(result.data, { lastLoginAt: null }),
         }
       },
       { errorPrefix: "Sign up failed" },
@@ -334,9 +335,9 @@ export const AuthStoreModel = types
       self,
       async () => {
         console.log("🔄 AuthStore.refreshSession: Starting session refresh...")
-        const authAdapter = getAppwriteAuthAdapter()
+        const authAdapter = getPocketBaseAuthAdapter()
 
-        // For Appwrite, we need to get the current session to refresh it
+        // Revalidate the stored PocketBase token
         const result = await authAdapter.getCurrentUser()
 
         if (!result.success) {
@@ -347,7 +348,7 @@ export const AuthStoreModel = types
         console.log("🔄 AuthStore.refreshSession: Session refresh successful")
         return {
           session: {
-            accessToken: "current", // Appwrite uses "current" for active session
+            accessToken: "current",
             refreshToken: "current",
             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
           },
@@ -359,7 +360,7 @@ export const AuthStoreModel = types
     const signOut = createAsyncAction(
       self,
       async () => {
-        const authAdapter = getAppwriteAuthAdapter()
+        const authAdapter = getPocketBaseAuthAdapter()
         const result = await authAdapter.logout()
 
         if (!result.success) {
@@ -397,7 +398,7 @@ export const AuthStoreModel = types
        */
       sendEmailVerification: flow(function* () {
         try {
-          const authAdapter = getAppwriteAuthAdapter()
+          const authAdapter = getPocketBaseAuthAdapter()
           const result = yield authAdapter.sendEmailVerification()
 
           if (!result.success) {
@@ -415,7 +416,7 @@ export const AuthStoreModel = types
        */
       verifyEmail: flow(function* (userId: string, secret: string) {
         try {
-          const authAdapter = getAppwriteAuthAdapter()
+          const authAdapter = getPocketBaseAuthAdapter()
           const result = yield authAdapter.verifyEmail(userId, secret)
 
           if (!result.success) {
@@ -486,11 +487,11 @@ export const AuthStoreModel = types
           }
 
           console.log(
-            "🔍 AuthStore.checkAuthStatus: Access token found, verifying with Appwrite...",
+            "🔍 AuthStore.checkAuthStatus: Access token found, verifying with PocketBase...",
           )
 
-          // Verify the session with Appwrite
-          const authAdapter = getAppwriteAuthAdapter()
+          // Verify the session with PocketBase
+          const authAdapter = getPocketBaseAuthAdapter()
           try {
             const userResult = yield authAdapter.getCurrentUser()
 

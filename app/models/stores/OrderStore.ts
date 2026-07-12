@@ -3,7 +3,7 @@
  * Manages order creation, status transitions, progress tracking, and Nigerian business context
  */
 
-import { types, flow, Instance, SnapshotOut } from "mobx-state-tree"
+import { types, flow, getSnapshot, Instance, SnapshotOut } from "mobx-state-tree"
 import {
   createAsyncAction,
   createCollectionModel,
@@ -31,13 +31,9 @@ import {
   OrderProgress as NigerianOrderProgress,
 } from "../../types/orders"
 import { orderTranslations, nigerianBusinessConfig } from "../../i18n/nigerian-languages"
-import {
-  appwriteClient,
-  appwriteDatabases,
-  DATABASE_ID,
-  COLLECTIONS,
-} from "../../services/appwrite"
-import { Query, RealtimeResponseEvent, Models } from "appwrite"
+import { orderApi, domainStatusToPB } from "../../services/api/order-api"
+import { getPocketBaseAdapter, filters, COLLECTIONS } from "../../services/api/pocketbase-api-adapter"
+import { subscribeToCollection } from "../../services/pocketbase/pocketbase-client"
 
 /**
  * MST model for Nigerian garment order items
@@ -284,7 +280,7 @@ const NigerianOrdersCollectionModel = createCollectionModel(
 const OrderSearchModel = createSearchModel()
 
 /**
- * Main Nigerian OrderStore model with Appwrite integration
+ * Main Nigerian OrderStore model with PocketBase integration
  */
 export const OrderStoreModel = types
   .model("NigerianOrderStore", {
@@ -499,40 +495,13 @@ export const OrderStoreModel = types
        */
       setOrderStyleConfig(styleConfig: any) {
         if (!self.orderCreationData) return
+        // Only the fields the creation-data model knows about — extra keys
+        // would make the MST assignment throw
         self.orderCreationData.styleConfig = {
           garmentType: styleConfig.garmentType,
           fitPreference: styleConfig.fitPreference,
-          designNotes: styleConfig.designNotes,
-          culturalSpecifications: styleConfig.culturalSpecifications,
-          embroideryStyle: styleConfig.embroideryStyle,
-          neckStyle: styleConfig.neckStyle,
-          matching: styleConfig.matching,
-          priority: styleConfig.priority,
-          specialInstructions: styleConfig.specialInstructions,
-          estimatedDays: styleConfig.estimatedDays,
-          basePrice: styleConfig.basePrice,
-          fabricRequirement: styleConfig.fabricRequirement,
-        }
-      },
-
-      /**
-       * Set pricing for order
-       */
-      setOrderPricing(pricing: any) {
-        if (!self.orderCreationData) return
-        self.orderCreationData.pricing = {
-          basePrice: pricing.basePrice,
-          fabricCost: pricing.fabricCost,
-          embellishmentCharge: pricing.embellishmentCharge,
-          priorityCharge: pricing.priorityCharge,
-          accessoriesCharge: pricing.accessoriesCharge,
-          subtotal: pricing.subtotal,
-          tax: pricing.tax,
-          totalAmount: pricing.totalAmount,
-          deposit: pricing.deposit,
-          balance: pricing.balance,
-          paymentMethod: pricing.paymentMethod,
-          paymentStatus: pricing.paymentStatus,
+          designNotes: styleConfig.designNotes ?? null,
+          culturalSpecifications: styleConfig.culturalSpecifications ?? null,
         }
       },
 
@@ -544,12 +513,13 @@ export const OrderStoreModel = types
         city: NigerianCity,
         isRush: boolean = false,
       ): PricingBreakdown {
-        const garmentConfig = nigerianBusinessConfig.traditionalGarments[garmentType]
-        const cityConfig = nigerianBusinessConfig.cities[city]
-
-        if (!garmentConfig || !cityConfig) {
-          throw new Error(`Configuration not found for ${garmentType} in ${city}`)
+        // Fall back to a generic config for garment types without an entry
+        const garmentConfig = nigerianBusinessConfig.traditionalGarments[garmentType] ?? {
+          basePrice: 20000,
+          complexityLevel: 2,
+          estimatedDays: 7,
         }
+        const cityConfig = nigerianBusinessConfig.cities[city] ?? nigerianBusinessConfig.cities.lagos
 
         const basePrice = garmentConfig.basePrice
         const fabricCost = self.orderCreationData?.fabricSelection?.totalPrice || 0
@@ -854,7 +824,7 @@ export const OrderStoreModel = types
       },
 
       /**
-       * Initialize Appwrite realtime subscription for orders
+       * Initialize PocketBase realtime subscription for orders
        */
       initializeRealtime(userId: string) {
         // Unsubscribe from previous subscription if exists
@@ -863,33 +833,35 @@ export const OrderStoreModel = types
         }
 
         // Subscribe to orders collection changes
-        const channel = `databases.${DATABASE_ID}.collections.${COLLECTIONS.ORDERS}.documents`
+        const unsubscribe = subscribeToCollection(COLLECTIONS.ORDERS, (event) => {
+          const record = event.record
+          if (!record) return
 
-        const unsubscribe = appwriteClient.subscribe(
-          channel,
-          (response: RealtimeResponseEvent<any>) => {
-            const payload = response.payload
+          // Only react to this user's orders (as customer or assigned tailor)
+          if (record.customer !== userId && record.tailor !== userId) return
 
-            // Filter for user's orders or tailor's orders
-            if (payload.userId === userId || payload.tailorId === userId) {
-              if (response.events.includes("databases.*.collections.*.documents.*.create")) {
-                // Add new order
-                self.orders.addItem(NigerianOrderModel.create(payload))
-              } else if (response.events.includes("databases.*.collections.*.documents.*.update")) {
-                // Update existing order
-                const existingOrder = self.orders.findById(payload.$id)
-                if (existingOrder) {
-                  Object.assign(existingOrder, payload)
-                } else {
-                  self.orders.addItem(NigerianOrderModel.create(payload))
-                }
-              } else if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
-                // Remove deleted order
-                self.orders.removeItem(payload.$id)
+          if (event.action === "delete") {
+            self.orders.removeItem(record.id)
+            return
+          }
+
+          // create/update: re-fetch the single order so its items and stage
+          // history are included, then upsert the mapped domain result
+          orderApi
+            .fetchOrder(record.id)
+            .then((result) => {
+              if (!result.success) return
+              const existingOrder = self.orders.findById(record.id)
+              if (existingOrder) {
+                self.orders.updateItem(record.id, result.data)
+              } else {
+                self.orders.addItem(NigerianOrderModel.create(result.data as any))
               }
-            }
-          },
-        )
+            })
+            .catch(() => {
+              // ignore transient realtime refresh failures
+            })
+        })
 
         self.realtimeUnsubscribe = unsubscribe
       },
@@ -906,75 +878,46 @@ export const OrderStoreModel = types
     }
   })
   .actions((self) => {
-    // Async actions with Appwrite integration
+    // Async actions backed by the PocketBase order API
     const fetchOrders = createAsyncAction(
       self,
       async (
         params: {
           page?: number
+          perPage?: number
           status?: OrderStatus
           clientId?: string
+          customerId?: string
           tailorId?: string
+          unassigned?: boolean
           priority?: OrderPriority
           search?: string
           dateFrom?: string
           dateTo?: string
         } = {},
       ) => {
-        // Build Appwrite queries
-        const queries: string[] = []
+        const result = await orderApi.fetchOrders({
+          page: params.page,
+          perPage: params.perPage,
+          status: params.status,
+          customerId: params.customerId ?? params.clientId,
+          tailorId: params.tailorId,
+          unassigned: params.unassigned,
+          priority: params.priority,
+          search: params.search,
+          dateFrom: params.dateFrom,
+          dateTo: params.dateTo,
+        })
 
-        if (params.status) {
-          queries.push(Query.equal("status", params.status))
-        }
-        if (params.clientId) {
-          queries.push(Query.equal("userId", params.clientId))
-        }
-        if (params.tailorId) {
-          queries.push(Query.equal("tailorId", params.tailorId))
-        }
-        if (params.priority) {
-          queries.push(Query.equal("priority", params.priority))
-        }
-        if (params.search) {
-          queries.push(Query.search("customerInfo.firstName", params.search))
-        }
-        if (params.dateFrom) {
-          queries.push(Query.greaterThanEqual("orderDate", params.dateFrom))
-        }
-        if (params.dateTo) {
-          queries.push(Query.lessThanEqual("orderDate", params.dateTo))
+        if (!result.success) {
+          throw new Error(result.message || "Failed to fetch orders")
         }
 
-        // Add pagination
-        const limit = 25
-        const offset = ((params.page || 1) - 1) * limit
-        queries.push(Query.limit(limit))
-        queries.push(Query.offset(offset))
-        queries.push(Query.orderDesc("$createdAt"))
-
-        try {
-          const response = await appwriteDatabases.listDocuments(
-            DATABASE_ID,
-            COLLECTIONS.ORDERS,
-            queries,
-          )
-
-          return {
-            orders: response.documents,
-            hasMore: response.total > offset + limit,
-            total: response.total,
-            page: params.page || 1,
-          }
-        } catch (error) {
-          console.error("Failed to fetch orders from Appwrite:", error)
-          // Return empty result on error
-          return {
-            orders: [],
-            hasMore: false,
-            total: 0,
-            page: 1,
-          }
+        return {
+          orders: result.data.orders,
+          hasMore: result.data.hasMore,
+          total: result.data.totalItems,
+          page: result.data.page,
         }
       },
       { errorPrefix: "Failed to load orders" },
@@ -983,20 +926,11 @@ export const OrderStoreModel = types
     const createNigerianOrder = createAsyncAction(
       self,
       async (orderData: any) => {
-        try {
-          // Create order document in Appwrite
-          const response = await appwriteDatabases.createDocument(
-            DATABASE_ID,
-            COLLECTIONS.ORDERS,
-            generateId(),
-            orderData,
-          )
-
-          return response
-        } catch (error) {
-          console.error("Failed to create order in Appwrite:", error)
-          throw error
+        const result = await orderApi.createOrder(orderData)
+        if (!result.success) {
+          throw new Error(result.message || "Failed to create order")
         }
+        return result.data
       },
       { errorPrefix: "Failed to create Nigerian order" },
     )
@@ -1004,20 +938,22 @@ export const OrderStoreModel = types
     const updateNigerianOrder = createAsyncAction(
       self,
       async (orderId: string, updates: any) => {
-        try {
-          // Update order document in Appwrite
-          const response = await appwriteDatabases.updateDocument(
-            DATABASE_ID,
-            COLLECTIONS.ORDERS,
-            orderId,
-            updates,
-          )
-
-          return response
-        } catch (error) {
-          console.error("Failed to update order in Appwrite:", error)
-          throw error
+        // Translate domain-shaped updates to PB order fields
+        const pbUpdates: Record<string, any> = {}
+        if (updates.status) pbUpdates.status = domainStatusToPB(updates.status)
+        if (updates.status === "cancelled" && (updates.notes || updates.internalNotes)) {
+          pbUpdates.cancellationReason = updates.notes || updates.internalNotes
         }
+        if (updates.notes !== undefined) pbUpdates.specialInstructions = updates.notes
+        if (updates.internalNotes !== undefined) pbUpdates.internalNotes = updates.internalNotes
+        if (updates.tailorId !== undefined) pbUpdates.tailor = updates.tailorId ?? ""
+        if (updates.estimatedDeliveryDate) pbUpdates.estimatedDelivery = updates.estimatedDeliveryDate
+
+        const result = await orderApi.updateOrder(orderId, pbUpdates)
+        if (!result.success) {
+          throw new Error(result.message || "Failed to update order")
+        }
+        return result.data
       },
       { errorPrefix: "Failed to update Nigerian order" },
     )
@@ -1025,68 +961,58 @@ export const OrderStoreModel = types
     const fetchOrderStatistics = createAsyncAction(
       self,
       async (params: { period?: string; clientId?: string; tailorId?: string } = {}) => {
-        try {
-          // Build queries for statistics
-          const queries: string[] = []
+        // Fetch the user's orders in one page (PB caps perPage at 500) and
+        // compute statistics client-side from the mapped domain orders
+        const result = await orderApi.fetchOrders({
+          customerId: params.clientId,
+          tailorId: params.tailorId,
+          perPage: 500,
+        })
 
-          if (params.clientId) {
-            queries.push(Query.equal("userId", params.clientId))
+        if (!result.success) {
+          throw new Error(result.message || "Failed to fetch statistics")
+        }
+
+        const orders = result.data.orders
+
+        // Calculate statistics
+        const totalOrders = orders.length
+        const pendingOrders = orders.filter((o: any) => o.status === "pending").length
+        const inProgressOrders = orders.filter((o: any) => o.status === "in_progress").length
+        const completedOrders = orders.filter((o: any) => o.status === "delivered").length
+
+        const revenue = orders
+          .filter((o: any) => o.status === "delivered")
+          .reduce((sum: number, o: any) => sum + (o.pricing?.totalPrice || 0), 0)
+
+        const averageOrderValue = totalOrders > 0 ? revenue / totalOrders : 0
+
+        // Calculate orders by garment type
+        const ordersByGarmentType: Record<string, number> = {}
+        orders.forEach((o: any) => {
+          if (o.garmentType) {
+            ordersByGarmentType[o.garmentType] = (ordersByGarmentType[o.garmentType] || 0) + 1
           }
-          if (params.tailorId) {
-            queries.push(Query.equal("tailorId", params.tailorId))
+        })
+
+        // Calculate orders by city
+        const ordersByCity: Record<string, number> = {}
+        orders.forEach((o: any) => {
+          if (o.city) {
+            ordersByCity[o.city] = (ordersByCity[o.city] || 0) + 1
           }
+        })
 
-          // Fetch all orders for statistics calculation
-          const ordersResponse = await appwriteDatabases.listDocuments(
-            DATABASE_ID,
-            COLLECTIONS.ORDERS,
-            queries,
-          )
-
-          const orders = ordersResponse.documents
-
-          // Calculate statistics
-          const totalOrders = orders.length
-          const pendingOrders = orders.filter((o: any) => o.status === "pending").length
-          const inProgressOrders = orders.filter((o: any) => o.status === "in_progress").length
-          const completedOrders = orders.filter((o: any) => o.status === "delivered").length
-
-          const revenue = orders
-            .filter((o: any) => o.status === "delivered")
-            .reduce((sum: number, o: any) => sum + (o.pricing?.totalPrice || 0), 0)
-
-          const averageOrderValue = totalOrders > 0 ? revenue / totalOrders : 0
-
-          // Calculate orders by garment type
-          const ordersByGarmentType: Record<string, number> = {}
-          orders.forEach((o: any) => {
-            if (o.garmentType) {
-              ordersByGarmentType[o.garmentType] = (ordersByGarmentType[o.garmentType] || 0) + 1
-            }
-          })
-
-          // Calculate orders by city
-          const ordersByCity: Record<string, number> = {}
-          orders.forEach((o: any) => {
-            if (o.city) {
-              ordersByCity[o.city] = (ordersByCity[o.city] || 0) + 1
-            }
-          })
-
-          return {
-            totalOrders,
-            pendingOrders,
-            inProgressOrders,
-            completedOrders,
-            revenue,
-            averageOrderValue,
-            ordersByGarmentType,
-            ordersByCity,
-            lastUpdated: new Date().toISOString(),
-          }
-        } catch (error) {
-          console.error("Failed to fetch statistics from Appwrite:", error)
-          throw error
+        return {
+          totalOrders,
+          pendingOrders,
+          inProgressOrders,
+          completedOrders,
+          revenue,
+          averageOrderValue,
+          ordersByGarmentType,
+          ordersByCity,
+          lastUpdated: new Date().toISOString(),
         }
       },
       { errorPrefix: "Failed to load statistics" },
@@ -1126,21 +1052,19 @@ export const OrderStoreModel = types
       }),
 
       /**
-       * Load single Nigerian order
+       * Load single Nigerian order (with items and stage history)
        */
       loadNigerianOrder: flow(function* (orderId: string) {
         try {
-          // Fetch order from Appwrite
-          const order = yield appwriteDatabases.getDocument(
-            DATABASE_ID,
-            COLLECTIONS.ORDERS,
-            orderId,
-          )
+          const result = yield orderApi.fetchOrder(orderId)
+          if (!result.success) {
+            throw new Error(result.message || "Failed to load order")
+          }
 
-          self.setCurrentOrder(order)
-          return order
+          self.setCurrentOrder(result.data)
+          return result.data
         } catch (error) {
-          self.setError(error.message)
+          self.setError(error instanceof Error ? error.message : String(error))
           throw error
         }
       }),
@@ -1152,10 +1076,7 @@ export const OrderStoreModel = types
         if (!self.draftOrder) return
 
         try {
-          const orderData = {
-            ...self.draftOrder,
-            status: "pending" as OrderStatus,
-          }
+          const orderData = getSnapshot(self.draftOrder)
 
           const createdOrder = yield createNigerianOrder(orderData)
           self.orders.addItem(NigerianOrderModel.create(createdOrder))
@@ -1245,26 +1166,35 @@ export const OrderStoreModel = types
        */
       loadUserMeasurements: flow(function* (userId: string) {
         try {
-          // Fetch measurements from Appwrite
-          const response = yield appwriteDatabases.listDocuments(
-            DATABASE_ID,
-            COLLECTIONS.MEASUREMENTS,
-            [Query.equal("userId", userId), Query.orderDesc("$createdAt"), Query.limit(10)],
-          )
+          const adapter = getPocketBaseAdapter()
+          const result = yield adapter.list(COLLECTIONS.MEASUREMENTS, {
+            filter: filters.eq("user", userId),
+            sort: "-created",
+            perPage: 10,
+          })
 
-          return response.documents
+          if (!result.success) {
+            throw new Error(result.message || "Failed to load measurements")
+          }
+
+          return result.data.items
         } catch (error) {
-          self.setError(error.message)
+          self.setError(error instanceof Error ? error.message : String(error))
           throw error
         }
       }),
 
       /**
-       * Delete order from Appwrite
+       * Delete order from PocketBase
        */
       deleteOrder: flow(function* (orderId: string) {
         try {
-          yield appwriteDatabases.deleteDocument(DATABASE_ID, COLLECTIONS.ORDERS, orderId)
+          const adapter = getPocketBaseAdapter()
+          const result = yield adapter.remove(COLLECTIONS.ORDERS, orderId)
+
+          if (!result.success) {
+            throw new Error(result.message || "Failed to delete order")
+          }
 
           // Remove from local store
           self.orders.removeItem(orderId)
@@ -1273,7 +1203,7 @@ export const OrderStoreModel = types
             self.currentOrder = null
           }
         } catch (error) {
-          self.setError(error.message)
+          self.setError(error instanceof Error ? error.message : String(error))
           throw error
         }
       }),
@@ -1283,24 +1213,21 @@ export const OrderStoreModel = types
        */
       createOrderMessage: flow(function* (orderId: string, message: string, senderId: string) {
         try {
-          const messageData = {
-            orderId,
-            senderId,
-            message,
-            timestamp: new Date().toISOString(),
+          const adapter = getPocketBaseAdapter()
+          const result = yield adapter.create(COLLECTIONS.MESSAGES, {
+            order: orderId,
+            sender: senderId,
+            content: message,
             isRead: false,
+          })
+
+          if (!result.success) {
+            throw new Error(result.message || "Failed to send message")
           }
 
-          const response = yield appwriteDatabases.createDocument(
-            DATABASE_ID,
-            COLLECTIONS.MESSAGES,
-            generateId(),
-            messageData,
-          )
-
-          return response
+          return result.data
         } catch (error) {
-          self.setError(error.message)
+          self.setError(error instanceof Error ? error.message : String(error))
           throw error
         }
       }),
