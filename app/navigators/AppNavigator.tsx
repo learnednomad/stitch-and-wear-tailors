@@ -14,6 +14,7 @@ import { observer } from "mobx-react-lite"
 import * as Screens from "@/screens"
 import Config from "../config"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
+import { registerSentryNavigationContainer } from "@/utils/sentry"
 import { useAppTheme, useThemeProvider } from "@/utils/useAppTheme"
 import { Component, ComponentProps } from "react"
 import { TabNavigator, TabParamList } from "@/navigators/ClientTabsNavigator"
@@ -239,7 +240,13 @@ export const AppNavigator = observer(function AppNavigator(props: NavigationProp
 
   return (
     <ThemeProvider value={{ themeScheme, setThemeContextOverride }}>
-      <NavigationContainer ref={navigationRef} theme={navigationTheme} linking={linking} {...props}>
+      <NavigationContainer
+        ref={navigationRef}
+        theme={navigationTheme}
+        linking={linking}
+        onReady={() => registerSentryNavigationContainer(navigationRef)}
+        {...props}
+      >
         <Screens.ErrorBoundary catchErrors={Config.catchErrors}>
           <AppStack />
         </Screens.ErrorBoundary>

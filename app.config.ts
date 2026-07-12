@@ -15,6 +15,24 @@ require("ts-node/register")
 module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
   const existingPlugins = config.plugins ?? []
 
+  // Sentry (https://starter.obytes.com/recipes/sentry-setup/):
+  // the expo plugin wires native crash handling and source-map upload.
+  // Org/project come from build-time env (SENTRY_AUTH_TOKEN should be an EAS
+  // secret); the plugin is skipped entirely until both are configured.
+  const sentryPlugin =
+    process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
+      ? [
+          [
+            "@sentry/react-native/expo",
+            {
+              url: "https://sentry.io/",
+              organization: process.env.SENTRY_ORG,
+              project: process.env.SENTRY_PROJECT,
+            },
+          ] as const,
+        ]
+      : []
+
   return {
     ...config,
     ios: {
@@ -31,9 +49,44 @@ module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
             NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryUserDefaults",
             NSPrivacyAccessedAPITypeReasons: ["CA92.1"], // CA92.1 = "Access info from same app, per documentation"
           },
+          {
+            // Sentry reads file timestamps for crash/session bookkeeping
+            NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryFileTimestamp",
+            NSPrivacyAccessedAPITypeReasons: ["C617.1"], // C617.1 = "Access timestamps of files inside the app container"
+          },
+          {
+            NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategorySystemBootTime",
+            NSPrivacyAccessedAPITypeReasons: ["35F9.1"], // 35F9.1 = "Measure time within the app"
+          },
+        ],
+        // Sentry collects crash and performance diagnostics (not linked to
+        // identity, not used for tracking)
+        NSPrivacyCollectedDataTypes: [
+          {
+            NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypeCrashData",
+            NSPrivacyCollectedDataTypeLinked: false,
+            NSPrivacyCollectedDataTypeTracking: false,
+            NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAppFunctionality"],
+          },
+          {
+            NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypePerformanceData",
+            NSPrivacyCollectedDataTypeLinked: false,
+            NSPrivacyCollectedDataTypeTracking: false,
+            NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAppFunctionality"],
+          },
+          {
+            NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypeOtherDiagnosticData",
+            NSPrivacyCollectedDataTypeLinked: false,
+            NSPrivacyCollectedDataTypeTracking: false,
+            NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAppFunctionality"],
+          },
         ],
       },
     },
-    plugins: [...existingPlugins, require("./plugins/withSplashScreen").withSplashScreen],
+    plugins: [
+      ...existingPlugins,
+      ...sentryPlugin,
+      require("./plugins/withSplashScreen").withSplashScreen,
+    ],
   }
 }

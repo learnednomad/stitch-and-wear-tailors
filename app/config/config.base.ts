@@ -4,6 +4,8 @@ export interface ConfigBaseProps {
   exitRoutes: string[]
   PB_URL?: string
   PASSWORD_RECOVERY_URL?: string
+  /** Sentry DSN — crash reporting is disabled when empty */
+  SENTRY_DSN?: string
 }
 
 export type PersistNavigationConfig = ConfigBaseProps["persistNavigation"]
@@ -23,6 +25,12 @@ const BaseConfig: ConfigBaseProps = {
    * is pressed while in that screen. Only affects Android.
    */
   exitRoutes: ["Welcome"],
+
+  /**
+   * Sentry crash reporting (https://starter.obytes.com/recipes/sentry-setup/).
+   * Only used in production builds; an empty DSN disables Sentry entirely.
+   */
+  SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN || "",
 }
 
 export default BaseConfig

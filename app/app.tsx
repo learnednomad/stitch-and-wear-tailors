@@ -30,6 +30,11 @@ import { customFontsToLoad } from "./theme"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { loadDateFnsLocale } from "./utils/formatDate"
 import { AuthProvider } from "./contexts/AuthContext"
+import { initSentry, withSentry } from "./utils/sentry"
+
+// Initialize Sentry before the root component renders (no-op in dev or
+// without a DSN) — Obytes Sentry recipe, steps 7-8.
+initSentry()
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -59,7 +64,7 @@ const config = {
  * @param {AppProps} props - The props for the `App` component.
  * @returns {JSX.Element} The rendered `App` component.
  */
-export function App() {
+function AppRoot() {
   const {
     initialNavigationState,
     onNavigationStateChange,
@@ -118,3 +123,7 @@ export function App() {
     </SafeAreaProvider>
   )
 }
+
+// Sentry.wrap adds touch-event and profiler instrumentation to the root
+// component (pass-through when Sentry isn't initialized).
+export const App = withSentry(AppRoot)

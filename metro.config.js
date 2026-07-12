@@ -1,9 +1,11 @@
 /* eslint-env node */
 // Learn more https://docs.expo.io/guides/customizing-metro
-const { getDefaultConfig } = require("expo/metro-config")
+// getSentryExpoConfig wraps expo's default config with Sentry's serializer
+// (debug-id injection for source maps) — Obytes Sentry recipe, step 6.
+const { getSentryExpoConfig } = require("@sentry/react-native/metro")
 
 /** @type {import('expo/metro-config').MetroConfig} */
-const config = getDefaultConfig(__dirname)
+const config = getSentryExpoConfig(__dirname)
 
 config.transformer.getTransformOptions = async () => ({
   transform: {
