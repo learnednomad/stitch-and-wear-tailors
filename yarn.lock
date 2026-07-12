@@ -1581,6 +1581,13 @@
     find-up "^5.0.0"
     js-yaml "^4.1.0"
 
+"@hookform/resolvers@^5.4.0":
+  version "5.4.0"
+  resolved "https://registry.yarnpkg.com/@hookform/resolvers/-/resolvers-5.4.0.tgz#89ff709a08576766fbef849e5ec60e549a888006"
+  integrity sha512-EIsqr/t/qbinPIhGjMdtvutIN1Kk4uwbROE9/UQ93CAVGR7GkA7Y92+fX80OzXi/OB67jVFYwKGO1WzkxmkFZw==
+  dependencies:
+    "@standard-schema/utils" "^0.3.0"
+
 "@humanfs/core@^0.19.1":
   version "0.19.1"
   resolved "https://registry.npmjs.org/@humanfs/core/-/core-0.19.1.tgz"
@@ -2369,6 +2376,23 @@
   integrity sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==
   dependencies:
     "@sinonjs/commons" "^3.0.0"
+
+"@standard-schema/utils@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@standard-schema/utils/-/utils-0.3.0.tgz#3d5e608f16c2390c10528e98e59aef6bf73cae7b"
+  integrity sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==
+
+"@tanstack/query-core@5.101.2":
+  version "5.101.2"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.101.2.tgz#c901fb76b68169ff5e1e44017404e7e2e90ce1af"
+  integrity sha512-hH5MLoJhF7KaIGd7q3xTXGXvslI+GYlM1Z/35aSHHWaCJWB7XvTSHYuV3eM7tw+aE0mT/xMro4M4Q9rCGHT0lw==
+
+"@tanstack/react-query@^5.101.2":
+  version "5.101.2"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.101.2.tgz#d886331bcd29df84bc04c45d93192b8207d17c7f"
+  integrity sha512-seDkr6kzGzX1okaaTtZPtgA688CDPlXUz1C6xSg0ESqn04Vuc8tlrYms1s3de+znBqhPVxFRfpAfUf+6XvfPWg==
+  dependencies:
+    "@tanstack/query-core" "5.101.2"
 
 "@testing-library/react-native@^12.5.2":
   version "12.9.0"
@@ -8263,6 +8287,11 @@ react-freeze@^1.0.0:
   resolved "https://registry.npmjs.org/react-freeze/-/react-freeze-1.0.4.tgz"
   integrity sha512-r4F0Sec0BLxWicc7HEyo2x3/2icUTrRmDjaaRyzzn+7aDyFZliszMDOgLVwSnQnYENOlL1o569Ze2HZefk8clA==
 
+react-hook-form@^7.81.0:
+  version "7.81.0"
+  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.81.0.tgz#003f1b4fd13102ab1142aec220572401ad1edac4"
+  integrity sha512-ocbmr2p5KBMoAfj4WCUvped33lVi1Kd5DuDUvQDnB6VEAacOjPI/jMbtDdbhco4y9ct4xUuCmMY0b/C9L0QHjw==
+
 react-i18next@^15.0.1:
   version "15.5.2"
   resolved "https://registry.npmjs.org/react-i18next/-/react-i18next-15.5.2.tgz"
@@ -9813,10 +9842,10 @@ typed-array-length@^1.0.7:
     possible-typed-array-names "^1.0.0"
     reflect.getprototypeof "^1.0.6"
 
-typescript@~5.3.3:
-  version "5.3.3"
-  resolved "https://registry.npmjs.org/typescript/-/typescript-5.3.3.tgz"
-  integrity sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==
+typescript@~5.8.3:
+  version "5.8.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.8.3.tgz#92f8a3e5e3cf497356f4178c34cd65a7f5e8440e"
+  integrity sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==
 
 ua-parser-js@^1.0.35:
   version "1.0.40"

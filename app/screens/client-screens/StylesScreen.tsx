@@ -4,18 +4,14 @@
  * The same catalog data as CatalogScreen, presented grouped: pick a gender,
  * then browse styles grouped by category section.
  */
-import { FC, useCallback, useEffect, useMemo, useState } from "react"
+import { FC, useMemo, useState } from "react"
 import { observer } from "mobx-react-lite"
-import {
-  RefreshControl,
-  TextStyle,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native"
+import { RefreshControl, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { CatalogGrid, Icon, Screen, Text } from "@/components"
-import { catalogApi, PBCatalogStyle } from "@/services/api/catalog-api"
+import { useStyles } from "@/api/catalog"
+import { errorMessage } from "@/api/common"
+import { PBCatalogStyle } from "@/services/api/catalog-api"
 import { fileUrl } from "@/services/api/pocketbase-api-adapter"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -39,26 +35,12 @@ function labelize(value: string): string {
 
 export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScreen({ navigation }) {
   const { theme } = useAppTheme()
-  const [styles, setStyles] = useState<PBCatalogStyle[]>([])
   const [gender, setGender] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    setIsLoading(true)
-    const result = await catalogApi.listStyles()
-    if (result.success) {
-      setStyles(result.data)
-      setError(null)
-    } else {
-      setError(result.message ?? "Failed to load styles")
-    }
-    setIsLoading(false)
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const stylesQuery = useStyles()
+  const styles = useMemo(() => stylesQuery.data ?? [], [stylesQuery.data])
+  const isLoading = stylesQuery.isLoading
+  const error = stylesQuery.error ? errorMessage(stylesQuery.error) : null
 
   // group the gender-filtered styles by category
   const grouped = useMemo(() => {
@@ -78,7 +60,12 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
       preset="scroll"
       safeAreaEdges={["top"]}
       ScrollViewProps={{
-        refreshControl: <RefreshControl refreshing={isLoading} onRefresh={load} />,
+        refreshControl: (
+          <RefreshControl
+            refreshing={stylesQuery.isRefetching}
+            onRefresh={() => stylesQuery.refetch()}
+          />
+        ),
       }}
     >
       <View style={$headerRow}>
@@ -132,7 +119,9 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
               id: style.id,
               title: style.name,
               subtitle: labelize(style.gender),
-              imageUrl: style.images?.length ? fileUrl(style, style.images[0], "300x300") : undefined,
+              imageUrl: style.images?.length
+                ? fileUrl(style, style.images[0], "300x300")
+                : undefined,
               price: style.basePrice,
               category: style.category,
             }))}

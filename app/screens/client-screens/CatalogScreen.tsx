@@ -4,7 +4,7 @@
  * Browse the tailor's style catalog: search by name, filter by category,
  * tap a style for details and start an order from it.
  */
-import { FC, useCallback, useEffect, useMemo, useState } from "react"
+import { FC, useMemo, useState } from "react"
 import { observer } from "mobx-react-lite"
 import {
   Modal,
@@ -17,7 +17,9 @@ import {
 } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, CatalogGrid, CatalogGridItem, Icon, Screen, Text, TextField } from "@/components"
-import { catalogApi, PBCatalogStyle } from "@/services/api/catalog-api"
+import { useStyles } from "@/api/catalog"
+import { errorMessage } from "@/api/common"
+import { PBCatalogStyle } from "@/services/api/catalog-api"
 import { fileUrl } from "@/services/api/pocketbase-api-adapter"
 import { formatNaira } from "@/utils/formatCurrency"
 import { spacing } from "@/theme"
@@ -37,28 +39,14 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
   navigation,
 }) {
   const { theme } = useAppTheme()
-  const [styles, setStyles] = useState<PBCatalogStyle[]>([])
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState<string | null>(null)
   const [selected, setSelected] = useState<PBCatalogStyle | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    setIsLoading(true)
-    const result = await catalogApi.listStyles(search ? { search } : {})
-    if (result.success) {
-      setStyles(result.data)
-      setError(null)
-    } else {
-      setError(result.message ?? "Failed to load catalog")
-    }
-    setIsLoading(false)
-  }, [search])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const stylesQuery = useStyles(search ? { search } : {})
+  const styles = useMemo(() => stylesQuery.data ?? [], [stylesQuery.data])
+  const isLoading = stylesQuery.isLoading
+  const error = stylesQuery.error ? errorMessage(stylesQuery.error) : null
 
   // categories actually present in the data (plus "All")
   const categories = useMemo(
@@ -89,7 +77,12 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
       preset="scroll"
       safeAreaEdges={["top"]}
       ScrollViewProps={{
-        refreshControl: <RefreshControl refreshing={isLoading} onRefresh={load} />,
+        refreshControl: (
+          <RefreshControl
+            refreshing={stylesQuery.isRefetching}
+            onRefresh={() => stylesQuery.refetch()}
+          />
+        ),
       }}
     >
       <View style={$headerRow}>

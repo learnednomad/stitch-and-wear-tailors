@@ -28,6 +28,8 @@ import { AppNavigator, useNavigationPersistence } from "./navigators"
 import * as storage from "./utils/storage"
 import { customFontsToLoad } from "./theme"
 import { KeyboardProvider } from "react-native-keyboard-controller"
+import { QueryClientProvider } from "@tanstack/react-query"
+import { queryClient } from "./api/common"
 import { loadDateFnsLocale } from "./utils/formatDate"
 import { AuthProvider } from "./contexts/AuthContext"
 import { initSentry, withSentry } from "./utils/sentry"
@@ -111,15 +113,17 @@ function AppRoot() {
   // otherwise, we're ready to render the app
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <KeyboardProvider>
-        <AuthProvider>
-          <AppNavigator
-            linking={linking}
-            initialState={initialNavigationState}
-            onStateChange={onNavigationStateChange}
-          />
-        </AuthProvider>
-      </KeyboardProvider>
+      <QueryClientProvider client={queryClient}>
+        <KeyboardProvider>
+          <AuthProvider>
+            <AppNavigator
+              linking={linking}
+              initialState={initialNavigationState}
+              onStateChange={onNavigationStateChange}
+            />
+          </AuthProvider>
+        </KeyboardProvider>
+      </QueryClientProvider>
     </SafeAreaProvider>
   )
 }

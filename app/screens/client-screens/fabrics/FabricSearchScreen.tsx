@@ -5,7 +5,7 @@
  * legacy FabricStore flows still target unwired /api mock endpoints and
  * its model shape doesn't match the PB schema.
  */
-import { FC, useCallback, useEffect, useMemo, useState } from "react"
+import { FC, useMemo, useState } from "react"
 import { observer } from "mobx-react-lite"
 import {
   RefreshControl,
@@ -17,7 +17,8 @@ import {
 } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { CatalogGrid, Icon, Screen, Text, TextField } from "@/components"
-import { catalogApi, PBFabric } from "@/services/api/catalog-api"
+import { useFabrics } from "@/api/catalog"
+import { errorMessage } from "@/api/common"
 import { fileUrl } from "@/services/api/pocketbase-api-adapter"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -35,27 +36,13 @@ function labelize(value: string): string {
 export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
   function FabricSearchScreen({ navigation }) {
     const { theme } = useAppTheme()
-    const [fabrics, setFabrics] = useState<PBFabric[]>([])
     const [search, setSearch] = useState("")
     const [type, setType] = useState<string | null>(null)
-    const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
 
-    const load = useCallback(async () => {
-      setIsLoading(true)
-      const result = await catalogApi.listFabrics(search ? { search } : {})
-      if (result.success) {
-        setFabrics(result.data)
-        setError(null)
-      } else {
-        setError(result.message ?? "Failed to load fabrics")
-      }
-      setIsLoading(false)
-    }, [search])
-
-    useEffect(() => {
-      load()
-    }, [load])
+    const fabricsQuery = useFabrics(search ? { search } : {})
+    const fabrics = useMemo(() => fabricsQuery.data ?? [], [fabricsQuery.data])
+    const isLoading = fabricsQuery.isLoading
+    const error = fabricsQuery.error ? errorMessage(fabricsQuery.error) : null
 
     // fabric types present in the data (plus "All")
     const types = useMemo(
@@ -71,7 +58,12 @@ export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
         preset="scroll"
         safeAreaEdges={["top"]}
         ScrollViewProps={{
-          refreshControl: <RefreshControl refreshing={isLoading} onRefresh={load} />,
+          refreshControl: (
+            <RefreshControl
+              refreshing={fabricsQuery.isRefetching}
+              onRefresh={() => fabricsQuery.refetch()}
+            />
+          ),
         }}
       >
         <View style={$headerRow}>
