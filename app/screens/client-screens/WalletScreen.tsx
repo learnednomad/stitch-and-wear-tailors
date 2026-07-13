@@ -1,10 +1,10 @@
 import React, { FC } from "react"
-import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle } from "react-native"
+import { View, ScrollView, TouchableOpacity, ViewStyle } from "react-native"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { AppStackParamList } from "@/navigators"
 import { Button, Screen, Icon, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
-import { colors, spacing } from "@/theme"
+import { colors } from "@/theme"
 import { useNavigation } from "@react-navigation/native"
 
 interface PaymentMethod {
@@ -105,18 +105,30 @@ export const WalletScreen: FC<WalletScreenProps> = () => {
   }
 
   const renderPaymentMethod = (method: PaymentMethod) => (
-    <TouchableOpacity key={method.id} style={$paymentMethodCard}>
-      <View style={$paymentMethodContent}>
-        <View style={$paymentMethodIcon}>
+    <TouchableOpacity
+      key={method.id}
+      className="mb-3 rounded-xl border border-neutral200 bg-neutral100 p-4"
+    >
+      <View className="flex-row items-center">
+        <View className="mr-4 h-10 w-10 items-center justify-center rounded-full bg-primary100">
           <Icon
             icon={method.type === "card" ? "check" : method.type === "bank" ? "menu" : "coins"}
             size={24}
             color={colors.palette.primary500}
           />
         </View>
-        <View style={$paymentMethodInfo}>
-          <Text style={$paymentMethodName}>{method.name}</Text>
-          {method.isDefault && <Text style={$defaultBadge}>Default</Text>}
+        <View className="flex-1">
+          <Text
+            className="mb-0.5 text-[16px] font-medium"
+            style={{ color: colors.palette.neutral900 }}
+          >
+            {method.name}
+          </Text>
+          {method.isDefault && (
+            <Text className="text-[12px] font-medium" style={{ color: colors.palette.success500 }}>
+              Default
+            </Text>
+          )}
         </View>
         <Icon icon="caretRight" size={20} color={colors.palette.neutral400} />
       </View>
@@ -124,14 +136,16 @@ export const WalletScreen: FC<WalletScreenProps> = () => {
   )
 
   const renderTransaction = (transaction: Transaction) => (
-    <TouchableOpacity key={transaction.id} style={$transactionCard}>
-      <View style={$transactionContent}>
-        <View style={$transactionLeft}>
+    <TouchableOpacity
+      key={transaction.id}
+      className="mb-3 rounded-2xl border border-neutral200 bg-neutral100 p-4"
+      style={$transactionCardShadow}
+    >
+      <View className="flex-row items-center justify-between">
+        <View className="flex-1 flex-row items-center">
           <View
-            style={[
-              $transactionIcon,
-              { backgroundColor: getStatusColor(transaction.status) + "20" },
-            ]}
+            className="mr-4 h-11 w-11 items-center justify-center rounded-[22px]"
+            style={{ backgroundColor: getStatusColor(transaction.status) + "20" }}
           >
             <Icon
               icon={
@@ -145,30 +159,41 @@ export const WalletScreen: FC<WalletScreenProps> = () => {
               color={getStatusColor(transaction.status)}
             />
           </View>
-          <View style={$transactionInfo}>
-            <Text style={$transactionDescription}>{transaction.description}</Text>
-            <Text style={$transactionOrderId}>Order #{transaction.orderId}</Text>
-            <Text style={$transactionDate}>{transaction.date}</Text>
+          <View className="flex-1">
+            <Text
+              className="mb-0.5 text-[16px] font-medium"
+              style={{ color: colors.palette.neutral900 }}
+            >
+              {transaction.description}
+            </Text>
+            <Text className="mb-0.5 text-[13px]" style={{ color: colors.palette.neutral600 }}>
+              Order #{transaction.orderId}
+            </Text>
+            <Text className="text-[12px]" style={{ color: colors.palette.neutral500 }}>
+              {transaction.date}
+            </Text>
           </View>
         </View>
-        <View style={$transactionRight}>
+        <View className="items-end">
           <Text
-            style={[
-              $transactionAmount,
-              {
-                color:
-                  transaction.status === "failed"
-                    ? colors.palette.angry500
-                    : colors.palette.neutral900,
-              },
-            ]}
+            className="mb-2 text-[16px] font-semibold"
+            style={{
+              color:
+                transaction.status === "failed"
+                  ? colors.palette.angry500
+                  : colors.palette.neutral900,
+            }}
           >
             ₦{transaction.amount.toLocaleString()}
           </Text>
           <View
-            style={[$statusBadge, { backgroundColor: getStatusColor(transaction.status) + "20" }]}
+            className="rounded px-2 py-0.5"
+            style={{ backgroundColor: getStatusColor(transaction.status) + "20" }}
           >
-            <Text style={[$statusText, { color: getStatusColor(transaction.status) }]}>
+            <Text
+              className="text-[11px] font-semibold capitalize"
+              style={{ color: getStatusColor(transaction.status) }}
+            >
               {transaction.status}
             </Text>
           </View>
@@ -186,71 +211,145 @@ export const WalletScreen: FC<WalletScreenProps> = () => {
     >
       <ScrollView style={$container} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={$header}>
-          <Text style={$headerTitle}>Wallet</Text>
-          <TouchableOpacity style={$headerAction}>
+        <View className="flex-row items-center justify-between px-6 py-6">
+          <Text className="text-[25px] font-medium" style={{ color: colors.palette.neutral900 }}>
+            Wallet
+          </Text>
+          <TouchableOpacity className="p-2">
             <Icon icon="settings" size={24} color={colors.palette.neutral600} />
           </TouchableOpacity>
         </View>
 
         {/* Balance Card */}
-        <View style={$balanceCard}>
-          <View style={$balanceHeader}>
-            <Text style={$balanceLabel}>Available Balance</Text>
-            <TouchableOpacity style={$eyeButton}>
+        <View className="mx-6 mb-6 rounded-[20px] bg-primary500 p-6" style={$balanceCardShadow}>
+          <View className="mb-2 flex-row items-center justify-between">
+            <Text
+              className="text-[14px]"
+              style={{ color: colors.palette.neutral100, opacity: 0.9 }}
+            >
+              Available Balance
+            </Text>
+            <TouchableOpacity className="p-2">
               <Icon icon="view" size={20} color={colors.palette.neutral100} />
             </TouchableOpacity>
           </View>
-          <Text style={$balanceAmount}>₦{balance.toLocaleString()}</Text>
-          <Text style={$balanceSubtext}>Last updated: Today, 2:08 PM</Text>
-          <View style={$balanceActions}>
-            <TouchableOpacity style={$balanceActionButton}>
+          <Text
+            className="my-2 text-[24px] font-extrabold tracking-[0.5px]"
+            style={{ color: colors.palette.neutral100 }}
+          >
+            ₦{balance.toLocaleString()}
+          </Text>
+          <Text
+            className="mb-6 text-[12px]"
+            style={{ color: colors.palette.neutral100, opacity: 0.8 }}
+          >
+            Last updated: Today, 2:08 PM
+          </Text>
+          <View className="flex-row gap-3">
+            <TouchableOpacity
+              className="flex-1 flex-row items-center justify-center gap-2 rounded-lg py-3"
+              style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+            >
               <Icon icon="check" size={20} color={colors.palette.neutral100} />
-              <Text style={$balanceActionText}>Add Money</Text>
+              <Text
+                className="text-[14px] font-semibold"
+                style={{ color: colors.palette.neutral100 }}
+              >
+                Add Money
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[$balanceActionButton, $secondaryActionButton]}>
+            <TouchableOpacity className="flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-neutral100 py-3">
               <Icon icon="caretLeft" size={20} color={colors.palette.primary500} />
-              <Text style={[$balanceActionText, $secondaryActionText]}>Send</Text>
+              <Text
+                className="text-[14px] font-semibold"
+                style={{ color: colors.palette.primary500 }}
+              >
+                Send
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Quick Stats */}
-        <View style={$statsContainer}>
-          <View style={$statCard}>
-            <Text style={$statValue}>₦125,000</Text>
-            <Text style={$statLabel}>This Month</Text>
+        <View className="mb-6 flex-row gap-3 px-6">
+          <View
+            className="flex-1 items-center rounded-xl border border-neutral200 bg-neutral100 p-4"
+            style={$statCardShadow}
+          >
+            <Text
+              className="mb-0.5 text-[16px] font-bold"
+              style={{ color: colors.palette.neutral900 }}
+            >
+              ₦125,000
+            </Text>
+            <Text className="mb-2 text-[12px]" style={{ color: colors.palette.neutral600 }}>
+              This Month
+            </Text>
             <Icon icon="caretRight" size={16} color={colors.palette.success500} />
           </View>
-          <View style={$statCard}>
-            <Text style={$statValue}>₦8,500</Text>
-            <Text style={$statLabel}>Pending</Text>
+          <View
+            className="flex-1 items-center rounded-xl border border-neutral200 bg-neutral100 p-4"
+            style={$statCardShadow}
+          >
+            <Text
+              className="mb-0.5 text-[16px] font-bold"
+              style={{ color: colors.palette.neutral900 }}
+            >
+              ₦8,500
+            </Text>
+            <Text className="mb-2 text-[12px]" style={{ color: colors.palette.neutral600 }}>
+              Pending
+            </Text>
             <Icon icon="more" size={16} color={colors.palette.warning500} />
           </View>
-          <View style={$statCard}>
-            <Text style={$statValue}>47</Text>
-            <Text style={$statLabel}>Transactions</Text>
+          <View
+            className="flex-1 items-center rounded-xl border border-neutral200 bg-neutral100 p-4"
+            style={$statCardShadow}
+          >
+            <Text
+              className="mb-0.5 text-[16px] font-bold"
+              style={{ color: colors.palette.neutral900 }}
+            >
+              47
+            </Text>
+            <Text className="mb-2 text-[12px]" style={{ color: colors.palette.neutral600 }}>
+              Transactions
+            </Text>
             <Icon icon="menu" size={16} color={colors.palette.primary500} />
           </View>
         </View>
 
         {/* Payment Methods */}
-        <View style={$section}>
-          <View style={$sectionHeader}>
-            <Text style={$sectionTitle}>Payment Methods</Text>
+        <View className="mb-6 px-6">
+          <View className="mb-4 flex-row items-center justify-between">
+            <Text className="text-[18px] font-semibold" style={{ color: colors.palette.neutral900 }}>
+              Payment Methods
+            </Text>
             <TouchableOpacity>
-              <Text style={$addText}>Add New</Text>
+              <Text
+                className="text-[14px] font-medium"
+                style={{ color: colors.palette.primary500 }}
+              >
+                Add New
+              </Text>
             </TouchableOpacity>
           </View>
           {paymentMethods.map(renderPaymentMethod)}
         </View>
 
         {/* Recent Transactions */}
-        <View style={$section}>
-          <View style={$sectionHeader}>
-            <Text style={$sectionTitle}>Recent Transactions</Text>
+        <View className="mb-6 px-6">
+          <View className="mb-4 flex-row items-center justify-between">
+            <Text className="text-[18px] font-semibold" style={{ color: colors.palette.neutral900 }}>
+              Recent Transactions
+            </Text>
             <TouchableOpacity>
-              <Text style={$viewAllText}>View All</Text>
+              <Text
+                className="text-[14px] font-medium"
+                style={{ color: colors.palette.primary500 }}
+              >
+                View All
+              </Text>
             </TouchableOpacity>
           </View>
           {transactions.map(renderTransaction)}
@@ -261,34 +360,16 @@ export const WalletScreen: FC<WalletScreenProps> = () => {
 }
 
 // Styles
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// inline (light in both schemes) — no `dark:` variants. Layout, spacing, and
+// solid-token container backgrounds/borders are className token utilities. RN
+// shadows and data-driven status tints stay inline.
 const $container: ViewStyle = {
   flex: 1,
 }
 
-const $header: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.lg,
-}
-
-const $headerTitle: TextStyle = {
-  fontSize: 25,
-  fontWeight: "500",
-  color: colors.palette.neutral900,
-}
-
-const $headerAction: ViewStyle = {
-  padding: spacing.xs,
-}
-
-const $balanceCard: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
-  marginHorizontal: spacing.lg,
-  marginBottom: spacing.lg,
-  padding: spacing.lg,
-  borderRadius: 20,
+// RN shadow objects — kept inline (no className equivalent for iOS shadows).
+const $balanceCardShadow: ViewStyle = {
   shadowColor: colors.palette.primary900,
   shadowOffset: { width: 0, height: 6 },
   shadowOpacity: 0.2,
@@ -296,83 +377,7 @@ const $balanceCard: ViewStyle = {
   elevation: 10,
 }
 
-const $balanceHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-}
-
-const $balanceLabel: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral100,
-  opacity: 0.9,
-}
-
-const $eyeButton: ViewStyle = {
-  padding: spacing.xs,
-}
-
-const $balanceAmount: TextStyle = {
-  fontSize: 24,
-  fontWeight: "800",
-  color: colors.palette.neutral100,
-  marginVertical: spacing.xs,
-  letterSpacing: 0.5,
-}
-
-const $balanceSubtext: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral100,
-  opacity: 0.8,
-  marginBottom: spacing.lg,
-}
-
-const $balanceActions: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.sm,
-}
-
-const $balanceActionButton: ViewStyle = {
-  flex: 1,
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  backgroundColor: "rgba(255, 255, 255, 0.2)",
-  paddingVertical: spacing.sm,
-  borderRadius: 8,
-  gap: spacing.xs,
-}
-
-const $secondaryActionButton: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-}
-
-const $balanceActionText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.neutral100,
-}
-
-const $secondaryActionText: TextStyle = {
-  color: colors.palette.primary500,
-}
-
-const $statsContainer: ViewStyle = {
-  flexDirection: "row",
-  paddingHorizontal: spacing.lg,
-  marginBottom: spacing.lg,
-  gap: spacing.sm,
-}
-
-const $statCard: ViewStyle = {
-  flex: 1,
-  backgroundColor: colors.palette.neutral100,
-  padding: spacing.md,
-  borderRadius: 12,
-  alignItems: "center",
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+const $statCardShadow: ViewStyle = {
   shadowColor: colors.palette.neutral900,
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.05,
@@ -380,166 +385,10 @@ const $statCard: ViewStyle = {
   elevation: 2,
 }
 
-const $statValue: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xxs,
-}
-
-const $statLabel: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.xs,
-}
-
-const $section: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  marginBottom: spacing.lg,
-}
-
-const $sectionHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.md,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-}
-
-const $addText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.primary500,
-}
-
-const $viewAllText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.primary500,
-}
-
-const $paymentMethodCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.md,
-  marginBottom: spacing.sm,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-}
-
-const $paymentMethodContent: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $paymentMethodIcon: ViewStyle = {
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  backgroundColor: colors.palette.primary100,
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: spacing.md,
-}
-
-const $paymentMethodInfo: ViewStyle = {
-  flex: 1,
-}
-
-const $paymentMethodName: TextStyle = {
-  fontSize: 16,
-  fontWeight: "500",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xxs,
-}
-
-const $defaultBadge: TextStyle = {
-  fontSize: 12,
-  fontWeight: "500",
-  color: colors.palette.success500,
-}
-
-const $transactionCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 16,
-  padding: spacing.md,
-  marginBottom: spacing.sm,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+const $transactionCardShadow: ViewStyle = {
   shadowColor: colors.palette.neutral900,
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.08,
   shadowRadius: 6,
   elevation: 3,
-}
-
-const $transactionContent: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $transactionLeft: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  flex: 1,
-}
-
-const $transactionIcon: ViewStyle = {
-  width: 44,
-  height: 44,
-  borderRadius: 22,
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: spacing.md,
-}
-
-const $transactionInfo: ViewStyle = {
-  flex: 1,
-}
-
-const $transactionDescription: TextStyle = {
-  fontSize: 16,
-  fontWeight: "500",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xxs,
-}
-
-const $transactionOrderId: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.xxs,
-}
-
-const $transactionDate: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral500,
-}
-
-const $transactionRight: ViewStyle = {
-  alignItems: "flex-end",
-}
-
-const $transactionAmount: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xs,
-}
-
-const $statusBadge: ViewStyle = {
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-  borderRadius: 4,
-}
-
-const $statusText: TextStyle = {
-  fontSize: 11,
-  fontWeight: "600",
-  textTransform: "capitalize",
 }
