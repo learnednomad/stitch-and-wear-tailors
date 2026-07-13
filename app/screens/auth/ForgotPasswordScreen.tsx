@@ -7,7 +7,6 @@ import React, { useState } from "react"
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   TextInput,
@@ -15,29 +14,24 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ViewStyle,
 } from "react-native"
-import { TextStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { Icon } from "@/components"
-import { colors as themeColors, spacing, typography as themeTypography } from "@/theme"
+import { colors as themeColors } from "@/theme"
 import { validateEmail } from "@/utils/emailValidation"
 import AuthService from "@/services/auth/AuthService"
 
-// Local aliases mapping this screen's legacy color/typography names onto the
-// app theme (the theme has no primary/card/success entries or text presets).
+// Local aliases mapping this screen's legacy color names onto the app theme
+// (the theme has no primary/card/success entries). Consumed only by the Icon /
+// ActivityIndicator `color` props; every style is now a NativeWind className.
+// This screen is light-only, so color utilities carry no `dark:` twin.
 const colors = {
   ...themeColors,
   primary: themeColors.tint,
   primaryLight: themeColors.palette.primary100,
   card: themeColors.palette.neutral100,
   success: themeColors.palette.success500,
-}
-
-const typography = {
-  body: { fontSize: 16, fontFamily: themeTypography.primary.normal } as TextStyle,
-  caption: { fontSize: 13, fontFamily: themeTypography.primary.normal } as TextStyle,
-  heading: { fontSize: 22, fontFamily: themeTypography.primary.bold } as TextStyle,
-  subheading: { fontSize: 16, fontFamily: themeTypography.primary.medium } as TextStyle,
 }
 
 export function ForgotPasswordScreen() {
@@ -92,34 +86,39 @@ export function ForgotPasswordScreen() {
 
   if (emailSent) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <View className="flex-1 bg-background">
+        <View className="flex-row items-center border-b border-b-border p-lg">
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon icon="back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Password Reset</Text>
+          <Text className="ml-md flex-1 text-[22px] font-spaceBold">Password Reset</Text>
         </View>
 
-        <View style={styles.successContent}>
-          <View style={styles.successIcon}>
+        <View className="items-center p-lg">
+          <View className="my-xl">
             <Icon icon="check" size={64} color={colors.success} />
           </View>
 
-          <Text style={styles.successTitle}>Email Sent!</Text>
-          <Text style={styles.successMessage}>
+          <Text className="mb-sm text-[22px] font-spaceBold">Email Sent!</Text>
+          <Text className="mb-xl text-center text-[16px] font-spaceRegular text-textDim">
             We've sent password reset instructions to {email}
           </Text>
 
-          <View style={styles.infoBox}>
+          <View className="mb-xl flex-row items-start rounded-lg bg-primary100 p-md">
             <Icon icon="feedback" size={20} color={colors.primary} />
-            <Text style={styles.infoText}>
+            <Text className="ml-sm flex-1 text-[13px] font-spaceRegular leading-5 text-tint">
               Please check your email and follow the instructions to reset your password. The link
               will expire in 1 hour.
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
-            <Text style={styles.buttonText}>Back to Sign In</Text>
+          <TouchableOpacity
+            className="mb-md items-center rounded-lg bg-tint p-md"
+            onPress={() => navigation.goBack()}
+          >
+            <Text className="text-[16px] font-spaceRegular font-semibold text-neutral100">
+              Back to Sign In
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -128,30 +127,32 @@ export function ForgotPasswordScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-background"
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
+      <ScrollView contentContainerStyle={$scrollContent}>
+        <View className="flex-row items-center border-b border-b-border p-lg">
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon icon="back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Reset Password</Text>
+          <Text className="ml-md flex-1 text-[22px] font-spaceBold">Reset Password</Text>
         </View>
 
-        <View style={styles.content}>
-          <View style={styles.iconContainer}>
+        <View className="p-lg">
+          <View className="my-xl items-center">
             <Icon icon="lock" size={48} color={colors.primary} />
           </View>
 
-          <Text style={styles.description}>
+          <Text className="mb-xl text-center text-[16px] font-spaceRegular text-textDim">
             Enter your email address and we'll send you instructions to reset your password.
           </Text>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email Address</Text>
+          <View className="mb-lg">
+            <Text className="mb-sm text-[13px] font-spaceRegular text-text">Email Address</Text>
             <TextInput
-              style={[styles.input, emailError ? styles.inputError : null]}
+              className={`rounded-lg border bg-neutral100 p-md text-[16px] font-spaceRegular ${
+                emailError ? "border-error" : "border-border"
+              }`}
               value={email}
               onChangeText={(text) => {
                 setEmail(text)
@@ -163,28 +164,32 @@ export function ForgotPasswordScreen() {
               autoCorrect={false}
               editable={!isLoading}
             />
-            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+            {emailError ? (
+              <Text className="mt-xs text-[13px] font-spaceRegular text-error">{emailError}</Text>
+            ) : null}
           </View>
 
           <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
+            className={`mb-md items-center rounded-lg bg-tint p-md ${isLoading ? "opacity-60" : ""}`}
             onPress={handlePasswordReset}
             disabled={isLoading}
           >
             {isLoading ? (
               <ActivityIndicator color={colors.card} />
             ) : (
-              <Text style={styles.buttonText}>Send Reset Email</Text>
+              <Text className="text-[16px] font-spaceRegular font-semibold text-neutral100">
+                Send Reset Email
+              </Text>
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.linkButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.linkText}>Back to Sign In</Text>
+          <TouchableOpacity className="items-center p-sm" onPress={() => navigation.goBack()}>
+            <Text className="text-[16px] font-spaceRegular text-tint underline">Back to Sign In</Text>
           </TouchableOpacity>
 
-          <View style={styles.helpSection}>
-            <Text style={styles.helpTitle}>Need Help?</Text>
-            <Text style={styles.helpText}>
+          <View className="mt-xl rounded-lg bg-neutral100 p-md">
+            <Text className="mb-sm text-[16px] font-spaceMedium">Need Help?</Text>
+            <Text className="text-[13px] font-spaceRegular leading-5 text-textDim">
               If you don't receive an email within a few minutes, check your spam folder or contact
               support.
             </Text>
@@ -195,132 +200,8 @@ export function ForgotPasswordScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  button: {
-    alignItems: "center",
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    marginBottom: spacing.md,
-    padding: spacing.md,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    ...typography.body,
-    color: colors.card,
-    fontWeight: "600",
-  },
-  container: {
-    backgroundColor: colors.background,
-    flex: 1,
-  },
-  content: {
-    padding: spacing.lg,
-  },
-  description: {
-    ...typography.body,
-    color: colors.textDim,
-    marginBottom: spacing.xl,
-    textAlign: "center",
-  },
-  errorText: {
-    ...typography.caption,
-    color: colors.error,
-    marginTop: spacing.xs,
-  },
-  header: {
-    alignItems: "center",
-    borderBottomColor: colors.border,
-    borderBottomWidth: 1,
-    flexDirection: "row",
-    padding: spacing.lg,
-  },
-  helpSection: {
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    marginTop: spacing.xl,
-    padding: spacing.md,
-  },
-  helpText: {
-    ...typography.caption,
-    color: colors.textDim,
-    lineHeight: 20,
-  },
-  helpTitle: {
-    ...typography.subheading,
-    marginBottom: spacing.sm,
-  },
-  iconContainer: {
-    alignItems: "center",
-    marginVertical: spacing.xl,
-  },
-  infoBox: {
-    alignItems: "flex-start",
-    backgroundColor: colors.primaryLight,
-    borderRadius: 8,
-    flexDirection: "row",
-    marginBottom: spacing.xl,
-    padding: spacing.md,
-  },
-  infoText: {
-    ...typography.caption,
-    color: colors.primary,
-    flex: 1,
-    lineHeight: 20,
-    marginLeft: spacing.sm,
-  },
-  input: {
-    ...typography.body,
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  inputContainer: {
-    marginBottom: spacing.lg,
-  },
-  inputError: {
-    borderColor: colors.error,
-  },
-  label: {
-    ...typography.caption,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  linkButton: {
-    alignItems: "center",
-    padding: spacing.sm,
-  },
-  linkText: {
-    ...typography.body,
-    color: colors.primary,
-    textDecorationLine: "underline",
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  successContent: {
-    alignItems: "center",
-    padding: spacing.lg,
-  },
-  successIcon: {
-    marginVertical: spacing.xl,
-  },
-  successMessage: {
-    ...typography.body,
-    color: colors.textDim,
-    marginBottom: spacing.xl,
-    textAlign: "center",
-  },
-  successTitle: {
-    ...typography.heading,
-    marginBottom: spacing.sm,
-  },
-  title: {
-    ...typography.heading,
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-})
+// ScrollView contentContainerStyle stays inline (it is a style prop, not
+// className): flexGrow keeps the short form vertically centered on tall screens.
+const $scrollContent: ViewStyle = {
+  flexGrow: 1,
+}
