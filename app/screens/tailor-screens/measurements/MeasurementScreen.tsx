@@ -77,7 +77,7 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
     const renderRow = (record: PBMeasurementRecord, readOnly: boolean) => (
       <TouchableOpacity
         key={record.id}
-        style={$row}
+        className="flex-row items-center px-4 py-4 border-b border-neutral200"
         onPress={() =>
           navigation.navigate("EditMeasurement", {
             measurementId: record.id,
@@ -85,9 +85,11 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
           })
         }
       >
-        <View style={$rowContent}>
-          <Text style={$rowTitle}>{record.name || "Untitled"}</Text>
-          <Text style={$rowSubtitle}>
+        <View className="flex-1">
+          <Text className="text-[15px]" weight="semiBold" style={$rowTitleColor}>
+            {record.name || "Untitled"}
+          </Text>
+          <Text className="text-[13px] mt-0.5 capitalize" style={$rowSubtitleColor}>
             {record.measurementType} · {record.unit}
             {record.isDefault ? " · default" : ""}
           </Text>
@@ -105,12 +107,14 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
         contentContainerStyle={$screenContent}
       >
         {/* Header */}
-        <View style={$header}>
-          <Text style={$headerTitle}>Measurements</Text>
+        <View className="px-6 py-4">
+          <Text className="text-[22px]" weight="bold" style={$headerTitleColor}>
+            Measurements
+          </Text>
         </View>
 
         {/* Segment selector */}
-        <View style={$segmentRow}>
+        <View className="flex-row mx-6 mb-3 rounded-[10px] bg-neutral200 p-1">
           {(
             [
               ["customers", "Customers"],
@@ -119,16 +123,23 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
           ).map(([key, label]) => (
             <TouchableOpacity
               key={key}
-              style={[$segment, segment === key && $selectedSegment]}
+              className="flex-1 py-3 rounded-lg items-center"
+              style={segment === key ? $selectedSegment : undefined}
               onPress={() => setSegment(key)}
             >
-              <Text style={[$segmentText, segment === key && $selectedSegmentText]}>{label}</Text>
+              <Text
+                className="text-[14px]"
+                weight={segment === key ? "semiBold" : "medium"}
+                style={segment === key ? $selectedSegmentTextColor : $segmentTextColor}
+              >
+                {label}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {isLoading ? (
-          <View style={$loadingContainer}>
+          <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color={colors.palette.primary500} />
           </View>
         ) : (
@@ -143,28 +154,36 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
             }
             showsVerticalScrollIndicator={false}
           >
-            {error && <Text style={$errorText}>{error}</Text>}
+            {error && (
+              <Text className="text-[13px] px-6 py-3" style={$errorTextColor}>
+                {error}
+              </Text>
+            )}
 
             {segment === "customers" ? (
               Object.keys(groupedProfiles).length === 0 ? (
-                <View style={$emptyContainer}>
-                  <Text style={$emptyTitle}>No customer measurements yet</Text>
-                  <Text style={$emptyText}>
+                <View className="items-center py-8 px-6">
+                  <Text className="text-[16px] mb-2" weight="semiBold" style={$emptyTitleColor}>
+                    No customer measurements yet
+                  </Text>
+                  <Text className="text-[13px] text-center leading-[18px]" style={$emptyTextColor}>
                     Measurement profiles of customers who place orders with you will appear here.
                   </Text>
                 </View>
               ) : (
                 Object.entries(groupedProfiles).map(([customerId, records]) => (
-                  <View key={customerId} style={$group}>
-                    <Text style={$groupTitle}>
+                  <View key={customerId} className="px-6 pt-4">
+                    <Text className="text-[14px] mb-2 capitalize" weight="semiBold" style={$groupTitleColor}>
                       {customerNames[customerId] ?? `Customer ${customerId.slice(0, 5)}`}
                     </Text>
-                    <View style={$card}>{records.map((r) => renderRow(r, true))}</View>
+                    <View className="rounded-xl border border-neutral200 bg-neutral100 overflow-hidden">
+                      {records.map((r) => renderRow(r, true))}
+                    </View>
                   </View>
                 ))
               )
             ) : (
-              <View style={$group}>
+              <View className="px-6 pt-4">
                 <Button
                   text="+ New Template"
                   style={$addButton}
@@ -172,19 +191,23 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
                   onPress={() => navigation.navigate("AddMeasurement")}
                 />
                 {templates.length === 0 ? (
-                  <View style={$emptyContainer}>
-                    <Text style={$emptyTitle}>No templates yet</Text>
-                    <Text style={$emptyText}>
+                  <View className="items-center py-8 px-6">
+                    <Text className="text-[16px] mb-2" weight="semiBold" style={$emptyTitleColor}>
+                      No templates yet
+                    </Text>
+                    <Text className="text-[13px] text-center leading-[18px]" style={$emptyTextColor}>
                       Create house templates (standard size profiles) you can reference while
                       working on orders.
                     </Text>
                   </View>
                 ) : (
-                  <View style={$card}>{templates.map((r) => renderRow(r, false))}</View>
+                  <View className="rounded-xl border border-neutral200 bg-neutral100 overflow-hidden">
+                    {templates.map((r) => renderRow(r, false))}
+                  </View>
                 )}
               </View>
             )}
-            <View style={$scrollFooterSpace} />
+            <View className="h-12" />
           </ScrollView>
         )}
       </Screen>
@@ -193,6 +216,12 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
 )
 
 // Styles
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (light in both schemes) — no `dark:` variants. Layout, spacing,
+// and container backgrounds/borders are className token utilities. The
+// selection-state segment background, Screen contentContainerStyle, the flex
+// ScrollView style, and Button style overrides stay inline.
+//
 // Screen's fixed preset gives its inner container no height; without flex the
 // measurement list collapses to zero height.
 const $screenContent: ViewStyle = {
@@ -203,108 +232,12 @@ const $container: ViewStyle = {
   flex: 1,
 }
 
-const $loadingContainer: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $header: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-}
-
-const $headerTitle: TextStyle = {
-  fontSize: 22,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-}
-
-const $segmentRow: ViewStyle = {
-  flexDirection: "row",
-  marginHorizontal: spacing.lg,
-  marginBottom: spacing.sm,
-  backgroundColor: colors.palette.neutral200,
-  borderRadius: 10,
-  padding: 4,
-}
-
-const $segment: ViewStyle = {
-  flex: 1,
-  paddingVertical: spacing.sm,
-  borderRadius: 8,
-  alignItems: "center",
-}
-
+// Selection-state background stays inline (conditional style).
 const $selectedSegment: ViewStyle = {
   backgroundColor: colors.palette.neutral100,
 }
 
-const $segmentText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral600,
-}
-
-const $selectedSegmentText: TextStyle = {
-  color: colors.palette.neutral900,
-  fontWeight: "600",
-}
-
-const $errorText: TextStyle = {
-  color: colors.palette.error500,
-  fontSize: 13,
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.sm,
-}
-
-const $group: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.md,
-}
-
-const $groupTitle: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.neutral600,
-  marginBottom: spacing.xs,
-  textTransform: "capitalize",
-}
-
-const $card: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-  overflow: "hidden",
-}
-
-const $row: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
-}
-
-const $rowContent: ViewStyle = {
-  flex: 1,
-}
-
-const $rowTitle: TextStyle = {
-  fontSize: 15,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-}
-
-const $rowSubtitle: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral600,
-  marginTop: 2,
-  textTransform: "capitalize",
-}
-
+// Button style overrides stay inline (Button owns its className).
 const $addButton: ViewStyle = {
   backgroundColor: colors.palette.primary500,
   borderRadius: 12,
@@ -317,26 +250,13 @@ const $addButtonText: TextStyle = {
   color: colors.palette.neutral100,
 }
 
-const $emptyContainer: ViewStyle = {
-  alignItems: "center",
-  paddingVertical: spacing.xl,
-  paddingHorizontal: spacing.lg,
-}
-
-const $emptyTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xs,
-}
-
-const $emptyText: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral600,
-  textAlign: "center",
-  lineHeight: 18,
-}
-
-const $scrollFooterSpace: ViewStyle = {
-  height: spacing.xxl,
-}
+// Text color overrides (static, light-only).
+const $headerTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $segmentTextColor: TextStyle = { color: colors.palette.neutral600 }
+const $selectedSegmentTextColor: TextStyle = { color: colors.palette.neutral900 }
+const $errorTextColor: TextStyle = { color: colors.palette.error500 }
+const $groupTitleColor: TextStyle = { color: colors.palette.neutral600 }
+const $rowTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $rowSubtitleColor: TextStyle = { color: colors.palette.neutral600 }
+const $emptyTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $emptyTextColor: TextStyle = { color: colors.palette.neutral600 }
