@@ -30,7 +30,8 @@ export const ThemeToggle: FC<ThemeToggleProps> = ({ style: $styleOverride, size 
 
   return (
     <TouchableOpacity
-      style={[$container, $styleOverride]}
+      className="items-center justify-center rounded-[20px] p-2"
+      style={$styleOverride}
       onPress={toggleTheme}
       accessible
       accessibilityLabel={`Switch to ${themeContext === "dark" ? "light" : "dark"} theme`}
@@ -40,11 +41,4 @@ export const ThemeToggle: FC<ThemeToggleProps> = ({ style: $styleOverride, size 
       <Icon icon={iconName} size={size} color={theme.colors.text} />
     </TouchableOpacity>
   )
-}
-
-const $container: ViewStyle = {
-  padding: 8,
-  borderRadius: 20,
-  justifyContent: "center",
-  alignItems: "center",
 }

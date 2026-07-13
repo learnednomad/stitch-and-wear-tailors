@@ -3,7 +3,6 @@ import { Image, ImageProps, ImageStyle, StyleProp, TextStyle, View, ViewStyle } 
 import { Button, ButtonProps } from "./Button"
 import { Text, TextProps } from "./Text"
 import { useAppTheme } from "@/utils/useAppTheme"
-import type { ThemedStyle } from "@/theme"
 import { translate } from "@/i18n/translate"
 
 const sadFace = require("../../assets/images/sad-face.png")
@@ -118,7 +117,6 @@ interface EmptyStatePresetItem {
 export function EmptyState(props: EmptyStateProps) {
   const {
     theme,
-    themed,
     theme: { spacing },
   } = useAppTheme()
 
@@ -163,21 +161,20 @@ export function EmptyState(props: EmptyStateProps) {
   const isButtonPresent = !!(button || buttonTx)
 
   const $containerStyles = [$containerStyleOverride]
+  // Base styles (self-center, text-center, px-6) move to className; the
+  // presence-conditional margins and caller overrides remain inline style props.
   const $imageStyles = [
-    $image,
     (isHeadingPresent || isContentPresent || isButtonPresent) && { marginBottom: spacing.xxxs },
     $imageStyleOverride,
     ImageProps?.style,
   ]
   const $headingStyles = [
-    themed($heading),
     isImagePresent && { marginTop: spacing.xxxs },
     (isContentPresent || isButtonPresent) && { marginBottom: spacing.xxxs },
     $headingStyleOverride,
     HeadingTextProps?.style,
   ]
   const $contentStyles = [
-    themed($content),
     (isImagePresent || isHeadingPresent) && { marginTop: spacing.xxxs },
     isButtonPresent && { marginBottom: spacing.xxxs },
     $contentStyleOverride,
@@ -195,6 +192,7 @@ export function EmptyState(props: EmptyStateProps) {
         <Image
           source={imageSource}
           {...ImageProps}
+          className="self-center"
           style={$imageStyles}
           tintColor={theme.colors.palette.neutral900}
         />
@@ -207,6 +205,7 @@ export function EmptyState(props: EmptyStateProps) {
           tx={headingTx}
           txOptions={headingTxOptions}
           {...HeadingTextProps}
+          className="px-6 text-center"
           style={$headingStyles}
         />
       )}
@@ -217,6 +216,7 @@ export function EmptyState(props: EmptyStateProps) {
           tx={contentTx}
           txOptions={contentTxOptions}
           {...ContentTextProps}
+          className="px-6 text-center"
           style={$contentStyles}
         />
       )}
@@ -235,13 +235,3 @@ export function EmptyState(props: EmptyStateProps) {
     </View>
   )
 }
-
-const $image: ImageStyle = { alignSelf: "center" }
-const $heading: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  textAlign: "center",
-  paddingHorizontal: spacing.lg,
-})
-const $content: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  textAlign: "center",
-  paddingHorizontal: spacing.lg,
-})
