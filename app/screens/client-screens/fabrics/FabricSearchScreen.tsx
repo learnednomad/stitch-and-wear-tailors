@@ -7,14 +7,7 @@
  */
 import { FC, useMemo, useState } from "react"
 import { observer } from "mobx-react-lite"
-import {
-  RefreshControl,
-  ScrollView,
-  TextStyle,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native"
+import { RefreshControl, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { CatalogGrid, Icon, Screen, Text, TextField } from "@/components"
 import { useFabrics } from "@/api/catalog"
@@ -66,9 +59,9 @@ export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
           ),
         }}
       >
-        <View style={$headerRow}>
+        <View className="flex-row items-center px-4 pt-4">
           <TouchableOpacity
-            style={$backButton}
+            className="mr-2 h-10 w-10 items-center justify-center"
             onPress={() => navigation.goBack()}
             accessible
             accessibilityLabel="Go back"
@@ -76,9 +69,9 @@ export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
           >
             <Icon icon="back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
-          <Text preset="heading" text="Fabrics" style={$headingText} />
+          <Text preset="heading" text="Fabrics" className="flex-1" />
         </View>
-        <View style={$searchContainer}>
+        <View className="px-4 pt-3">
           <TextField
             placeholder="Search fabrics..."
             value={search}
@@ -99,20 +92,13 @@ export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
             return (
               <TouchableOpacity
                 key={option ?? "all"}
-                style={[
-                  $chip,
-                  {
-                    backgroundColor: active ? theme.colors.accent : theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
+                className="rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
+                style={{ backgroundColor: active ? theme.colors.accent : theme.colors.surface }}
                 onPress={() => setType(option)}
               >
                 <Text
-                  style={[
-                    $chipText,
-                    { color: active ? theme.colors.palette.neutral100 : theme.colors.text },
-                  ]}
+                  className="text-[13px] font-semibold"
+                  style={{ color: active ? theme.colors.palette.neutral100 : theme.colors.text }}
                   text={option ? labelize(option) : "All"}
                 />
               </TouchableOpacity>
@@ -121,7 +107,7 @@ export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
         </ScrollView>
 
         {error ? (
-          <Text style={[$error, { color: theme.colors.error }]} text={error} />
+          <Text className="p-4 text-center text-error dark:text-error-dark" text={error} />
         ) : (
           <CatalogGrid
             items={visible.map((fabric) => ({
@@ -142,7 +128,7 @@ export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
           />
         )}
         <Text
-          style={[$footnote, { color: theme.colors.textDim }]}
+          className="p-4 text-center text-[12px] text-textDim dark:text-textDim-dark"
           text="Prices shown are per meter"
         />
       </Screen>
@@ -154,55 +140,9 @@ const $root: ViewStyle = {
   flex: 1,
 }
 
-const $headerRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.md,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: spacing.xs,
-}
-
-const $headingText: TextStyle = {
-  flex: 1,
-}
-
-const $searchContainer: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-}
-
+// ScrollView contentContainerStyle prop — stays an inline style object.
 const $chips: ViewStyle = {
   paddingHorizontal: spacing.md,
   paddingVertical: spacing.sm,
   gap: spacing.xs,
-}
-
-const $chip: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-  borderRadius: 16,
-  borderWidth: 1,
-}
-
-const $chipText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-}
-
-const $error: TextStyle = {
-  padding: spacing.md,
-  textAlign: "center",
-}
-
-const $footnote: TextStyle = {
-  fontSize: 12,
-  textAlign: "center",
-  padding: spacing.md,
 }

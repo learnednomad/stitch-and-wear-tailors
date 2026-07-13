@@ -7,15 +7,7 @@
  * item's category initial.
  */
 import { useMemo } from "react"
-import {
-  Image,
-  ImageStyle,
-  TextStyle,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-  ViewStyle,
-} from "react-native"
+import { Image, TouchableOpacity, useWindowDimensions, View } from "react-native"
 import { Text } from "./Text"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -72,69 +64,66 @@ export function CatalogGrid(props: CatalogGridProps) {
 
   if (items.length === 0) {
     return (
-      <View style={$empty}>
-        <Text text={emptyText ?? "Nothing here yet"} style={{ color: theme.colors.textDim }} />
+      <View className="items-center p-8">
+        <Text
+          text={emptyText ?? "Nothing here yet"}
+          className="text-textDim dark:text-textDim-dark"
+        />
       </View>
     )
   }
 
   return (
-    <View style={$grid}>
+    <View className="flex-row flex-wrap gap-3 px-4">
       {items.map((item) => (
         <TouchableOpacity
           key={item.id}
-          style={[
-            $card,
-            {
-              width: cardWidth,
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-          ]}
+          className="overflow-hidden rounded-2xl border border-border bg-surface dark:border-border-dark dark:bg-surface-dark"
+          style={{ width: cardWidth }}
           onPress={() => onPressItem?.(item)}
           accessible
           accessibilityRole="button"
           accessibilityLabel={item.title}
         >
           {item.imageUrl ? (
-            <Image source={{ uri: item.imageUrl }} style={$image} resizeMode="cover" />
+            <Image source={{ uri: item.imageUrl }} className="h-[120px] w-full" resizeMode="cover" />
           ) : (
             <View
-              style={[
-                $placeholder,
-                {
-                  backgroundColor:
-                    placeholderTones[placeholderToneIndex(item.category, placeholderTones.length)]
-                      .bg,
-                },
-              ]}
+              className="h-[120px] w-full items-center justify-center"
+              style={{
+                backgroundColor:
+                  placeholderTones[placeholderToneIndex(item.category, placeholderTones.length)].bg,
+              }}
             >
               <Text
-                style={[
-                  $placeholderInitial,
-                  {
-                    color:
-                      placeholderTones[
-                        placeholderToneIndex(item.category, placeholderTones.length)
-                      ].fg,
-                  },
-                ]}
+                className="text-[36px] font-bold"
+                style={{
+                  color:
+                    placeholderTones[placeholderToneIndex(item.category, placeholderTones.length)]
+                      .fg,
+                }}
               >
                 {(item.category || item.title).charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
-          <View style={$cardBody}>
-            <Text style={[$title, { color: theme.colors.text }]} numberOfLines={1}>
+          <View className="p-3">
+            <Text
+              className="text-[14px] font-semibold text-text dark:text-text-dark"
+              numberOfLines={1}
+            >
               {item.title}
             </Text>
             {!!item.subtitle && (
-              <Text style={[$subtitle, { color: theme.colors.textDim }]} numberOfLines={1}>
+              <Text
+                className="mt-0.5 text-[12px] text-textDim dark:text-textDim-dark"
+                numberOfLines={1}
+              >
                 {item.subtitle}
               </Text>
             )}
             {item.price !== undefined && (
-              <Text style={[$price, { color: theme.colors.accent }]}>
+              <Text className="mt-1 text-[13px] font-bold text-accent dark:text-accent-dark">
                 {formatNaira(item.price)}
               </Text>
             )}
@@ -143,59 +132,4 @@ export function CatalogGrid(props: CatalogGridProps) {
       ))}
     </View>
   )
-}
-
-const $grid: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.sm,
-  paddingHorizontal: spacing.md,
-}
-
-const $card: ViewStyle = {
-  borderRadius: 16,
-  borderWidth: 1,
-  overflow: "hidden",
-}
-
-const $image: ImageStyle = {
-  width: "100%",
-  height: 120,
-}
-
-const $placeholder: ViewStyle = {
-  width: "100%",
-  height: 120,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $placeholderInitial: TextStyle = {
-  fontSize: 36,
-  fontWeight: "700",
-}
-
-const $cardBody: ViewStyle = {
-  padding: spacing.sm,
-}
-
-const $title: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-}
-
-const $subtitle: TextStyle = {
-  fontSize: 12,
-  marginTop: 2,
-}
-
-const $price: TextStyle = {
-  fontSize: 13,
-  fontWeight: "700",
-  marginTop: spacing.xxs,
-}
-
-const $empty: ViewStyle = {
-  padding: spacing.xl,
-  alignItems: "center",
 }
