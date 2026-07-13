@@ -5,10 +5,9 @@
 
 import React, { FC, useState, useEffect } from "react"
 import { View, ScrollView, ViewStyle, TextStyle, TouchableOpacity, Alert } from "react-native"
-import { observer } from "mobx-react-lite"
 import { Text, TextField, Button, Icon, AutoImage } from "@/components"
 import { colors, spacing } from "@/theme"
-import { useStores } from "@/models"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { NigerianGarmentType } from "@/types/orders"
 import { nigerianBusinessConfig } from "@/i18n/nigerian-languages"
 
@@ -32,8 +31,8 @@ interface StyleVariation {
   priceAdjustment: number
 }
 
-export const StyleSelectionStep: FC = observer(() => {
-  const { orderStore } = useStores()
+export const StyleSelectionStep: FC = () => {
+  const orderStore = useOrderDraftStore()
 
   const [selectedGarmentType, setSelectedGarmentType] = useState<NigerianGarmentType | "">("")
   const [selectedVariation, setSelectedVariation] = useState<string>("")
@@ -565,7 +564,7 @@ export const StyleSelectionStep: FC = observer(() => {
       </View>
     </ScrollView>
   )
-})
+}
 
 // Styles
 // Static (light-only) `colors` screen: layout/spacing/container colors moved to

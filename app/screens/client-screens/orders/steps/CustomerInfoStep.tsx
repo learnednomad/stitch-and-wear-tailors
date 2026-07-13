@@ -5,15 +5,14 @@
 
 import React, { FC, useState, useEffect } from "react"
 import { ScrollView, View, ViewStyle, TextStyle, Alert } from "react-native"
-import { observer } from "mobx-react-lite"
 import { Text, TextField, Button } from "@/components"
 import { colors, spacing } from "@/theme"
-import { useStores } from "@/models"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useAuthStore } from "@/state/authStore"
 import { CustomerInfo, NigerianCity, SupportedLanguage } from "@/types/orders"
 
-export const CustomerInfoStep: FC = observer(() => {
-  const { orderStore } = useStores()
+export const CustomerInfoStep: FC = () => {
+  const orderStore = useOrderDraftStore()
   const authStore = useAuthStore()
 
   const [formData, setFormData] = useState({
@@ -232,7 +231,7 @@ export const CustomerInfoStep: FC = observer(() => {
       </View>
     </ScrollView>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay

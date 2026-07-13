@@ -5,17 +5,23 @@
 
 import React, { FC, useState, useEffect } from "react"
 import { View, ScrollView, ViewStyle, TextStyle, Alert } from "react-native"
-import { observer } from "mobx-react-lite"
 import { Text, Button, Icon } from "@/components"
 import { colors, spacing } from "@/theme"
-import { useStores } from "@/models"
+import {
+  useOrderDraftStore,
+  getCityConfig,
+  getGarmentConfig,
+  selectIsOrderCreationComplete,
+} from "@/state/orderDraftStore"
+import { useCreateOrder } from "@/api/orders"
 import { useAuthStore } from "@/state/authStore"
 import { useNavigation } from "@react-navigation/native"
 
-export const ConfirmationStep: FC = observer(() => {
-  const { orderStore } = useStores()
+export const ConfirmationStep: FC = () => {
+  const orderStore = useOrderDraftStore()
   const authStore = useAuthStore()
   const navigation = useNavigation()
+  const createOrder = useCreateOrder()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -28,7 +34,7 @@ export const ConfirmationStep: FC = observer(() => {
       Alert.alert(
         "Incomplete Order",
         "Some order information is missing. Please go back and complete all steps.",
-        [{ text: "OK", onPress: () => (orderStore.orderCreationStep = 0) }],
+        [{ text: "OK", onPress: () => orderStore.setOrderCreationStep(0) }],
       )
     }
   }, [])
@@ -39,7 +45,7 @@ export const ConfirmationStep: FC = observer(() => {
       return
     }
 
-    if (!orderStore.isOrderCreationComplete) {
+    if (!selectIsOrderCreationComplete(orderStore)) {
       Alert.alert("Incomplete Order", "Please complete all required steps before submitting.")
       return
     }
@@ -47,11 +53,13 @@ export const ConfirmationStep: FC = observer(() => {
     setIsSubmitting(true)
 
     try {
-      // Create the draft order using OrderStore
+      // Build the draft order in the Zustand wizard store, then submit via
+      // the React Query create mutation (server-data path).
       orderStore.createNigerianDraftOrder()
+      const draft = useOrderDraftStore.getState().draftOrder
 
-      // Submit the order
-      const createdOrder = await orderStore.submitNigerianDraftOrder()
+      const createdOrder = await createOrder.mutateAsync(draft as Record<string, any>)
+      orderStore.clearDraftOrder()
 
       Alert.alert(
         "Order Submitted Successfully!",
@@ -86,7 +94,7 @@ export const ConfirmationStep: FC = observer(() => {
   const getEstimatedDelivery = () => {
     if (!orderData?.styleConfig) return "N/A"
 
-    const garmentConfig = orderStore.getGarmentConfig(orderData.styleConfig.garmentType as any)
+    const garmentConfig = getGarmentConfig(orderData.styleConfig.garmentType as any)
     if (!garmentConfig) return "N/A"
 
     const baseDays = garmentConfig.estimatedDays
@@ -124,7 +132,7 @@ export const ConfirmationStep: FC = observer(() => {
         orderData.priority === "urgent",
       )
 
-      const cityConfig = orderStore.getCityConfig(orderData.customerInfo.city as any)
+      const cityConfig = getCityConfig(orderData.customerInfo.city as any)
       const deliveryFee = cityConfig.deliveryFee
 
       return pricing.totalPrice + deliveryFee
@@ -483,7 +491,7 @@ export const ConfirmationStep: FC = observer(() => {
       </View>
     </ScrollView>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors and

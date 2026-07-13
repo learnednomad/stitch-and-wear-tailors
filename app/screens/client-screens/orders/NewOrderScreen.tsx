@@ -8,13 +8,11 @@ import {
   FlatList,
   Alert,
 } from "react-native"
-import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, Screen, Icon, Text, AutoImage } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
 import { useNavigation } from "@react-navigation/native"
-import { useStores } from "@/models"
 import { useAuth } from "@/contexts/AuthContext"
 
 interface Style {
@@ -42,10 +40,9 @@ interface Fabric {
 
 interface NewOrderScreenProps extends AppStackScreenProps<"NewOrder"> {}
 
-export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
+export const NewOrderScreen: FC<NewOrderScreenProps> = ({ route }) => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
-  const { orderStore, fabricStore } = useStores()
   const { user } = useAuth()
 
   // Reorder entry point: OrderDetail pre-selects the past order's style and
@@ -506,7 +503,7 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
       </View>
     </Screen>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay

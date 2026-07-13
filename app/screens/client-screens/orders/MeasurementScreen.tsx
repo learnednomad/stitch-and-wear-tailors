@@ -13,7 +13,8 @@ import { Button, Screen, Icon, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
 import { useNavigation } from "@react-navigation/native"
-import { useStores } from "@/models"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
+import { useCreateOrder } from "@/api/orders"
 import { useAuth } from "@/contexts/AuthContext"
 
 /** Map the catalog style ids used by NewOrderScreen to domain garment types */
@@ -49,7 +50,8 @@ interface MeasurementScreenProps extends AppStackScreenProps<"Measurement"> {}
 export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
-  const { orderStore } = useStores()
+  const orderStore = useOrderDraftStore()
+  const createOrderMutation = useCreateOrder()
   const { user } = useAuth()
 
   const [measurements, setMeasurements] = useState<MeasurementData>({})
@@ -222,7 +224,10 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
       })
       orderStore.createNigerianDraftOrder()
 
-      const createdOrder = await orderStore.submitNigerianDraftOrder()
+      // Submit the freshly built draft via the React Query create mutation.
+      const draft = useOrderDraftStore.getState().draftOrder
+      const createdOrder = await createOrderMutation.mutateAsync(draft as Record<string, any>)
+      useOrderDraftStore.getState().clearDraftOrder()
 
       Alert.alert(
         "Order Created Successfully!",

@@ -5,10 +5,9 @@
 
 import React, { FC, useState, useEffect } from "react"
 import { View, ScrollView, ViewStyle, TextStyle, TouchableOpacity, Alert } from "react-native"
-import { observer } from "mobx-react-lite"
 import { Text, Button, Icon } from "@/components"
 import { colors, spacing } from "@/theme"
-import { useStores } from "@/models"
+import { useOrderDraftStore, getCityConfig, getGarmentConfig } from "@/state/orderDraftStore"
 import { PaymentMethod, NigerianCity, NigerianGarmentType, OrderPriority } from "@/types/orders"
 
 interface PricingBreakdown {
@@ -22,8 +21,8 @@ interface PricingBreakdown {
   balanceAmount: number
 }
 
-export const PricingStep: FC = observer(() => {
-  const { orderStore } = useStores()
+export const PricingStep: FC = () => {
+  const orderStore = useOrderDraftStore()
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("bank_transfer")
   const [selectedPriority, setSelectedPriority] = useState<OrderPriority>("normal")
@@ -130,7 +129,7 @@ export const PricingStep: FC = observer(() => {
       const calculatedPricing = orderStore.calculateNigerianPricing(garmentType, city, isRush)
 
       // Add delivery fee based on city
-      const cityConfig = orderStore.getCityConfig(city)
+      const cityConfig = getCityConfig(city)
       const deliveryFee = cityConfig.deliveryFee
 
       // Add processing fee for payment method
@@ -167,7 +166,7 @@ export const PricingStep: FC = observer(() => {
   const handleConfirmPricing = () => {
     if (pricing && orderStore.orderCreationData) {
       // Update order priority
-      orderStore.orderCreationData.priority = selectedPriority
+      orderStore.setOrderPriority(selectedPriority)
 
       Alert.alert(
         "Pricing Confirmed",
@@ -187,7 +186,7 @@ export const PricingStep: FC = observer(() => {
   const getEstimatedDelivery = () => {
     if (!orderStore.orderCreationData?.styleConfig) return "N/A"
 
-    const garmentConfig = orderStore.getGarmentConfig(
+    const garmentConfig = getGarmentConfig(
       orderStore.orderCreationData.styleConfig.garmentType as NigerianGarmentType,
     )
     if (!garmentConfig) return "N/A"
@@ -496,7 +495,7 @@ export const PricingStep: FC = observer(() => {
       </View>
     </ScrollView>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors and

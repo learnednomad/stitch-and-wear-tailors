@@ -5,10 +5,9 @@
 
 import React, { FC, useState, useEffect } from "react"
 import { View, ScrollView, ViewStyle, TextStyle, TouchableOpacity, FlatList, Alert } from "react-native"
-import { observer } from "mobx-react-lite"
 import { Text, TextField, Button, Icon, AutoImage } from "@/components"
 import { colors, spacing } from "@/theme"
-import { useStores } from "@/models"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { FabricType, NigerianCity } from "@/types/orders"
 
 interface FabricOption {
@@ -25,8 +24,8 @@ interface FabricOption {
   culturalSignificance?: string
 }
 
-export const FabricSelectionStep: FC = observer(() => {
-  const { orderStore } = useStores()
+export const FabricSelectionStep: FC = () => {
+  const orderStore = useOrderDraftStore()
 
   const [selectedFabricId, setSelectedFabricId] = useState<string>("")
   const [quantity, setQuantity] = useState<string>("3")
@@ -456,7 +455,7 @@ export const FabricSelectionStep: FC = observer(() => {
       </View>
     </ScrollView>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors and

@@ -5,11 +5,15 @@
 
 import React, { FC, useState, useEffect } from "react"
 import { View, ScrollView, ViewStyle, TextStyle, Alert, TouchableOpacity } from "react-native"
-import { observer } from "mobx-react-lite"
 import { Text, TextField, Button, Icon } from "@/components"
 import { colors, spacing } from "@/theme"
-import { useStores } from "@/models"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useAuthStore } from "@/state/authStore"
+import {
+  getPocketBaseAdapter,
+  filters,
+  COLLECTIONS,
+} from "@/services/api/pocketbase-api-adapter"
 import { NigerianGarmentType, MeasurementData } from "@/types/orders"
 
 interface SavedMeasurement {
@@ -25,8 +29,8 @@ interface SavedMeasurement {
   isDefault: boolean
 }
 
-export const MeasurementsStep: FC = observer(() => {
-  const { orderStore } = useStores()
+export const MeasurementsStep: FC = () => {
+  const orderStore = useOrderDraftStore()
   const authStore = useAuthStore()
 
   const [selectedOption, setSelectedOption] = useState<"new" | "existing" | "skip">("new")
@@ -53,9 +57,17 @@ export const MeasurementsStep: FC = observer(() => {
   const loadSavedMeasurements = async () => {
     try {
       if (authStore.user?.id) {
-        // TODO: Replace with actual API call
-        const measurements = await orderStore.loadUserMeasurements(authStore.user.id)
-        setSavedMeasurements(measurements || [])
+        // Direct PB read (parity with the former OrderStore.loadUserMeasurements;
+        // measurements move to a React Query hook in a later batch).
+        const adapter = getPocketBaseAdapter()
+        const result = await adapter.list(COLLECTIONS.MEASUREMENTS, {
+          filter: filters.eq("user", authStore.user.id),
+          sort: "-created",
+          perPage: 10,
+        })
+        if (result.success) {
+          setSavedMeasurements((result.data.items as SavedMeasurement[]) || [])
+        }
       }
     } catch (error) {
       console.warn("Failed to load measurements:", error)
@@ -355,7 +367,7 @@ export const MeasurementsStep: FC = observer(() => {
       </View>
     </ScrollView>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay
