@@ -60,6 +60,8 @@ export const COLLECTIONS = {
   APPOINTMENTS: "appointments",
   REVIEWS: "reviews",
   NOTIFICATIONS: "notifications",
+  PRODUCTS: "products",
+  MARKETPLACE_ORDERS: "marketplace_orders",
 } as const
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS]

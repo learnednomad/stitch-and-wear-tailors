@@ -12,11 +12,13 @@ import { HomeScreen } from "@/screens/client-screens/HomeScreen"
 import { OrdersScreen } from "@/screens/client-screens/orders/OrdersScreen"
 import { PaymentScreen } from "@/screens/client-screens/orders/PaymentScreen"
 import { CatalogScreen } from "@/screens/client-screens/CatalogScreen"
+import { MarketplaceScreen } from "@/screens/client-screens/marketplace/MarketplaceScreen"
 
 export type TabParamList = {
   Home: undefined
   Orders: { queryIndex?: string; itemIndex?: string }
   Browse: undefined
+  Shop: undefined
   Pay: undefined
   Settings: undefined
 }
@@ -83,6 +85,14 @@ export function TabNavigator() {
         options={{
           tabBarLabel: "Browse",
           tabBarIcon: ({ color }) => <Icon icon="view" color={color} size={24} />,
+        }}
+      />
+      <Tab.Screen
+        name="Shop"
+        component={MarketplaceScreen as any}
+        options={{
+          tabBarLabel: "Shop",
+          tabBarIcon: ({ color }) => <Icon icon="money" color={color} size={24} />,
         }}
       />
       <Tab.Screen

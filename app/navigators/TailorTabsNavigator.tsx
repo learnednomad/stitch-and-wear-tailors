@@ -12,10 +12,12 @@ import { TailorScreen } from "@/screens/tailor-screens/TailorScreen"
 import { TailorOrderScreen } from "@/screens/tailor-screens/orders/TailorOrderScreen"
 import { AnalyticsScreen } from "@/screens/tailor-screens/analytics/AnalyticsScreen"
 import { TailorMeasurementScreen } from "@/screens/tailor-screens/measurements/MeasurementScreen"
+import { ManageProductsScreen } from "@/screens/tailor-screens/marketplace/ManageProductsScreen"
 
 export type TailorTabParamList = {
   TailorHome: undefined
   TailorOrders: { queryIndex?: string; itemIndex?: string }
+  Products: undefined
   Measurements: undefined
   Analytics: undefined
   Settings: undefined
@@ -73,6 +75,14 @@ export function TailorTabNavigator() {
         options={{
           tabBarLabel: "Orders",
           tabBarIcon: ({ color }) => <Icon icon="sew" color={color} size={24} />,
+        }}
+      />
+      <Tab.Screen
+        name="Products"
+        component={ManageProductsScreen as any}
+        options={{
+          tabBarLabel: "Products",
+          tabBarIcon: ({ color }) => <Icon icon="coins" color={color} size={24} />,
         }}
       />
       <Tab.Screen

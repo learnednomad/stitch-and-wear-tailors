@@ -91,6 +91,13 @@ module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
       ...existingPlugins,
       ...sentryPlugin,
       require("./plugins/withSplashScreen").withSplashScreen,
+      [
+        "expo-image-picker",
+        {
+          photosPermission:
+            "Allow Stitch & Wear to access your photos so you can add images to your product listings.",
+        },
+      ],
     ],
   }
 }

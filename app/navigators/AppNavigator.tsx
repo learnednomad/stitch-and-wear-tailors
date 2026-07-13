@@ -69,6 +69,12 @@ export type AppStackParamList = {
   CreateInvoice: undefined
   FabricSearch: undefined
   BookFitting: undefined
+  Marketplace: undefined
+  ProductDetail: { productId: string }
+  Cart: undefined
+  Checkout: undefined
+  MyPurchases: undefined
+  ManageProducts: undefined
   Styles: undefined
   Catalog: undefined
   Settings: undefined
@@ -191,6 +197,12 @@ const AppStack = observer(function AppStack() {
             <Stack.Screen name="InvoiceDetail" component={Screens.InvoiceDetailScreen} />
             <Stack.Screen name="CreateInvoice" component={Screens.CreateInvoiceScreen} />
             <Stack.Screen name="FabricSearch" component={Screens.FabricSearchScreen} />
+            <Stack.Screen name="Marketplace" component={Screens.MarketplaceScreen} />
+            <Stack.Screen name="ProductDetail" component={Screens.ProductDetailScreen} />
+            <Stack.Screen name="Cart" component={Screens.CartScreen} />
+            <Stack.Screen name="Checkout" component={Screens.CheckoutScreen} />
+            <Stack.Screen name="MyPurchases" component={Screens.MyPurchasesScreen} />
+            <Stack.Screen name="ManageProducts" component={Screens.ManageProductsScreen} />
             <Stack.Screen name="BookFitting" component={Screens.BookFittingScreen} />
             <Stack.Screen name="Styles" component={Screens.StylesScreen} />
             <Stack.Screen name="Catalog" component={Screens.CatalogScreen} />

@@ -77,6 +77,22 @@ const CATALOG_STYLES = [
   ["Tailored Trousers", "trouser", "unisex", 22000, "Straight-cut tailored trousers"],
 ]
 
+// [name, category, price, stock, description]
+const PRODUCTS = [
+  ["Ready-made Agbada (Navy)", "menswear", 78000, 6, "Pre-tailored three-piece agbada, navy with silver embroidery. Ships in 2–3 days."],
+  ["Senator Wear (Black)", "menswear", 42000, 12, "Classic slim-fit senator, ready to wear. Mandarin collar, covered buttons."],
+  ["Embroidered Kaftan (White)", "menswear", 36000, 9, "Off-the-rack white kaftan with tonal embroidery panel."],
+  ["Ankara Flare Gown", "womenswear", 49000, 5, "Floor-length ankara gown, flared skirt. Vibrant Angelina print."],
+  ["Ankara Two-Piece Set", "womenswear", 45000, 7, "Crop top and maxi skirt ankara set, ready to wear."],
+  ["Iro & Buba Set (Aso-Oke)", "womenswear", 62000, 4, "Traditional iro and buba in premium aso-oke, with matching gele."],
+  ["Kids Dashiki (Ages 4–8)", "childrenswear", 14000, 15, "Colourful dashiki for children, soft cotton, machine washable."],
+  ["Beaded Gele Headwrap", "accessories", 9500, 20, "Pre-tied beaded gele, adjustable. Gold and burgundy."],
+  ["Leather Babouche Slippers", "footwear", 18000, 10, "Handmade leather slippers, tan. Sizes 40–46."],
+  ["Ankara Fabric (6 yards)", "fabric", 12000, 25, "Premium wax ankara, 6-yard bundle. Assorted prints."],
+  ["Aso-Oke Bundle (Gold)", "fabric", 34000, 8, "Handwoven aso-oke, gold. Enough for a full iro & buba."],
+  ["Kente Stole", "accessories", 15000, 14, "Authentic kente stole, graduation-ready."],
+]
+
 const FABRICS = [
   ["Premium Ankara Wax", "ankara", "Multicolor", "Geometric", 4500, 120],
   ["Hollandais Ankara", "ankara", "Blue/Gold", "Floral", 6500, 80],
@@ -171,6 +187,27 @@ async function main() {
     fabricIds.push(rec.id)
   }
   console.log(`Fabrics: ${fabricIds.length}`)
+
+  // --- marketplace products (sold by the demo tailor) ---
+  let productIds = []
+  for (const [name, category, price, stock, description] of PRODUCTS) {
+    let rec = await first("products", `name = '${name.replace(/'/g, "''")}'`)
+    if (!rec) {
+      rec = await api("POST", "/api/collections/products/records", {
+        seller: tailor.id,
+        name,
+        category,
+        price,
+        stock,
+        currency: "NGN",
+        description,
+        isActive: true,
+        tags: [category],
+      })
+    }
+    productIds.push(rec.id)
+  }
+  console.log(`Products: ${productIds.length}`)
 
   // --- everything below only when the demo client has no orders yet ---
   const existingOrder = await first("orders", `customer = '${client.id}'`)

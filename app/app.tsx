@@ -32,6 +32,7 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "./api/common"
 import { loadDateFnsLocale } from "./utils/formatDate"
 import { AuthProvider } from "./contexts/AuthContext"
+import { CartProvider } from "./contexts/CartContext"
 import { initSentry, withSentry } from "./utils/sentry"
 
 // Initialize Sentry before the root component renders (no-op in dev or
@@ -116,11 +117,13 @@ function AppRoot() {
       <QueryClientProvider client={queryClient}>
         <KeyboardProvider>
           <AuthProvider>
-            <AppNavigator
-              linking={linking}
-              initialState={initialNavigationState}
-              onStateChange={onNavigationStateChange}
-            />
+            <CartProvider>
+              <AppNavigator
+                linking={linking}
+                initialState={initialNavigationState}
+                onStateChange={onNavigationStateChange}
+              />
+            </CartProvider>
           </AuthProvider>
         </KeyboardProvider>
       </QueryClientProvider>
