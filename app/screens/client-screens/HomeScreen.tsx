@@ -1,6 +1,5 @@
 import React, { FC, useEffect, useState, useCallback } from "react"
 import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle, RefreshControl } from "react-native"
-import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "@/navigators"
 import {
   Button,
@@ -17,8 +16,9 @@ import {
 } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
-import { useStores } from "@/models"
 import { useClientOrders } from "@/api/orders"
+import { useNotifications, unreadCountOf } from "@/api/notifications"
+import { useClientMeasurements } from "@/api/measurements"
 import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useAuthStore } from "@/state/authStore"
 import { useNavigation } from "@react-navigation/native"
@@ -31,7 +31,7 @@ const getGreeting = () => {
   return currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening"
 }
 
-export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
+export const HomeScreen: FC<ClientPortalScreenProps> = () => {
   const { theme } = useAppTheme()
   const navigation = useNavigation()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
@@ -39,8 +39,6 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [nextAppointment, setNextAppointment] = useState<PBAppointment | null>(null)
 
-  // Get stores (measurement + notification stay on MST for now)
-  const { measurementStore, notificationStore } = useStores()
   const authStore = useAuthStore()
   const getTranslation = useOrderDraftStore((s) => s.getTranslation)
 
@@ -49,10 +47,14 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   const userProfile = currentUser?.profile
   const userName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : "Welcome User"
 
-  const unreadNotifications = notificationStore.unreadCount || 0
+  // Notifications drive the bell badge (React Query)
+  const { data: notifications = [], refetch: refetchNotifications } = useNotifications()
+  const unreadNotifications = unreadCountOf(notifications)
 
   // Real order data via React Query (loaded/kept fresh automatically)
   const { data: myOrders = [], refetch: refetchOrders } = useClientOrders(currentUser?.id)
+  // Client's own measurement records (React Query)
+  const { data: measurements = [] } = useClientMeasurements(currentUser?.id)
   const activeOrdersCount = myOrders.filter((order: any) =>
     ["pending", "confirmed", "in_progress", "ready"].includes(order.status),
   ).length
@@ -62,7 +64,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
 
   // Get recent data with safe access
   const recentOrders = myOrders.slice(0, 3) // Get first 3 orders
-  const recentMeasurements = (measurementStore?.measurements?.items || []).slice(0, 3) // Get first 3 measurements
+  const recentMeasurements = measurements.slice(0, 3) // Get first 3 measurements
 
   // Button style overrides (Button owns its className; these inline overrides
   // read the live theme so they stay dark-aware).
@@ -101,7 +103,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
           }
         }),
         // Refresh notifications from PocketBase so the bell badge is live
-        notificationStore.loadServerNotifications(),
+        refetchNotifications(),
       ])
     } catch (error) {
       console.error("Failed to load dashboard data:", error)
@@ -346,7 +348,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
               className="mx-4 mb-3 rounded-2xl border border-border bg-surface p-4 dark:border-border-dark dark:bg-surface-dark"
               onPress={() => console.log(`Navigate to Measurement Details: ${item.id}`)}
               accessible
-              accessibilityLabel={`Measurement: ${item.type || "Custom"}`}
+              accessibilityLabel={`Measurement: ${item.name || "Custom"}`}
               accessibilityRole="button"
               activeOpacity={0.7}
             >
@@ -356,19 +358,19 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
                     weight="semiBold"
                     className="text-[15px] leading-[21px] text-text dark:text-text-dark"
                   >
-                    {item.type || "Custom Measurement"}
+                    {item.name || "Custom Measurement"}
                   </Text>
                   <Text className="text-[12px] leading-[17px] text-textDim dark:text-textDim-dark">
-                    {item.garmentType || "General"} · {item.status || "Active"}
+                    {item.measurementType || "General"} · {item.isDefault ? "Default" : "Saved"}
                   </Text>
                 </View>
                 <Icon icon="caretRight" size={18} color={theme.colors.palette.gray500} />
               </View>
               <View className="flex-row justify-between border-t border-separator py-3 dark:border-separator-dark">
                 {[
-                  { label: "Chest", value: item.measurements?.chest },
-                  { label: "Waist", value: item.measurements?.waist },
-                  { label: "Length", value: item.measurements?.length },
+                  { label: "Chest", value: item.chest },
+                  { label: "Waist", value: item.waist },
+                  { label: "Hips", value: item.hips },
                 ].map(({ label, value }) => (
                   <View key={label} className="flex-1 items-center">
                     <Text className="mb-1 text-[12px] leading-[17px] text-textDim dark:text-textDim-dark">
@@ -384,7 +386,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
                 ))}
               </View>
               <Text className="text-[12px] leading-[17px] text-gray500 dark:text-gray500-dark">
-                Measured on {item.createdAt ? formatDate(item.createdAt) : "Unknown"}
+                Measured on {item.created ? formatDate(item.created) : "Unknown"}
               </Text>
             </TouchableOpacity>
           ))}
@@ -405,7 +407,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
       </View>
     </Screen>
   )
-})
+}
 
 // Styles
 // This screen was fully themed(); container colors are now className token

@@ -3,38 +3,23 @@
  * Second step in Nigerian order creation workflow
  */
 
-import React, { FC, useState, useEffect } from "react"
+import React, { FC, useState } from "react"
 import { View, ScrollView, ViewStyle, TextStyle, Alert, TouchableOpacity } from "react-native"
 import { Text, TextField, Button, Icon } from "@/components"
 import { colors, spacing } from "@/theme"
 import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useAuthStore } from "@/state/authStore"
-import {
-  getPocketBaseAdapter,
-  filters,
-  COLLECTIONS,
-} from "@/services/api/pocketbase-api-adapter"
-import { NigerianGarmentType, MeasurementData } from "@/types/orders"
-
-interface SavedMeasurement {
-  id: string
-  garmentType: NigerianGarmentType
-  chest: number
-  waist: number
-  length: number
-  shoulder?: number
-  armLength?: number
-  neck?: number
-  createdAt: string
-  isDefault: boolean
-}
+import { useClientMeasurements } from "@/api/measurements"
+import { PBMeasurementRecord } from "@/screens/tailor-screens/measurements/measurement-data"
 
 export const MeasurementsStep: FC = () => {
   const orderStore = useOrderDraftStore()
   const authStore = useAuthStore()
 
   const [selectedOption, setSelectedOption] = useState<"new" | "existing" | "skip">("new")
-  const [savedMeasurements, setSavedMeasurements] = useState<SavedMeasurement[]>([])
+  // Saved measurements via React Query (folds the former direct PB read /
+  // OrderStore.loadUserMeasurements into the measurements hook).
+  const { data: savedMeasurements = [] } = useClientMeasurements(authStore.user?.id)
   const [selectedMeasurementId, setSelectedMeasurementId] = useState<string>("")
   const [showTutorial, setShowTutorial] = useState(false)
 
@@ -49,30 +34,6 @@ export const MeasurementsStep: FC = () => {
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
-
-  useEffect(() => {
-    loadSavedMeasurements()
-  }, [])
-
-  const loadSavedMeasurements = async () => {
-    try {
-      if (authStore.user?.id) {
-        // Direct PB read (parity with the former OrderStore.loadUserMeasurements;
-        // measurements move to a React Query hook in a later batch).
-        const adapter = getPocketBaseAdapter()
-        const result = await adapter.list(COLLECTIONS.MEASUREMENTS, {
-          filter: filters.eq("user", authStore.user.id),
-          sort: "-created",
-          perPage: 10,
-        })
-        if (result.success) {
-          setSavedMeasurements((result.data.items as SavedMeasurement[]) || [])
-        }
-      }
-    } catch (error) {
-      console.warn("Failed to load measurements:", error)
-    }
-  }
 
   const validateMeasurements = () => {
     const newErrors: Record<string, string> = {}
@@ -158,7 +119,7 @@ export const MeasurementsStep: FC = () => {
     { key: "neck", label: orderStore.getTranslation("measurementTypes", "neck"), required: false },
   ]
 
-  const renderSavedMeasurement = (measurement: SavedMeasurement) => (
+  const renderSavedMeasurement = (measurement: PBMeasurementRecord) => (
     <TouchableOpacity
       key={measurement.id}
       className={`rounded-[12px] border-2 bg-neutral100 p-lg mb-md ${
@@ -169,7 +130,7 @@ export const MeasurementsStep: FC = () => {
     >
       <View className="flex-row items-center justify-between mb-sm">
         <Text className="text-[16px] font-semibold" style={$textDeepCharcoal}>
-          {orderStore.getTranslation("garments", measurement.garmentType)}
+          {measurement.name || measurement.measurementType}
         </Text>
         {measurement.isDefault && (
           <View className="rounded-[4px] bg-sageGreen px-xs py-[2px]">
@@ -182,11 +143,10 @@ export const MeasurementsStep: FC = () => {
 
       <View className="mb-sm">
         <Text className="text-[13px] mb-xxs" style={$textThreadBlue}>
-          Chest: {measurement.chest}cm • Waist: {measurement.waist}cm • Length: {measurement.length}
-          cm
+          Chest: {measurement.chest}cm • Waist: {measurement.waist}cm • Hips: {measurement.hips}cm
         </Text>
         <Text className="text-[11px]" style={$textNeutral500}>
-          Created: {new Date(measurement.createdAt).toLocaleDateString()}
+          Created: {new Date(measurement.created).toLocaleDateString()}
         </Text>
       </View>
 

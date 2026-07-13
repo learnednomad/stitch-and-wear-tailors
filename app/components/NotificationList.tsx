@@ -7,14 +7,18 @@
  * (orderId -> OrderDetail, appointment -> BookFitting). Subscribes to
  * PocketBase realtime while mounted.
  */
-import { useCallback, useEffect, useState } from "react"
-import { observer } from "mobx-react-lite"
+import { useCallback, useState } from "react"
 import { RefreshControl, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { Text } from "./Text"
-import { useStores } from "@/models"
 import { PBNotification } from "@/services/api/notification-api"
-import { subscribeToCollection, COLLECTIONS, pb } from "@/services/pocketbase/pocketbase-client"
+import {
+  useNotifications,
+  useNotificationRealtime,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+  unreadCountOf,
+} from "@/api/notifications"
 
 function isToday(iso: string): boolean {
   const date = new Date(iso)
@@ -34,37 +38,28 @@ function formatTime(iso: string): string {
   return date.toLocaleDateString("en-NG", { month: "short", day: "numeric" })
 }
 
-export const NotificationList = observer(function NotificationList() {
+export function NotificationList() {
   const navigation = useNavigation<any>()
-  const { notificationStore } = useStores()
+  const { data: items = [], isLoading, refetch } = useNotifications()
+  const markRead = useMarkNotificationRead()
+  const markAllRead = useMarkAllNotificationsRead()
   const [isRefreshing, setIsRefreshing] = useState(false)
 
-  const load = useCallback(async () => {
-    await notificationStore.loadServerNotifications()
-  }, [notificationStore])
+  // realtime: fold this user's own-record events into the list cache while mounted
+  useNotificationRealtime()
 
-  useEffect(() => {
-    load()
-    // realtime: fold own-record events into the store while mounted
-    const currentUserId = pb.authStore.record?.id ?? ""
-    const unsubscribe = subscribeToCollection(COLLECTIONS.NOTIFICATIONS, (event) => {
-      if (event.record?.user === currentUserId) {
-        notificationStore.applyRealtimeNotification(event.action, event.record)
-      }
-    })
-    return unsubscribe
-  }, [load, notificationStore])
+  const unreadCount = unreadCountOf(items)
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true)
-    await load()
+    await refetch()
     setIsRefreshing(false)
-  }, [load])
+  }, [refetch])
 
   const handlePress = useCallback(
     (notification: PBNotification) => {
       if (!notification.isRead) {
-        notificationStore.markServerNotificationRead(notification.id)
+        markRead.mutate(notification.id)
       }
       const data = notification.data ?? {}
       if (data.orderId) {
@@ -73,10 +68,9 @@ export const NotificationList = observer(function NotificationList() {
         navigation.navigate("BookFitting")
       }
     },
-    [navigation, notificationStore],
+    [navigation, markRead],
   )
 
-  const items = notificationStore.serverNotifications
   const todayItems = items.filter((n) => isToday(n.created))
   const earlierItems = items.filter((n) => !isToday(n.created))
 
@@ -122,10 +116,10 @@ export const NotificationList = observer(function NotificationList() {
       style={$container}
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
     >
-      {items.length > 0 && notificationStore.unreadCount > 0 && (
+      {items.length > 0 && unreadCount > 0 && (
         <TouchableOpacity
           className="self-end px-4 pt-3"
-          onPress={() => notificationStore.markAllServerNotificationsRead()}
+          onPress={() => markAllRead.mutate()}
         >
           <Text
             className="text-[13px] text-tint dark:text-tint-dark"
@@ -154,14 +148,14 @@ export const NotificationList = observer(function NotificationList() {
           {earlierItems.map(renderItem)}
         </>
       )}
-      {items.length === 0 && !notificationStore.isLoading && (
+      {items.length === 0 && !isLoading && (
         <View className="items-center p-8">
           <Text text="No notifications yet" className="text-textDim dark:text-textDim-dark" />
         </View>
       )}
     </ScrollView>
   )
-})
+}
 
 // ScrollView `style` stays inline per the recipe.
 const $container: ViewStyle = {
