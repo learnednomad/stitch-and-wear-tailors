@@ -7,7 +7,7 @@
  * messages (highlighted once the recipient has read it).
  */
 
-import { View, ViewStyle, TextStyle } from "react-native"
+import { View, ViewStyle } from "react-native"
 import { Text } from "./Text"
 import { Icon } from "./Icon"
 import { colors, spacing } from "../theme"
@@ -29,11 +29,24 @@ export function ChatBubble(props: ChatBubbleProps) {
   const { message, isOwn } = props
 
   return (
-    <View style={[$row, isOwn ? $rowOwn : $rowOther]}>
-      <View style={[$bubble, isOwn ? $bubbleOwn : $bubbleOther]}>
-        <Text style={[$content, isOwn ? $contentOwn : $contentOther]}>{message.content}</Text>
-        <View style={$meta}>
-          <Text style={[$time, isOwn ? $timeOwn : $timeOther]}>
+    <View className={`mb-2 flex-row px-4 ${isOwn ? "justify-end" : "justify-start"}`}>
+      <View
+        className={`max-w-[80%] rounded-2xl px-3 py-2 ${isOwn ? "rounded-br" : "rounded-bl"}`}
+        style={{
+          backgroundColor: isOwn ? colors.palette.primary500 : colors.palette.neutral200,
+        }}
+      >
+        <Text
+          className="text-[15px] leading-5"
+          style={{ color: isOwn ? colors.palette.neutral100 : colors.palette.neutral900 }}
+        >
+          {message.content}
+        </Text>
+        <View className="mt-1 flex-row items-center justify-end">
+          <Text
+            className="text-[10px]"
+            style={{ color: isOwn ? colors.palette.primary200 : colors.palette.neutral500 }}
+          >
             {formatRelativeTime(message.created)}
           </Text>
           {isOwn && (
@@ -50,70 +63,7 @@ export function ChatBubble(props: ChatBubbleProps) {
   )
 }
 
-// Styles
-const $row: ViewStyle = {
-  flexDirection: "row",
-  marginBottom: spacing.xs,
-  paddingHorizontal: spacing.md,
-}
-
-const $rowOwn: ViewStyle = {
-  justifyContent: "flex-end",
-}
-
-const $rowOther: ViewStyle = {
-  justifyContent: "flex-start",
-}
-
-const $bubble: ViewStyle = {
-  maxWidth: "80%",
-  borderRadius: 16,
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-}
-
-const $bubbleOwn: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
-  borderBottomRightRadius: 4,
-}
-
-const $bubbleOther: ViewStyle = {
-  backgroundColor: colors.palette.neutral200,
-  borderBottomLeftRadius: 4,
-}
-
-const $content: TextStyle = {
-  fontSize: 15,
-  lineHeight: 20,
-}
-
-const $contentOwn: TextStyle = {
-  color: colors.palette.neutral100,
-}
-
-const $contentOther: TextStyle = {
-  color: colors.palette.neutral900,
-}
-
-const $meta: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "flex-end",
-  marginTop: spacing.xxs,
-}
-
-const $time: TextStyle = {
-  fontSize: 10,
-}
-
-const $timeOwn: TextStyle = {
-  color: colors.palette.primary200,
-}
-
-const $timeOther: TextStyle = {
-  color: colors.palette.neutral500,
-}
-
+// Icon `containerStyle` is a component style prop, so it stays inline.
 const $tick: ViewStyle = {
   marginLeft: spacing.xxs,
 }
