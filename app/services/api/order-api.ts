@@ -781,6 +781,14 @@ export const orderApi = {
       sort: "created",
     })
   },
+
+  /**
+   * Hard-delete an order record (server cascades its items/stages).
+   */
+  async deleteOrder(orderId: string): Promise<ServiceResult<unknown>> {
+    const adapter = getPocketBaseAdapter()
+    return adapter.remove(COLLECTIONS.ORDERS, orderId)
+  },
 }
 
 export type OrderApi = typeof orderApi

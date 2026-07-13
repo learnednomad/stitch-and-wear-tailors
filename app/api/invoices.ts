@@ -15,6 +15,8 @@ import { paymentApi } from "@/services/api/payment-api"
 import { COLLECTIONS, filters, getPocketBaseAdapter } from "@/services/api/pocketbase-api-adapter"
 
 import { unwrap } from "./common"
+// Single source of truth for the order query-key factory (see ./orders).
+import { orderKeys } from "./orders"
 
 export const invoiceKeys = {
   all: ["invoices"] as const,
@@ -27,11 +29,6 @@ export const paymentKeys = {
   all: ["payments"] as const,
   pendingClaims: () => ["payments", "claims", "pending"] as const,
   byOrder: (orderId: string) => ["payments", "by-order", orderId] as const,
-}
-
-export const orderKeys = {
-  all: ["orders"] as const,
-  detail: (orderId: string) => ["orders", "detail", orderId] as const,
 }
 
 export function useTailorInvoices() {
