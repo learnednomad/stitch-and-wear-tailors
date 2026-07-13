@@ -86,31 +86,44 @@ export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = observer(
       const statusColor = isDelivered ? colors.palette.success500 : colors.palette.alertRed
       return (
         <TouchableOpacity
-          style={$orderCard}
+          className="rounded-[12px] border border-neutral200 bg-warmIvory p-lg"
+          style={$orderCardShadow}
           onPress={() => (navigation as any).navigate("OrderDetail", { orderId: order.id })}
         >
-          <View style={$orderHeader}>
-            <View style={$orderTitleSection}>
-              <Text style={$orderNumber}>#{order.orderNumber}</Text>
-              <View style={[$statusBadge, { backgroundColor: statusColor + "20" }]}>
-                <Text style={[$statusText, { color: statusColor }]}>
+          <View className="mb-sm flex-row items-start justify-between">
+            <View className="flex-row items-center gap-sm">
+              <Text className="text-[16px] font-bold" style={$cOrderNumber}>
+                #{order.orderNumber}
+              </Text>
+              <View
+                className="rounded-[6px] px-sm py-xxs"
+                style={{ backgroundColor: statusColor + "20" }}
+              >
+                <Text
+                  className="text-[11px] font-semibold uppercase"
+                  style={{ color: statusColor }}
+                >
                   {titleCase(order.status)}
                 </Text>
               </View>
             </View>
-            <Text style={$orderDate}>{formatRelativeTime(order.createdAt)}</Text>
+            <Text className="text-[12px]" style={$cOrderDate}>
+              {formatRelativeTime(order.createdAt)}
+            </Text>
           </View>
 
-          <View style={$orderItem}>
+          <View className="flex-row items-center gap-sm">
             <Icon icon="sew" size={16} color={colors.palette.threadBlue} />
-            <Text style={$itemName}>{titleCase(order.garmentType ?? "custom")}</Text>
-            <Text style={$itemPrice}>
+            <Text className="flex-1 text-[13px]" style={$cItemName}>
+              {titleCase(order.garmentType ?? "custom")}
+            </Text>
+            <Text className="text-[13px] font-semibold" style={$cItemPrice}>
               ₦{(order.pricing?.totalPrice ?? 0).toLocaleString()}
             </Text>
           </View>
 
           {isDelivered && order.actualDeliveryDate && (
-            <Text style={$deliveredText}>
+            <Text className="mt-sm text-[12px]" style={$cDelivered}>
               Delivered{" "}
               {new Date(order.actualDeliveryDate).toLocaleDateString("en-NG", {
                 day: "numeric",
@@ -132,9 +145,9 @@ export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = observer(
         contentContainerStyle={$screenContent}
       >
         {/* Header */}
-        <View style={$header}>
+        <View className="flex-row items-center border-b border-neutral200 px-lg py-md">
           <TouchableOpacity
-            style={$backButton}
+            className="h-[40px] w-[40px] items-center justify-center"
             onPress={() => navigation.goBack()}
             accessible
             accessibilityLabel="Go back"
@@ -142,19 +155,28 @@ export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = observer(
           >
             <Icon icon="back" size={24} color={colors.palette.neutral900} />
           </TouchableOpacity>
-          <Text style={$headerTitle}>Order History</Text>
-          <View style={$headerSpacer} />
+          <Text className="flex-1 text-center text-[18px] font-semibold" style={$cHeaderTitle}>
+            Order History
+          </Text>
+          <View className="w-[40px]" />
         </View>
 
         {/* Filter chips */}
-        <View style={$filterRow}>
+        <View className="flex-row gap-sm px-lg py-md">
           {filterOptions.map((option) => (
             <TouchableOpacity
               key={option.value}
-              style={[$filterChip, filter === option.value && $filterChipActive]}
+              className={`rounded-[16px] border px-md py-xs ${
+                filter === option.value
+                  ? "border-tailorGold bg-tailorGold"
+                  : "border-neutral300 bg-neutral200"
+              }`}
               onPress={() => setFilter(option.value)}
             >
-              <Text style={[$filterChipText, filter === option.value && $filterChipTextActive]}>
+              <Text
+                className="text-[13px] font-medium"
+                style={filter === option.value ? $cChipTextActive : $cChipText}
+              >
                 {option.label}
               </Text>
             </TouchableOpacity>
@@ -162,14 +184,18 @@ export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = observer(
         </View>
 
         {isLoading ? (
-          <View style={$emptyState}>
-            <Text style={$emptyDescription}>Loading history...</Text>
+          <View className="flex-1 items-center justify-center p-xl">
+            <Text className="text-center text-[14px] leading-[20px]" style={$cEmptyDescription}>
+              Loading history...
+            </Text>
           </View>
         ) : filteredOrders.length === 0 ? (
-          <View style={$emptyState}>
+          <View className="flex-1 items-center justify-center p-xl">
             <Icon icon="sew" size={64} color={colors.palette.neutral400} />
-            <Text style={$emptyTitle}>No Past Orders</Text>
-            <Text style={$emptyDescription}>
+            <Text className="mb-xs mt-lg text-[20px] font-semibold" style={$cEmptyTitle}>
+              No Past Orders
+            </Text>
+            <Text className="text-center text-[14px] leading-[20px]" style={$cEmptyDescription}>
               Delivered and cancelled orders will show up here
             </Text>
           </View>
@@ -195,6 +221,9 @@ export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = observer(
 )
 
 // Styles
+// Static (light-only) `colors` screen: layout/spacing/container colors live in
+// className token utilities; text colors and dynamic (status-driven) colors stay
+// inline. These objects feed component style props or hold color/shadow only.
 const $root: ViewStyle = {
   flex: 1,
   backgroundColor: colors.palette.neutral100,
@@ -206,77 +235,13 @@ const $screenContent: ViewStyle = {
   flex: 1,
 }
 
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $headerTitle: TextStyle = {
-  flex: 1,
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  textAlign: "center",
-}
-
-const $headerSpacer: ViewStyle = {
-  width: 40,
-}
-
-const $filterRow: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.sm,
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-}
-
-const $filterChip: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.xs,
-  borderRadius: 16,
-  backgroundColor: colors.palette.neutral200,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
-const $filterChipActive: ViewStyle = {
-  backgroundColor: colors.palette.tailorGold,
-  borderColor: colors.palette.tailorGold,
-}
-
-const $filterChipText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "500",
-  color: colors.palette.deepCharcoal,
-}
-
-const $filterChipTextActive: TextStyle = {
-  color: colors.palette.warmIvory,
-}
-
 const $listContainer: ViewStyle = {
   paddingHorizontal: spacing.lg,
   paddingBottom: spacing.xl,
   gap: spacing.md,
 }
 
-const $orderCard: ViewStyle = {
-  backgroundColor: colors.palette.warmIvory,
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
+const $orderCardShadow: ViewStyle = {
   shadowColor: colors.palette.deepCharcoal,
   shadowOffset: { width: 0, height: 1 },
   shadowOpacity: 0.1,
@@ -284,84 +249,14 @@ const $orderCard: ViewStyle = {
   elevation: 2,
 }
 
-const $orderHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  marginBottom: spacing.sm,
-}
-
-const $orderTitleSection: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.sm,
-}
-
-const $orderNumber: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.palette.deepCharcoal,
-}
-
-const $statusBadge: ViewStyle = {
-  borderRadius: 6,
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xxs,
-}
-
-const $statusText: TextStyle = {
-  fontSize: 11,
-  fontWeight: "600",
-  textTransform: "uppercase",
-}
-
-const $orderDate: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral500,
-}
-
-const $orderItem: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.sm,
-}
-
-const $itemName: TextStyle = {
-  flex: 1,
-  fontSize: 13,
-  color: colors.palette.deepCharcoal,
-}
-
-const $itemPrice: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-  color: colors.palette.tailorGold,
-}
-
-const $deliveredText: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-  marginTop: spacing.sm,
-}
-
-const $emptyState: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  padding: spacing.xl,
-}
-
-const $emptyTitle: TextStyle = {
-  fontSize: 20,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginTop: spacing.lg,
-  marginBottom: spacing.xs,
-}
-
-const $emptyDescription: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-  textAlign: "center",
-  lineHeight: 20,
-}
+// Text color overrides (static, light-only).
+const $cHeaderTitle: TextStyle = { color: colors.palette.neutral900 }
+const $cOrderNumber: TextStyle = { color: colors.palette.deepCharcoal }
+const $cOrderDate: TextStyle = { color: colors.palette.neutral500 }
+const $cItemName: TextStyle = { color: colors.palette.deepCharcoal }
+const $cItemPrice: TextStyle = { color: colors.palette.tailorGold }
+const $cDelivered: TextStyle = { color: colors.palette.threadBlue }
+const $cEmptyTitle: TextStyle = { color: colors.palette.deepCharcoal }
+const $cEmptyDescription: TextStyle = { color: colors.palette.threadBlue }
+const $cChipText: TextStyle = { color: colors.palette.deepCharcoal }
+const $cChipTextActive: TextStyle = { color: colors.palette.warmIvory }
