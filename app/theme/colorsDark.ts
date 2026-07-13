@@ -1,85 +1,11 @@
-const palette = {
-  neutral900: "#FFFFFF",
-  neutral800: "#F4F2F1",
-  neutral700: "#D7CEC9",
-  neutral600: "#B6ACA6",
-  neutral500: "#978F8A",
-  neutral400: "#564E4A",
-  neutral300: "#3C3836",
-  neutral200: "#191015",
-  neutral100: "#000000",
-
-  primary600: "#F4E0D9",
-  primary500: "#E8C1B4",
-  primary400: "#DDA28E",
-  primary300: "#D28468",
-  primary200: "#C76542",
-  primary100: "#A54F31",
-
-  secondary500: "#DCDDE9",
-  secondary400: "#BCC0D6",
-  secondary300: "#9196B9",
-  secondary200: "#626894",
-  secondary100: "#41476E",
-
-  accent500: "#FFEED4",
-  accent400: "#FFE1B2",
-  accent300: "#FDD495",
-  accent200: "#FBC878",
-  accent100: "#FFBB50",
-
-  angry100: "#F2D6CD",
-  angry500: "#C03403",
-
-  // Brand emerald scale (inverted for dark surfaces)
-  emerald100: "#22301F",
-  emerald200: "#2E4630",
-  emerald300: "#3E5F41",
-  emerald400: "#5C8F61",
-  emerald500: "#7BAE80",
-  emerald600: "#9BC49F",
-  emerald700: "#BCD9BF",
-
-  // Warm neutrals (map to dark greys)
-  sand100: "#241F1D",
-  sand200: "#2E2926",
-  sand300: "#3C3836",
-  gray500: "#978F8A",
-  gray600: "#B6ACA6",
-
-  // Semantic scales
-  success100: "#1F2E1C",
-  success500: "#7FA96F",
-  success600: "#9BC08B",
-  warning100: "#332A18",
-  warning500: "#D9A94F",
-  warning600: "#E5BE72",
-  error100: "#3A211C",
-  error500: "#E07868",
-  error600: "#EC9A8D",
-
-  overlay20: "rgba(25, 16, 21, 0.2)",
-  overlay50: "rgba(25, 16, 21, 0.5)",
-} as const
+// The raw dark palette and the resolved dark semantic tokens now live in
+// `tokens.js` (the single source of truth shared with Tailwind). This file
+// stays the app-facing dark `colors` object; its values and types are identical
+// to the previous inline definition.
+import { paletteDark as palette, semanticDark } from "./tokens"
 
 export const colors = {
   palette,
   transparent: "rgba(0, 0, 0, 0)",
-  text: palette.neutral800,
-  textDim: palette.neutral600,
-  background: palette.neutral200,
-  border: palette.neutral400,
-  tint: palette.primary500,
-  tintInactive: palette.neutral300,
-  separator: palette.neutral300,
-  surface: palette.neutral300,
-  surfaceMuted: palette.sand100,
-  accent: palette.emerald500,
-  accentSoft: palette.emerald100,
-  success: palette.success600,
-  successBackground: palette.success100,
-  warning: palette.warning600,
-  warningBackground: palette.warning100,
-  error: palette.angry500,
-  errorBackground: palette.angry100,
+  ...semanticDark,
 } as const
