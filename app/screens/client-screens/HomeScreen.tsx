@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { useNavigation } from "@react-navigation/native"
 import { appointmentApi, PBAppointment } from "@/services/api/appointment-api"
 
@@ -37,7 +38,8 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   const [nextAppointment, setNextAppointment] = useState<PBAppointment | null>(null)
 
   // Get stores
-  const { authStore, orderStore, measurementStore, notificationStore } = useStores()
+  const { orderStore, measurementStore, notificationStore } = useStores()
+  const authStore = useAuthStore()
 
   // Get user data from stores
   const currentUser = authStore.user

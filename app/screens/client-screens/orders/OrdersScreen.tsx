@@ -19,6 +19,7 @@ import {
 import { colors, spacing } from "@/theme"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { Instance } from "mobx-state-tree"
 import { NigerianOrderModel } from "@/models/stores/OrderStore"
 import { NigerianGarmentType, OrderStatus } from "@/types/orders"
@@ -28,7 +29,8 @@ type OrderInstance = Instance<typeof NigerianOrderModel>
 interface OrdersScreenProps extends TabScreenProps<"Orders"> {}
 
 export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScreen() {
-  const { orderStore, authStore } = useStores()
+  const { orderStore } = useStores()
+  const authStore = useAuthStore()
   const navigation = useNavigation()
 
   // Filters persist in component state for the session (v1)

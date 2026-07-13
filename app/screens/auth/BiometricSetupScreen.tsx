@@ -17,7 +17,7 @@ import { useNavigation } from "@react-navigation/native"
 import { Icon, IconTypes } from "@/components"
 import { colors as themeColors } from "@/theme"
 import BiometricAuthService from "@/services/auth/BiometricAuthService"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 
 // Local aliases mapping this screen's legacy color names onto the app theme
 // (the theme has no primary/card/warning entries). Consumed only by the Icon /
@@ -34,7 +34,7 @@ const colors = {
 
 export function BiometricSetupScreen() {
   const navigation = useNavigation()
-  const { authStore } = useStores()
+  const authStore = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
   const [biometricAvailable, setBiometricAvailable] = useState(false)

@@ -9,10 +9,12 @@ import { observer } from "mobx-react-lite"
 import { Text, Button, Icon } from "@/components"
 import { colors, spacing } from "@/theme"
 import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { useNavigation } from "@react-navigation/native"
 
 export const ConfirmationStep: FC = observer(() => {
-  const { orderStore, authStore } = useStores()
+  const { orderStore } = useStores()
+  const authStore = useAuthStore()
   const navigation = useNavigation()
 
   const [isSubmitting, setIsSubmitting] = useState(false)

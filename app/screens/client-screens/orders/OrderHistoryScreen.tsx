@@ -19,7 +19,7 @@ import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon } from "@/components"
 import { colors, spacing } from "@/theme"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { orderApi } from "@/services/api/order-api"
 import { formatRelativeTime } from "@/utils/formatRelativeTime"
 
@@ -30,7 +30,7 @@ interface OrderHistoryScreenProps extends AppStackScreenProps<"OrderHistory"> {}
 export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = observer(
   function OrderHistoryScreen() {
     const navigation = useNavigation()
-    const { authStore } = useStores()
+    const authStore = useAuthStore()
 
     const [orders, setOrders] = useState<Record<string, any>[]>([])
     const [filter, setFilter] = useState<HistoryFilter>("all")

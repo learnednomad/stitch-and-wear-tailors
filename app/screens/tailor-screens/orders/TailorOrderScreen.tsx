@@ -29,7 +29,7 @@ import {
   matchesOrderFilter,
 } from "@/components/OrderFilterBar"
 import { colors, spacing } from "@/theme"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { useTailorBoardOrders } from "@/api/orders"
 import { COLLECTIONS } from "@/services/pocketbase/pocketbase-client"
 import { realtimeManager, useRealtimeStatus } from "@/services/realtime"
@@ -64,7 +64,7 @@ function columnForOrder(order: Record<string, any>): ColumnKey | null {
 
 export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
   const navigation = useNavigation()
-  const { authStore } = useStores()
+  const authStore = useAuthStore()
   const { width } = useWindowDimensions()
   const isWide = width >= 768
   const realtimeStatus = useRealtimeStatus()

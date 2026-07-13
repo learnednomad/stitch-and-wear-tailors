@@ -1,13 +1,13 @@
 /**
  * Authentication Context
  *
- * Provides authentication state and methods throughout the app,
- * wrapping the AuthStore with React Context for easier access.
+ * Thin wrapper around `useAuthStore` (Zustand). Preserves the `useAuth()` shape
+ * consumed across the auth screens and the navigator; all state and actions are
+ * sourced from the Zustand store's selectors.
  */
 
 import React, { createContext, useContext, useEffect, ReactNode } from "react"
-import { observer } from "mobx-react-lite"
-import { useStores } from "@/models"
+import { useAuthStore, selectIsAuthenticated } from "@/state/authStore"
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -27,34 +27,34 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children }) => {
-  const { authStore } = useStores()
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  // Subscribe to the Zustand store so the provider re-renders (and the
+  // navigator re-gates) whenever auth state changes.
+  const user = useAuthStore((s) => s.user)
+  const isAuthenticated = useAuthStore(selectIsAuthenticated)
+  const isLoading = useAuthStore((s) => s.status === "checking" || s.isLoading)
 
   // Check authentication status on app start
   useEffect(() => {
     // Small delay to ensure the component is fully mounted
     const timer = setTimeout(() => {
-      authStore.checkAuthStatus()
+      useAuthStore.getState().checkAuthStatus()
     }, 100)
 
     return () => clearTimeout(timer)
   }, [])
 
   const checkAuthStatus = async () => {
-    // Use the AuthStore's built-in checkAuthStatus method
-    await authStore.checkAuthStatus()
+    await useAuthStore.getState().checkAuthStatus()
   }
 
   const clearStoredAuth = async () => {
-    // Use the AuthStore's built-in clearAuth method
-    authStore.clearAuth()
+    useAuthStore.getState().clearAuth()
   }
 
   const signIn = async (email: string, password: string) => {
     try {
-      // AuthStore now handles persistence internally
-      const result = await authStore.signIn({ email, password })
-      return result
+      await useAuthStore.getState().signIn({ email, password })
     } catch (error) {
       await clearStoredAuth()
       throw error
@@ -63,9 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
 
   const signUp = async (userData: any) => {
     try {
-      // AuthStore now handles persistence internally
-      const result = await authStore.signUp(userData)
-      return result
+      await useAuthStore.getState().signUp(userData)
     } catch (error) {
       await clearStoredAuth()
       throw error
@@ -73,32 +71,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
   }
 
   const signOut = async () => {
-    // AuthStore now handles clearing persistence internally
-    await authStore.signOut()
+    await useAuthStore.getState().signOut()
   }
 
   const sendEmailVerification = async () => {
-    try {
-      const result = await authStore.sendEmailVerification()
-      return result
-    } catch (error) {
-      throw error
-    }
+    await useAuthStore.getState().sendEmailVerification()
   }
 
   const verifyEmail = async (userId: string, secret: string) => {
-    try {
-      const result = await authStore.verifyEmail(userId, secret)
-      return result
-    } catch (error) {
-      throw error
-    }
+    await useAuthStore.getState().verifyEmail(userId, secret)
   }
 
   const contextValue: AuthContextType = {
-    isAuthenticated: authStore.isAuthenticated,
-    isLoading: authStore.status === "checking" || authStore.isLoading,
-    user: authStore.user,
+    isAuthenticated,
+    isLoading,
+    user,
     signIn,
     signUp,
     signOut,
@@ -108,7 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = observer(({ children })
   }
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
-})
+}
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext)

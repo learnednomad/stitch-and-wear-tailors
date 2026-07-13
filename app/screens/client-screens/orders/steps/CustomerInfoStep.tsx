@@ -9,10 +9,12 @@ import { observer } from "mobx-react-lite"
 import { Text, TextField, Button } from "@/components"
 import { colors, spacing } from "@/theme"
 import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { CustomerInfo, NigerianCity, SupportedLanguage } from "@/types/orders"
 
 export const CustomerInfoStep: FC = observer(() => {
-  const { orderStore, authStore } = useStores()
+  const { orderStore } = useStores()
+  const authStore = useAuthStore()
 
   const [formData, setFormData] = useState({
     firstName: "",

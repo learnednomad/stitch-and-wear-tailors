@@ -29,7 +29,7 @@ import { observer } from "mobx-react-lite"
 import Svg, { G, Rect, Text as SvgText } from "react-native-svg"
 import { Screen, Text } from "@/components"
 import { colors, spacing } from "@/theme"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import {
   getPocketBaseAdapter,
   filters,
@@ -357,7 +357,7 @@ const RevenueBarChart: FC<{ buckets: RevenueBucket[]; width: number }> = ({ buck
 // ---------------------------------------------------------------------------
 
 export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
-  const { authStore } = useStores()
+  const authStore = useAuthStore()
   const { width } = useWindowDimensions()
 
   const [period, setPeriod] = useState<PeriodKey>("month")

@@ -4,7 +4,7 @@ import { ViewStyle, View, Alert, TouchableOpacity, TextStyle, ImageStyle } from 
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, TextField, Button, PasswordStrengthIndicator, Icon } from "@/components"
 import { useNavigation } from "@react-navigation/native"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import AuthService from "@/services/auth/AuthService"
 import { validateEmail } from "@/utils/emailValidation"
 import { validatePassword, validatePasswordConfirmation } from "@/utils/passwordValidation"
@@ -13,7 +13,7 @@ import { spacing, colors } from "@/theme"
 interface SignUpScreenProps extends AppStackScreenProps<"SignUp"> {}
 
 export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScreen() {
-  const { authStore } = useStores()
+  const authStore = useAuthStore()
   const navigation = useNavigation()
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")

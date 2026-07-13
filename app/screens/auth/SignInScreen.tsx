@@ -4,7 +4,8 @@ import { ViewStyle, View, Alert } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen } from "@/components"
 import { useNavigation } from "@react-navigation/native"
-import { useStores, UserStatus } from "@/models"
+import { UserStatus } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import AuthService from "@/services/auth/AuthService"
 import { spacing, colors } from "@/theme"
 import { ValidationUtils } from "@/utils/validation"
@@ -16,7 +17,7 @@ import { BiometricService } from "@/services/biometric/BiometricService"
 interface SignInScreenProps extends AppStackScreenProps<"SignIn"> {}
 
 export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScreen() {
-  const { authStore } = useStores()
+  const authStore = useAuthStore()
   const navigation = useNavigation()
   const [isLoading, setIsLoading] = useState(false)
 

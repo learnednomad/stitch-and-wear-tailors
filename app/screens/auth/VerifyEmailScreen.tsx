@@ -4,7 +4,7 @@ import { ViewStyle, View, Alert, TouchableOpacity } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Button } from "@/components"
 import { useNavigation } from "@react-navigation/native"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { getPocketBaseAuthAdapter } from "@/services/pocketbase/pocketbase-auth-adapter"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
@@ -12,7 +12,7 @@ import { spacing } from "@/theme"
 interface VerifyEmailScreenProps extends AppStackScreenProps<"VerifyEmail"> {}
 
 export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function VerifyEmailScreen() {
-  const { authStore } = useStores()
+  const authStore = useAuthStore()
   const navigation = useNavigation()
   const { theme } = useAppTheme()
   const [isLoading, setIsLoading] = useState(false)

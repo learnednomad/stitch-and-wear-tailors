@@ -13,7 +13,7 @@ import i18next from "i18next"
 import Constants from "expo-constants"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, Screen, Switch, Text, TextField } from "@/components"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { useAuth } from "@/contexts/AuthContext"
 import AuthService from "@/services/auth/AuthService"
 import { getPocketBaseAuthAdapter } from "@/services/pocketbase/pocketbase-auth-adapter"
@@ -58,7 +58,7 @@ export const SettingsScreen: FC<SettingsScreenProps> = observer(function Setting
   navigation,
 }) {
   const { theme } = useAppTheme()
-  const { authStore } = useStores()
+  const authStore = useAuthStore()
   const { signOut } = useAuth()
 
   const user = authStore.user

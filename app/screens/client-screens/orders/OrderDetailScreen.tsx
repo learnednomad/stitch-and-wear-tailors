@@ -16,6 +16,7 @@ import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { orderApi } from "@/services/api/order-api"
 import { messageApi } from "@/services/api/message-api"
 
@@ -91,7 +92,8 @@ interface OrderDetailScreenProps extends AppStackScreenProps<"OrderDetail"> {}
 export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }) => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
-  const { orderStore, authStore } = useStores()
+  const { orderStore } = useStores()
+  const authStore = useAuthStore()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isStatusSheetVisible, setIsStatusSheetVisible] = useState(false)

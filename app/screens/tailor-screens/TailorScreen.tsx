@@ -23,7 +23,7 @@ import {
 } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { useTailorBoardOrders } from "@/api/orders"
 
 /** Mapped domain order snapshot (loosely typed — mapper guarantees shape) */
@@ -32,7 +32,7 @@ type DomainOrder = Record<string, any>
 export const TailorScreen: FC = observer(function TailorScreen() {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
-  const { authStore } = useStores()
+  const authStore = useAuthStore()
 
   const [activeTab, setActiveTab] = useState<"all" | "urgent">("all")
 

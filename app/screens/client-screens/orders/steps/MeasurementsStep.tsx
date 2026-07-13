@@ -9,6 +9,7 @@ import { observer } from "mobx-react-lite"
 import { Text, TextField, Button, Icon } from "@/components"
 import { colors, spacing } from "@/theme"
 import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { NigerianGarmentType, MeasurementData } from "@/types/orders"
 
 interface SavedMeasurement {
@@ -25,7 +26,8 @@ interface SavedMeasurement {
 }
 
 export const MeasurementsStep: FC = observer(() => {
-  const { orderStore, authStore } = useStores()
+  const { orderStore } = useStores()
+  const authStore = useAuthStore()
 
   const [selectedOption, setSelectedOption] = useState<"new" | "existing" | "skip">("new")
   const [savedMeasurements, setSavedMeasurements] = useState<SavedMeasurement[]>([])

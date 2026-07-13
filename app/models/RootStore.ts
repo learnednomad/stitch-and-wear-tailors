@@ -1,5 +1,4 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
-import { AuthStoreModel } from "./stores/AuthStore"
 import { UserStoreModel } from "./stores/UserStore"
 import { OrderStoreModel } from "./stores/OrderStore"
 import { FabricStoreModel } from "./stores/FabricStore"
@@ -13,7 +12,6 @@ import { NotificationStoreModel } from "./stores/NotificationStore"
 export const RootStoreModel = types
   .model("RootStore")
   .props({
-    authStore: types.optional(AuthStoreModel, {}),
     userStore: types.optional(UserStoreModel, {}),
     orderStore: types.optional(OrderStoreModel, {
       statistics: {
@@ -88,78 +86,6 @@ export const RootStoreModel = types
   })
   .actions((self) => ({
     /**
-     * Initialize stores after authentication
-     */
-    async initializeUserStores(userId: string) {
-      // Load user profile
-      try {
-        await self.userStore.loadUserProfile(userId)
-      } catch (error) {
-        console.warn("Failed to load user profile:", error)
-      }
-
-      // Initialize fabric wishlist
-      self.fabricStore.initializeWishlist(userId)
-      try {
-        await self.fabricStore.loadWishlist(userId)
-      } catch (error) {
-        console.warn("Failed to load wishlist:", error)
-      }
-
-      // Load user's orders if they exist
-      if (self.authStore.hasAnyRole(["client", "tailor"])) {
-        try {
-          const params = self.authStore.hasRole("client")
-            ? { clientId: userId }
-            : { tailorId: userId }
-          await self.orderStore.loadNigerianOrders(params, true)
-        } catch (error) {
-          console.warn("Failed to load orders:", error)
-        }
-      }
-
-      // Load measurement history for clients
-      if (self.authStore.hasRole("client")) {
-        try {
-          await self.measurementStore.loadClientHistory(userId)
-        } catch (error) {
-          console.warn("Failed to load measurement history:", error)
-        }
-      }
-
-      // Load measurement templates for tailors
-      if (self.authStore.hasRole("tailor")) {
-        try {
-          await self.measurementStore.loadTemplates()
-        } catch (error) {
-          console.warn("Failed to load measurement templates:", error)
-        }
-      }
-
-      // Load upcoming appointments
-      try {
-        const appointmentParams = self.authStore.hasRole("client")
-          ? { clientId: userId }
-          : { tailorId: userId }
-        await self.appointmentStore.loadUpcomingAppointments(
-          appointmentParams.clientId,
-          appointmentParams.tailorId,
-        )
-      } catch (error) {
-        console.warn("Failed to load appointments:", error)
-      }
-
-      // Initialize notification preferences and load recent notifications
-      self.notificationStore.initializePreferences(userId)
-      try {
-        await self.notificationStore.loadPreferences(userId)
-        await self.notificationStore.loadNotifications({ userId, page: 1 }, true)
-      } catch (error) {
-        console.warn("Failed to load notifications:", error)
-      }
-    },
-
-    /**
      * Clear all user data on logout
      */
     clearUserData() {
@@ -179,18 +105,11 @@ export const RootStoreModel = types
      * Sync critical data periodically
      */
     async syncData() {
-      if (!self.authStore.isAuthenticated) return
-
       const promises = []
 
       // Sync wishlist if exists
       if (self.fabricStore.wishlist) {
         promises.push(self.fabricStore.saveWishlist())
-      }
-
-      // Refresh auth if session is expiring soon
-      if (self.authStore.isSessionExpiringSoon) {
-        promises.push(self.authStore.refreshSession())
       }
 
       // Save current measurement if in session
@@ -208,53 +127,10 @@ export const RootStoreModel = types
   }))
   .views((self) => ({
     /**
-     * Get current user info from auth store
-     */
-    get currentUser() {
-      return self.authStore.user
-    },
-
-    /**
      * Get full user profile from user store
      */
     get currentUserProfile() {
       return self.userStore.currentUserProfile
-    },
-
-    /**
-     * Check if user is authenticated
-     */
-    get isAuthenticated() {
-      return self.authStore.isAuthenticated
-    },
-
-    /**
-     * Get user's role
-     */
-    get userRole() {
-      return self.authStore.user?.role
-    },
-
-    /**
-     * Check if user has specific role
-     */
-    hasRole(role: string) {
-      return self.authStore.hasRole(role as any)
-    },
-
-    /**
-     * Get orders relevant to current user
-     */
-    get userOrders() {
-      if (!self.authStore.user) return []
-
-      if (self.authStore.hasRole("client")) {
-        return self.orderStore.getOrdersByUser(self.authStore.user.id)
-      } else if (self.authStore.hasRole("tailor")) {
-        return self.orderStore.getOrdersByTailor(self.authStore.user.id)
-      }
-
-      return self.orderStore.orders.items
     },
 
     /**
@@ -313,7 +189,6 @@ export const RootStoreModel = types
      */
     get isLoading() {
       return (
-        self.authStore.isLoading ||
         self.userStore.isLoading ||
         self.orderStore.isLoading ||
         self.fabricStore.isLoading ||
@@ -328,7 +203,6 @@ export const RootStoreModel = types
      */
     get error() {
       return (
-        self.authStore.error ||
         self.userStore.error ||
         self.orderStore.error ||
         self.fabricStore.error ||
@@ -342,7 +216,6 @@ export const RootStoreModel = types
      * Clear all errors
      */
     clearErrors() {
-      self.authStore.clearError()
       self.userStore.clearError()
       self.orderStore.clearError()
       self.fabricStore.clearError()

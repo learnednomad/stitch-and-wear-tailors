@@ -2,7 +2,6 @@
  * Export all store models for easy importing
  */
 
-export * from "./AuthStore"
 export * from "./UserStore"
 export * from "./OrderStore"
 export * from "./FabricStore"
