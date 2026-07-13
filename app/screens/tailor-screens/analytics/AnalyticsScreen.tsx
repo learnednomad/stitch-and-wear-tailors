@@ -292,8 +292,10 @@ const RevenueBarChart: FC<{ buckets: RevenueBucket[]; width: number }> = ({ buck
   const max = Math.max(...buckets.map((b) => b.amount), 0)
   if (max <= 0) {
     return (
-      <View style={$chartEmpty}>
-        <Text style={$emptyText}>No revenue recorded in this period</Text>
+      <View className="h-40 items-center justify-center">
+        <Text className="text-[13px] text-center" style={$emptyTextColor}>
+          No revenue recorded in this period
+        </Text>
       </View>
     )
   }
@@ -422,8 +424,10 @@ export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
       safeAreaEdges={["top"]}
       statusBarStyle="dark"
     >
-      <View style={$header}>
-        <Text style={$title}>Analytics</Text>
+      <View className="p-6">
+        <Text className="text-[24px]" weight="bold" style={$titleColor}>
+          Analytics
+        </Text>
       </View>
 
       <ScrollView
@@ -439,17 +443,22 @@ export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Period selector */}
-        <View style={$periodRow}>
+        <View className="flex-row gap-2">
           {PERIOD_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.key}
-              style={[$periodChip, period === option.key && $periodChipActive]}
+              className="flex-1 py-2 rounded-full bg-surface border border-border items-center"
+              style={period === option.key ? $periodChipActive : undefined}
               onPress={() => setPeriod(option.key)}
               accessible
               accessibilityRole="button"
               accessibilityState={{ selected: period === option.key }}
             >
-              <Text style={[$periodChipText, period === option.key && $periodChipTextActive]}>
+              <Text
+                className="text-[12px]"
+                weight={period === option.key ? "semiBold" : "medium"}
+                style={period === option.key ? $periodChipTextActiveColor : $periodChipTextColor}
+              >
                 {option.label}
               </Text>
             </TouchableOpacity>
@@ -457,59 +466,79 @@ export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
         </View>
 
         {isLoading ? (
-          <View style={$centerState}>
-            <Text style={$emptyText}>Loading analytics...</Text>
+          <View className="py-12 items-center gap-2">
+            <Text className="text-[13px] text-center" style={$emptyTextColor}>
+              Loading analytics...
+            </Text>
           </View>
         ) : errorMessage ? (
-          <View style={$centerState}>
-            <Text style={$emptyText}>{errorMessage}</Text>
+          <View className="py-12 items-center gap-2">
+            <Text className="text-[13px] text-center" style={$emptyTextColor}>
+              {errorMessage}
+            </Text>
           </View>
         ) : !data || data.ordersReceived === 0 ? (
-          <View style={$centerState}>
-            <Text style={$emptyTitle}>No orders in this period</Text>
-            <Text style={$emptyText}>
+          <View className="py-12 items-center gap-2">
+            <Text className="text-[16px]" weight="semiBold" style={$emptyTitleColor}>
+              No orders in this period
+            </Text>
+            <Text className="text-[13px] text-center" style={$emptyTextColor}>
               Stats will appear here once you receive orders. Try a longer period.
             </Text>
           </View>
         ) : (
           <>
             {/* Stat tiles */}
-            <View style={$tileGrid}>
+            <View className="flex-row flex-wrap gap-3">
               {statTiles.map((tile) => (
-                <View key={tile.label} style={$tile}>
-                  <Text style={$tileValue}>{tile.value}</Text>
-                  <Text style={$tileLabel}>{tile.label}</Text>
-                  {"sub" in tile && tile.sub ? <Text style={$tileSub}>{tile.sub}</Text> : null}
+                <View key={tile.label} className="basis-[47%] grow rounded-2xl border border-border bg-surface p-4">
+                  <Text className="text-[20px]" weight="bold" style={$tileValueColor}>
+                    {tile.value}
+                  </Text>
+                  <Text className="text-[12px] mt-1" style={$tileLabelColor}>
+                    {tile.label}
+                  </Text>
+                  {"sub" in tile && tile.sub ? (
+                    <Text className="text-[11px] mt-0.5" style={$tileSubColor}>
+                      {tile.sub}
+                    </Text>
+                  ) : null}
                 </View>
               ))}
             </View>
 
             {/* Revenue chart */}
-            <View style={$card}>
-              <Text style={$cardTitle}>Revenue</Text>
+            <View className="rounded-2xl border border-border bg-surface p-4 gap-3">
+              <Text className="text-[14px]" weight="bold" style={$cardTitleColor}>
+                Revenue
+              </Text>
               <RevenueBarChart buckets={data.revenueBuckets} width={chartWidth} />
             </View>
 
             {/* Popular garment types */}
-            <View style={$card}>
-              <Text style={$cardTitle}>Popular Garments</Text>
+            <View className="rounded-2xl border border-border bg-surface p-4 gap-3">
+              <Text className="text-[14px]" weight="bold" style={$cardTitleColor}>
+                Popular Garments
+              </Text>
               {data.garmentCounts.length === 0 ? (
-                <Text style={$emptyText}>No garment data yet</Text>
+                <Text className="text-[13px] text-center" style={$emptyTextColor}>
+                  No garment data yet
+                </Text>
               ) : (
                 data.garmentCounts.map((garment) => (
-                  <View key={garment.type} style={$garmentRow}>
-                    <Text style={$garmentLabel} numberOfLines={1}>
+                  <View key={garment.type} className="flex-row items-center gap-3">
+                    <Text className="w-[110px] text-[13px]" style={$garmentLabelColor} numberOfLines={1}>
                       {titleCase(garment.type)}
                     </Text>
-                    <View style={$garmentBarTrack}>
+                    <View className="flex-1 h-2 rounded-[4px] bg-neutral200 overflow-hidden">
                       <View
-                        style={[
-                          $garmentBarFill,
-                          { width: `${(garment.count / maxGarmentCount) * 100}%` },
-                        ]}
+                        className="h-full rounded-[4px] bg-accent"
+                        style={{ width: `${(garment.count / maxGarmentCount) * 100}%` }}
                       />
                     </View>
-                    <Text style={$garmentCount}>{garment.count}</Text>
+                    <Text className="w-6 text-[13px] text-right" weight="semiBold" style={$garmentCountColor}>
+                      {garment.count}
+                    </Text>
                   </View>
                 ))
               )}
@@ -525,6 +554,12 @@ export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
 // Styles
 // ---------------------------------------------------------------------------
 
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (light in both schemes) — no `dark:` variants. Layout, spacing,
+// and container backgrounds/borders are className token utilities. The SVG revenue
+// chart keeps its geometry and data-driven fills inline; the garment-bar width, the
+// selection-state period-chip background, the Screen style/contentContainerStyle,
+// and the flex/padding ScrollView styles stay inline.
 const $root: ViewStyle = {
   flex: 1,
   backgroundColor: colors.background,
@@ -534,17 +569,6 @@ const $root: ViewStyle = {
 // analytics scroll area collapses to zero height.
 const $screenContent: ViewStyle = {
   flex: 1,
-}
-
-const $header: ViewStyle = {
-  padding: spacing.lg,
-  
-}
-
-const $title: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.text,
 }
 
 const $scroll: ViewStyle = {
@@ -557,140 +581,21 @@ const $scrollContent: ViewStyle = {
   paddingBottom: spacing.xxl,
 }
 
-const $periodRow: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.xs,
-}
-
-const $periodChip: ViewStyle = {
-  flex: 1,
-  paddingVertical: spacing.xs,
-  borderRadius: 999,
-  backgroundColor: colors.surface,
-  borderWidth: 1,
-  borderColor: colors.border,
-  alignItems: "center",
-}
-
+// Selection-state period-chip background/border stays inline (conditional style).
 const $periodChipActive: ViewStyle = {
   backgroundColor: colors.accent,
   borderColor: colors.accent,
 }
 
-const $periodChipText: TextStyle = {
-  fontSize: 12,
-  fontWeight: "500",
-  color: colors.textDim,
-}
-
-const $periodChipTextActive: TextStyle = {
-  color: colors.palette.neutral100,
-  fontWeight: "600",
-}
-
-const $tileGrid: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.sm,
-}
-
-const $tile: ViewStyle = {
-  flexBasis: "47%",
-  flexGrow: 1,
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  padding: spacing.md,
-  borderWidth: 1,
-  borderColor: colors.border,
-}
-
-const $tileValue: TextStyle = {
-  fontSize: 20,
-  fontWeight: "700",
-  color: colors.text,
-}
-
-const $tileLabel: TextStyle = {
-  fontSize: 12,
-  color: colors.textDim,
-  marginTop: spacing.xxs,
-}
-
-const $tileSub: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.neutral500,
-  marginTop: 2,
-}
-
-const $card: ViewStyle = {
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  padding: spacing.md,
-  borderWidth: 1,
-  borderColor: colors.border,
-  gap: spacing.sm,
-}
-
-const $cardTitle: TextStyle = {
-  fontSize: 14,
-  fontWeight: "700",
-  color: colors.text,
-}
-
-const $chartEmpty: ViewStyle = {
-  height: CHART_HEIGHT,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $garmentRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.sm,
-}
-
-const $garmentLabel: TextStyle = {
-  width: 110,
-  fontSize: 13,
-  color: colors.text,
-}
-
-const $garmentBarTrack: ViewStyle = {
-  flex: 1,
-  height: 8,
-  borderRadius: 4,
-  backgroundColor: colors.palette.neutral200,
-  overflow: "hidden",
-}
-
-const $garmentBarFill: ViewStyle = {
-  height: "100%",
-  borderRadius: 4,
-  backgroundColor: colors.accent,
-}
-
-const $garmentCount: TextStyle = {
-  width: 24,
-  fontSize: 13,
-  fontWeight: "600",
-  color: colors.textDim,
-  textAlign: "right",
-}
-
-const $centerState: ViewStyle = {
-  paddingVertical: spacing.xxl,
-  alignItems: "center",
-  gap: spacing.xs,
-}
-
-const $emptyTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.text,
-}
-
-const $emptyText: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral500,
-  textAlign: "center",
-}
+// Text color overrides (static, light-only).
+const $titleColor: TextStyle = { color: colors.text }
+const $periodChipTextColor: TextStyle = { color: colors.textDim }
+const $periodChipTextActiveColor: TextStyle = { color: colors.palette.neutral100 }
+const $tileValueColor: TextStyle = { color: colors.text }
+const $tileLabelColor: TextStyle = { color: colors.textDim }
+const $tileSubColor: TextStyle = { color: colors.palette.neutral500 }
+const $cardTitleColor: TextStyle = { color: colors.text }
+const $garmentLabelColor: TextStyle = { color: colors.text }
+const $garmentCountColor: TextStyle = { color: colors.textDim }
+const $emptyTitleColor: TextStyle = { color: colors.text }
+const $emptyTextColor: TextStyle = { color: colors.palette.neutral500 }
