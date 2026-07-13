@@ -7,19 +7,17 @@
  */
 import { FC, useState } from "react"
 import { observer } from "mobx-react-lite"
-import { Alert, TextStyle, View, ViewStyle } from "react-native"
+import { Alert, View, ViewStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, Screen, Text, TextField } from "@/components"
 import AuthService from "@/services/auth/AuthService"
 import { spacing } from "@/theme"
-import { useAppTheme } from "@/utils/useAppTheme"
 
 interface VerifyOtpScreenProps extends AppStackScreenProps<"VerifyOtp"> {}
 
 export const VerifyOtpScreen: FC<VerifyOtpScreenProps> = observer(function VerifyOtpScreen() {
   const navigation = useNavigation<any>()
-  const { theme } = useAppTheme()
   const [code, setCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
@@ -45,10 +43,10 @@ export const VerifyOtpScreen: FC<VerifyOtpScreenProps> = observer(function Verif
 
   return (
     <Screen style={$root} preset="scroll" safeAreaEdges={["top"]}>
-      <View style={$container}>
-        <Text preset="heading" text="Enter verification code" style={$title} />
+      <View className="p-lg">
+        <Text preset="heading" text="Enter verification code" className="mb-xs" />
         <Text
-          style={[$subtitle, { color: theme.colors.textDim }]}
+          className="mb-lg leading-5 text-textDim dark:text-textDim-dark"
           text="Paste the verification code from the email we sent you."
         />
         <TextField
@@ -75,19 +73,6 @@ export const VerifyOtpScreen: FC<VerifyOtpScreenProps> = observer(function Verif
 
 const $root: ViewStyle = {
   flex: 1,
-}
-
-const $container: ViewStyle = {
-  padding: spacing.lg,
-}
-
-const $title: TextStyle = {
-  marginBottom: spacing.xs,
-}
-
-const $subtitle: TextStyle = {
-  marginBottom: spacing.lg,
-  lineHeight: 20,
 }
 
 const $field: ViewStyle = {

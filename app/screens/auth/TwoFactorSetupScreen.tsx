@@ -7,7 +7,7 @@
  * per-user MFA ships.
  */
 import { FC } from "react"
-import { View, ViewStyle, TextStyle } from "react-native"
+import { View, ViewStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { Screen, Text, Button } from "@/components"
 import { spacing, colors } from "@/theme"
@@ -17,13 +17,18 @@ export const TwoFactorSetupScreen: FC = () => {
 
   return (
     <Screen style={$root} preset="scroll" safeAreaEdges={["top"]}>
-      <View style={$container}>
-        <Text preset="heading" text="Two-Factor Authentication" style={$title} />
+      <View className="p-lg">
+        <Text preset="heading" text="Two-Factor Authentication" className="mb-md" />
         <Text
           text="Your account is protected with secure email verification. When we detect a sign-in from a new device, we may send a one-time code to your email address."
-          style={$body}
+          className="mb-md"
+          style={{ color: colors.textDim }}
         />
-        <Text text="Authenticator-app support is coming in a future update." style={$body} />
+        <Text
+          text="Authenticator-app support is coming in a future update."
+          className="mb-md"
+          style={{ color: colors.textDim }}
+        />
         <Button text="Go Back" style={$button} onPress={() => navigation.goBack()} />
       </View>
     </Screen>
@@ -32,19 +37,6 @@ export const TwoFactorSetupScreen: FC = () => {
 
 const $root: ViewStyle = {
   flex: 1,
-}
-
-const $container: ViewStyle = {
-  padding: spacing.lg,
-}
-
-const $title: TextStyle = {
-  marginBottom: spacing.md,
-}
-
-const $body: TextStyle = {
-  marginBottom: spacing.md,
-  color: colors.textDim,
 }
 
 const $button: ViewStyle = {
