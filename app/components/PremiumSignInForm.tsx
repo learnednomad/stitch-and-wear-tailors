@@ -191,8 +191,10 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
 
     return (
       <Animated.View
-        className="flex-1 px-lg py-xl"
         style={{
+          flex: 1,
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.xl,
           opacity: fadeAnim,
           transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
         }}
@@ -213,8 +215,11 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
         {/* Biometric Authentication */}
         {biometricAvailable && (
           <Animated.View
-            className="mb-lg items-center"
-            style={{ transform: [{ scale: biometricPulse }] }}
+            style={{
+              alignItems: "center",
+              marginBottom: spacing.lg,
+              transform: [{ scale: biometricPulse }],
+            }}
           >
             <TouchableOpacity
               style={styles.biometricButton}
