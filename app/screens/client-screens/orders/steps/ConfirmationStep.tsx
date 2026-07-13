@@ -133,33 +133,46 @@ export const ConfirmationStep: FC = observer(() => {
 
   if (!orderData) {
     return (
-      <View style={$container}>
-        <View style={$errorState}>
+      <View className="flex-1">
+        <View className="flex-1 justify-center items-center p-xl">
           <Icon icon="x" size={48} color={colors.palette.alertRed} />
-          <Text style={$errorTitle}>Order Data Missing</Text>
-          <Text style={$errorDescription}>Please go back and complete all order steps.</Text>
+          <Text className="text-[18px] font-semibold mt-md mb-xs" style={$textAlertRed}>
+            Order Data Missing
+          </Text>
+          <Text className="text-[14px] text-center" style={$textThreadBlue}>
+            Please go back and complete all order steps.
+          </Text>
         </View>
       </View>
     )
   }
 
   return (
-    <ScrollView style={$container} showsVerticalScrollIndicator={false}>
-      <View style={$content}>
-        <Text style={$title}>{orderStore.getTranslation("confirmation", "en")}</Text>
-        <Text style={$subtitle}>Review your order details before final submission</Text>
+    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <View className="p-lg">
+        <Text className="text-[24px] font-bold mb-xs" style={$textCharcoal}>
+          {orderStore.getTranslation("confirmation", "en")}
+        </Text>
+        <Text className="text-[14px] mb-lg leading-[20px]" style={$textThreadBlue}>
+          Review your order details before final submission
+        </Text>
 
         {/* Order Summary */}
-        <View style={$summarySection}>
-          <Text style={$sectionTitle}>Order Summary</Text>
+        <View className="mb-lg">
+          <Text className="text-[18px] font-semibold mb-md" style={$textCharcoal}>
+            Order Summary
+          </Text>
 
-          <View style={$summaryCard}>
-            <View style={$summaryHeader}>
-              <Text style={$summaryOrderType}>
+          <View
+            className="rounded-[12px] p-lg border-l-4 border-l-tailorGold"
+            style={$summaryCardBg}
+          >
+            <View className="flex-row justify-between items-center">
+              <Text className="text-[16px] font-semibold" style={$textCharcoal}>
                 {orderData.orderType.charAt(0).toUpperCase() + orderData.orderType.slice(1)} Order
               </Text>
-              <View style={$priorityBadge}>
-                <Text style={$priorityText}>
+              <View className="bg-tailorGold rounded-[6px] px-sm py-xs">
+                <Text className="text-[12px] font-semibold" style={$textWarmIvory}>
                   {orderData.priority.charAt(0).toUpperCase() + orderData.priority.slice(1)}{" "}
                   Priority
                 </Text>
@@ -169,38 +182,54 @@ export const ConfirmationStep: FC = observer(() => {
         </View>
 
         {/* Customer Information */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Customer Information</Text>
+        <View className="mb-lg">
+          <Text className="text-[18px] font-semibold mb-md" style={$textCharcoal}>
+            Customer Information
+          </Text>
 
-          <View style={$infoCard}>
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Name:</Text>
-              <Text style={$infoValue}>
+          <View className="bg-neutral100 rounded-[12px] p-lg border border-neutral200">
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Name:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
                 {orderData.customerInfo?.firstName} {orderData.customerInfo?.lastName}
               </Text>
             </View>
 
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Email:</Text>
-              <Text style={$infoValue}>{orderData.customerInfo?.email}</Text>
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Email:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
+                {orderData.customerInfo?.email}
+              </Text>
             </View>
 
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Phone:</Text>
-              <Text style={$infoValue}>{orderData.customerInfo?.phone}</Text>
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Phone:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
+                {orderData.customerInfo?.phone}
+              </Text>
             </View>
 
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>City:</Text>
-              <Text style={$infoValue}>
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                City:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
                 {orderData.customerInfo?.city &&
                   orderStore.getTranslation("cities", orderData.customerInfo.city)}
               </Text>
             </View>
 
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Language:</Text>
-              <Text style={$infoValue}>
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Language:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
                 {orderData.customerInfo?.preferredLanguage === "en" && "English"}
                 {orderData.customerInfo?.preferredLanguage === "yo" && "Yorùbá"}
                 {orderData.customerInfo?.preferredLanguage === "ha" && "Hausa"}
@@ -211,21 +240,27 @@ export const ConfirmationStep: FC = observer(() => {
         </View>
 
         {/* Garment Details */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Garment Details</Text>
+        <View className="mb-lg">
+          <Text className="text-[18px] font-semibold mb-md" style={$textCharcoal}>
+            Garment Details
+          </Text>
 
-          <View style={$infoCard}>
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Style:</Text>
-              <Text style={$infoValue}>
+          <View className="bg-neutral100 rounded-[12px] p-lg border border-neutral200">
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Style:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
                 {orderData.styleConfig?.garmentType &&
                   orderStore.getTranslation("garments", orderData.styleConfig.garmentType)}
               </Text>
             </View>
 
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Fit:</Text>
-              <Text style={$infoValue}>
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Fit:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
                 {(orderData.styleConfig?.fitPreference || "regular").replace(/^\w/, (letter) =>
                   letter.toUpperCase(),
                 )}{" "}
@@ -234,48 +269,76 @@ export const ConfirmationStep: FC = observer(() => {
             </View>
 
             {orderData.styleConfig?.designNotes && (
-              <View style={$infoRow}>
-                <Text style={$infoLabel}>Design Notes:</Text>
-                <Text style={$infoValue}>{orderData.styleConfig.designNotes}</Text>
+              <View className="flex-row justify-between items-start mb-sm">
+                <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                  Design Notes:
+                </Text>
+                <Text
+                  className="text-[14px] font-normal flex-[2] text-right"
+                  style={$textCharcoal}
+                >
+                  {orderData.styleConfig.designNotes}
+                </Text>
               </View>
             )}
 
             {orderData.styleConfig?.culturalSpecifications && (
-              <View style={$infoRow}>
-                <Text style={$infoLabel}>Cultural Details:</Text>
-                <Text style={$infoValue}>{orderData.styleConfig.culturalSpecifications}</Text>
+              <View className="flex-row justify-between items-start mb-sm">
+                <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                  Cultural Details:
+                </Text>
+                <Text
+                  className="text-[14px] font-normal flex-[2] text-right"
+                  style={$textCharcoal}
+                >
+                  {orderData.styleConfig.culturalSpecifications}
+                </Text>
               </View>
             )}
           </View>
         </View>
 
         {/* Fabric Details */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Fabric Selection</Text>
+        <View className="mb-lg">
+          <Text className="text-[18px] font-semibold mb-md" style={$textCharcoal}>
+            Fabric Selection
+          </Text>
 
-          <View style={$infoCard}>
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Type:</Text>
-              <Text style={$infoValue}>
+          <View className="bg-neutral100 rounded-[12px] p-lg border border-neutral200">
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Type:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
                 {orderData.fabricSelection?.type
                   ?.replace(/_/g, " ")
                   .replace(/\b\w/g, (l) => l.toUpperCase())}
               </Text>
             </View>
 
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Color:</Text>
-              <Text style={$infoValue}>{orderData.fabricSelection?.color}</Text>
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Color:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
+                {orderData.fabricSelection?.color}
+              </Text>
             </View>
 
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Quantity:</Text>
-              <Text style={$infoValue}>{orderData.fabricSelection?.quantity} meters</Text>
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Quantity:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
+                {orderData.fabricSelection?.quantity} meters
+              </Text>
             </View>
 
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Cost:</Text>
-              <Text style={$infoValue}>
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Cost:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
                 ₦{orderData.fabricSelection?.totalPrice.toLocaleString()}
               </Text>
             </View>
@@ -283,21 +346,23 @@ export const ConfirmationStep: FC = observer(() => {
         </View>
 
         {/* Measurements */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Measurements</Text>
+        <View className="mb-lg">
+          <Text className="text-[18px] font-semibold mb-md" style={$textCharcoal}>
+            Measurements
+          </Text>
 
-          <View style={$infoCard}>
+          <View className="bg-neutral100 rounded-[12px] p-lg border border-neutral200">
             {orderData.measurementId ? (
-              <View style={$measurementStatus}>
+              <View className="flex-row items-center">
                 <Icon icon="check" size={24} color={colors.palette.sageGreen} />
-                <Text style={$measurementText}>
+                <Text className="text-[14px] ml-sm flex-1" style={$textCharcoal}>
                   Measurements saved (ID: {orderData.measurementId.slice(-8)})
                 </Text>
               </View>
             ) : (
-              <View style={$measurementStatus}>
+              <View className="flex-row items-center">
                 <Icon icon="more" size={24} color={colors.palette.threadBlue} />
-                <Text style={$measurementText}>
+                <Text className="text-[14px] ml-sm flex-1" style={$textCharcoal}>
                   Measurements will be taken during fitting appointment
                 </Text>
               </View>
@@ -306,43 +371,68 @@ export const ConfirmationStep: FC = observer(() => {
         </View>
 
         {/* Delivery Information */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Delivery Information</Text>
+        <View className="mb-lg">
+          <Text className="text-[18px] font-semibold mb-md" style={$textCharcoal}>
+            Delivery Information
+          </Text>
 
-          <View style={$infoCard}>
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Estimated Delivery:</Text>
-              <Text style={$infoValue}>{getEstimatedDelivery()}</Text>
+          <View className="bg-neutral100 rounded-[12px] p-lg border border-neutral200">
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Estimated Delivery:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
+                {getEstimatedDelivery()}
+              </Text>
             </View>
 
-            <View style={$infoRow}>
-              <Text style={$infoLabel}>Address:</Text>
-              <Text style={$infoValue}>{orderData.customerInfo?.address}</Text>
+            <View className="flex-row justify-between items-start mb-sm">
+              <Text className="text-[14px] font-medium flex-1" style={$textThreadBlue}>
+                Address:
+              </Text>
+              <Text className="text-[14px] font-normal flex-[2] text-right" style={$textCharcoal}>
+                {orderData.customerInfo?.address}
+              </Text>
             </View>
           </View>
         </View>
 
         {/* Pricing Summary */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Total Cost</Text>
+        <View className="mb-lg">
+          <Text className="text-[18px] font-semibold mb-md" style={$textCharcoal}>
+            Total Cost
+          </Text>
 
-          <View style={$pricingCard}>
-            <View style={$totalRow}>
-              <Text style={$totalLabel}>Total Amount</Text>
-              <Text style={$totalValue}>₦{calculateTotalPrice().toLocaleString()}</Text>
+          <View
+            className="rounded-[12px] p-lg border-l-4 border-l-sageGreen"
+            style={$pricingCardBg}
+          >
+            <View className="flex-row justify-between items-center mb-md pb-sm border-b border-b-neutral300">
+              <Text className="text-[18px] font-semibold" style={$textCharcoal}>
+                Total Amount
+              </Text>
+              <Text className="text-[20px] font-bold" style={$textSageGreen}>
+                ₦{calculateTotalPrice().toLocaleString()}
+              </Text>
             </View>
 
-            <View style={$paymentInfo}>
-              <Text style={$paymentTitle}>Payment Schedule</Text>
-              <View style={$paymentRow}>
-                <Text style={$paymentLabel}>Deposit (50%)</Text>
-                <Text style={$paymentAmount}>
+            <View className="mt-sm">
+              <Text className="text-[14px] font-semibold mb-sm" style={$textCharcoal}>
+                Payment Schedule
+              </Text>
+              <View className="flex-row justify-between items-center mb-xs">
+                <Text className="text-[12px]" style={$textThreadBlue}>
+                  Deposit (50%)
+                </Text>
+                <Text className="text-[14px] font-semibold" style={$textSageGreen}>
                   ₦{(calculateTotalPrice() * 0.5).toLocaleString()}
                 </Text>
               </View>
-              <View style={$paymentRow}>
-                <Text style={$paymentLabel}>Balance (50%)</Text>
-                <Text style={$paymentAmount}>
+              <View className="flex-row justify-between items-center mb-xs">
+                <Text className="text-[12px]" style={$textThreadBlue}>
+                  Balance (50%)
+                </Text>
+                <Text className="text-[14px] font-semibold" style={$textSageGreen}>
                   ₦{(calculateTotalPrice() * 0.5).toLocaleString()}
                 </Text>
               </View>
@@ -351,19 +441,25 @@ export const ConfirmationStep: FC = observer(() => {
         </View>
 
         {/* Terms and Conditions */}
-        <View style={$section}>
-          <View style={$termsContainer}>
+        <View className="mb-lg">
+          <View className="flex-row items-start">
             <Button text="" style={$checkbox} onPress={() => setTermsAccepted(!termsAccepted)}>
-              <View style={[$checkboxBox, termsAccepted && $checkboxChecked]}>
+              <View
+                className={`w-[24px] h-[24px] rounded-[4px] border-2 justify-center items-center ${
+                  termsAccepted ? "bg-sageGreen border-sageGreen" : "bg-neutral100 border-neutral400"
+                }`}
+              >
                 {termsAccepted && (
                   <Icon icon="check" size={16} color={colors.palette.warmIvory} />
                 )}
               </View>
             </Button>
 
-            <View style={$termsText}>
-              <Text style={$termsTitle}>Terms and Conditions</Text>
-              <Text style={$termsDescription}>
+            <View className="flex-1">
+              <Text className="text-[14px] font-semibold mb-xs" style={$textCharcoal}>
+                Terms and Conditions
+              </Text>
+              <Text className="text-[12px] leading-[16px]" style={$textThreadBlue}>
                 I agree to the terms and conditions, payment schedule, and understand that a 50%
                 deposit is required to begin work. I acknowledge the estimated delivery date and
                 fitting requirements.
@@ -381,249 +477,33 @@ export const ConfirmationStep: FC = observer(() => {
           disabled={!termsAccepted || isSubmitting}
         />
 
-        <View style={$spacer} />
+        <View className="h-xl" />
       </View>
     </ScrollView>
   )
 })
 
 // Styles
-const $container: ViewStyle = {
-  flex: 1,
-}
+// This screen reads the STATIC (light-only) `colors` import, so text colors and
+// opacity-tinted card backgrounds stay as inline styles (no `dark:` variants).
+// Layout, spacing, borders, and solid token backgrounds are className utilities.
+const $textCharcoal: TextStyle = { color: colors.palette.deepCharcoal }
+const $textThreadBlue: TextStyle = { color: colors.palette.threadBlue }
+const $textAlertRed: TextStyle = { color: colors.palette.alertRed }
+const $textWarmIvory: TextStyle = { color: colors.palette.warmIvory }
+const $textSageGreen: TextStyle = { color: colors.palette.sageGreen }
 
-const $content: ViewStyle = {
-  padding: spacing.lg,
-}
+// Opacity-tinted card backgrounds (dynamic hex, cannot be a token class).
+const $summaryCardBg: ViewStyle = { backgroundColor: colors.palette.tailorGold + "10" }
+const $pricingCardBg: ViewStyle = { backgroundColor: colors.palette.sageGreen + "10" }
 
-const $title: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xs,
-}
-
-const $subtitle: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.lg,
-  lineHeight: 20,
-}
-
-const $errorState: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  padding: spacing.xl,
-}
-
-const $errorTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.alertRed,
-  marginTop: spacing.md,
-  marginBottom: spacing.xs,
-}
-
-const $errorDescription: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-  textAlign: "center",
-}
-
-const $summarySection: ViewStyle = {
-  marginBottom: spacing.lg,
-}
-
-const $section: ViewStyle = {
-  marginBottom: spacing.lg,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.md,
-}
-
-const $summaryCard: ViewStyle = {
-  backgroundColor: colors.palette.tailorGold + "10",
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderLeftWidth: 4,
-  borderLeftColor: colors.palette.tailorGold,
-}
-
-const $summaryHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $summaryOrderType: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $priorityBadge: ViewStyle = {
-  backgroundColor: colors.palette.tailorGold,
-  borderRadius: 6,
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-}
-
-const $priorityText: TextStyle = {
-  fontSize: 12,
-  fontWeight: "600",
-  color: colors.palette.warmIvory,
-}
-
-const $infoCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-}
-
-const $infoRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  marginBottom: spacing.sm,
-}
-
-const $infoLabel: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-  fontWeight: "500",
-  flex: 1,
-}
-
-const $infoValue: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.deepCharcoal,
-  fontWeight: "400",
-  flex: 2,
-  textAlign: "right",
-}
-
-const $measurementStatus: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $measurementText: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.deepCharcoal,
-  marginLeft: spacing.sm,
-  flex: 1,
-}
-
-const $pricingCard: ViewStyle = {
-  backgroundColor: colors.palette.sageGreen + "10",
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderLeftWidth: 4,
-  borderLeftColor: colors.palette.sageGreen,
-}
-
-const $totalRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.md,
-  paddingBottom: spacing.sm,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral300,
-}
-
-const $totalLabel: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $totalValue: TextStyle = {
-  fontSize: 20,
-  fontWeight: "700",
-  color: colors.palette.sageGreen,
-}
-
-const $paymentInfo: ViewStyle = {
-  marginTop: spacing.sm,
-}
-
-const $paymentTitle: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.sm,
-}
-
-const $paymentRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-}
-
-const $paymentLabel: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-}
-
-const $paymentAmount: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.sageGreen,
-}
-
-const $termsContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "flex-start",
-}
-
+// Button style/textStyle overrides stay inline (Button owns its className).
 const $checkbox: ViewStyle = {
   width: 24,
   height: 24,
   marginRight: spacing.sm,
   padding: 0,
   marginTop: 2,
-}
-
-const $checkboxBox: ViewStyle = {
-  width: 24,
-  height: 24,
-  borderRadius: 4,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral400,
-  backgroundColor: colors.palette.neutral100,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $checkboxChecked: ViewStyle = {
-  backgroundColor: colors.palette.sageGreen,
-  borderColor: colors.palette.sageGreen,
-}
-
-const $termsText: ViewStyle = {
-  flex: 1,
-}
-
-const $termsTitle: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xs,
-}
-
-const $termsDescription: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-  lineHeight: 16,
 }
 
 const $submitButton: ViewStyle = {
@@ -648,8 +528,4 @@ const $submitButtonText: TextStyle = {
   fontWeight: "600",
   color: colors.palette.warmIvory,
   textAlign: "center",
-}
-
-const $spacer: ViewStyle = {
-  height: spacing.xl,
 }
