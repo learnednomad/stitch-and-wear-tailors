@@ -8,8 +8,6 @@ import {
   ViewProps,
   ViewStyle,
 } from "react-native"
-import type { ThemedStyle, ThemedStyleArray } from "@/theme"
-import { $styles } from "../theme"
 import { Text, TextProps } from "./Text"
 import { useAppTheme } from "@/utils/useAppTheme"
 
@@ -152,10 +150,7 @@ export function Card(props: CardProps) {
     ...WrapperProps
   } = props
 
-  const {
-    themed,
-    theme: { spacing },
-  } = useAppTheme()
+  const { theme } = useAppTheme()
 
   const preset: Presets = props.preset ?? "default"
   const isPressable = !!WrapperProps.onPress
@@ -168,46 +163,35 @@ export function Card(props: CardProps) {
   >
   const HeaderContentWrapper = verticalAlignment === "force-footer-bottom" ? View : Fragment
 
-  const $containerStyle: StyleProp<ViewStyle> = [
-    themed($containerPresets[preset]),
-    $containerStyleOverride,
+  // RN shadow stays inline (no className equivalent); shadow color is themed.
+  const $shadowStyle: ViewStyle = {
+    shadowColor: theme.colors.palette.neutral800,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12.81,
+    elevation: 16,
+  }
+
+  const $alignmentWrapperClass = [
+    "flex-1 self-stretch",
+    $alignmentWrapperJustify[verticalAlignment],
+    LeftComponent && "ms-4",
+    RightComponent && "me-4",
   ]
-  const $headingStyle = [
-    themed($headingPresets[preset]),
-    (isFooterPresent || isContentPresent) && { marginBottom: spacing.xxxs },
-    $headingStyleOverride,
-    HeadingTextProps?.style,
-  ]
-  const $contentStyle = [
-    themed($contentPresets[preset]),
-    isHeadingPresent && { marginTop: spacing.xxxs },
-    isFooterPresent && { marginBottom: spacing.xxxs },
-    $contentStyleOverride,
-    ContentTextProps?.style,
-  ]
-  const $footerStyle = [
-    themed($footerPresets[preset]),
-    (isHeadingPresent || isContentPresent) && { marginTop: spacing.xxxs },
-    $footerStyleOverride,
-    FooterTextProps?.style,
-  ]
-  const $alignmentWrapperStyle = [
-    $alignmentWrapper,
-    { justifyContent: $alignmentWrapperFlexOptions[verticalAlignment] },
-    LeftComponent && { marginStart: spacing.md },
-    RightComponent && { marginEnd: spacing.md },
-  ]
+    .filter(Boolean)
+    .join(" ")
 
   return (
     <Wrapper
-      style={$containerStyle}
+      className={`flex-row min-h-24 rounded-2xl border p-2 ${$containerPresetClass[preset]}`}
+      style={[$shadowStyle, $containerStyleOverride]}
       activeOpacity={0.8}
       accessibilityRole={isPressable ? "button" : undefined}
       {...WrapperProps}
     >
       {LeftComponent}
 
-      <View style={$alignmentWrapperStyle}>
+      <View className={$alignmentWrapperClass}>
         <HeaderContentWrapper>
           {HeadingComponent ||
             (isHeadingPresent && (
@@ -217,7 +201,12 @@ export function Card(props: CardProps) {
                 tx={headingTx}
                 txOptions={headingTxOptions}
                 {...HeadingTextProps}
-                style={$headingStyle}
+                className={$textPresetClass[preset]}
+                style={[
+                  (isFooterPresent || isContentPresent) && { marginBottom: 2 },
+                  $headingStyleOverride,
+                  HeadingTextProps?.style,
+                ]}
               />
             ))}
 
@@ -229,7 +218,13 @@ export function Card(props: CardProps) {
                 tx={contentTx}
                 txOptions={contentTxOptions}
                 {...ContentTextProps}
-                style={$contentStyle}
+                className={$textPresetClass[preset]}
+                style={[
+                  isHeadingPresent && { marginTop: 2 },
+                  isFooterPresent && { marginBottom: 2 },
+                  $contentStyleOverride,
+                  ContentTextProps?.style,
+                ]}
               />
             ))}
         </HeaderContentWrapper>
@@ -243,7 +238,12 @@ export function Card(props: CardProps) {
               tx={footerTx}
               txOptions={footerTxOptions}
               {...FooterTextProps}
-              style={$footerStyle}
+              className={$textPresetClass[preset]}
+              style={[
+                (isHeadingPresent || isContentPresent) && { marginTop: 2 },
+                $footerStyleOverride,
+                FooterTextProps?.style,
+              ]}
             />
           ))}
       </View>
@@ -253,60 +253,25 @@ export function Card(props: CardProps) {
   )
 }
 
-const $containerBase: ThemedStyle<ViewStyle> = (theme) => ({
-  borderRadius: theme.spacing.md,
-  padding: theme.spacing.xs,
-  borderWidth: 1,
-  shadowColor: theme.colors.palette.neutral800,
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.08,
-  shadowRadius: 12.81,
-  elevation: 16,
-  minHeight: 96,
-})
-
-const $alignmentWrapper: ViewStyle = {
-  flex: 1,
-  alignSelf: "stretch",
-}
-
-const $alignmentWrapperFlexOptions = {
-  "top": "flex-start",
-  "center": "center",
-  "space-between": "space-between",
-  "force-footer-bottom": "space-between",
+// verticalAlignment -> justify-content utility for the alignment wrapper.
+const $alignmentWrapperJustify = {
+  "top": "justify-start",
+  "center": "justify-center",
+  "space-between": "justify-between",
+  "force-footer-bottom": "justify-between",
 } as const
 
-const $containerPresets: Record<Presets, ThemedStyleArray<ViewStyle>> = {
-  default: [
-    $styles.row,
-    $containerBase,
-    (theme) => ({
-      backgroundColor: theme.colors.palette.neutral100,
-      borderColor: theme.colors.palette.neutral300,
-    }),
-  ],
-  reversed: [
-    $styles.row,
-    $containerBase,
-    (theme) => ({
-      backgroundColor: theme.colors.palette.neutral800,
-      borderColor: theme.colors.palette.neutral500,
-    }),
-  ],
+// Container background + border per preset, each with its `dark:` twin (mirrors
+// the previous themed palette.neutral* lookups).
+const $containerPresetClass: Record<Presets, string> = {
+  default:
+    "bg-neutral100 border-neutral300 dark:bg-neutral100-dark dark:border-neutral300-dark",
+  reversed:
+    "bg-neutral800 border-neutral500 dark:bg-neutral800-dark dark:border-neutral500-dark",
 }
 
-const $headingPresets: Record<Presets, ThemedStyleArray<TextStyle>> = {
-  default: [],
-  reversed: [(theme) => ({ color: theme.colors.palette.neutral100 })],
-}
-
-const $contentPresets: Record<Presets, ThemedStyleArray<TextStyle>> = {
-  default: [],
-  reversed: [(theme) => ({ color: theme.colors.palette.neutral100 })],
-}
-
-const $footerPresets: Record<Presets, ThemedStyleArray<TextStyle>> = {
-  default: [],
-  reversed: [(theme) => ({ color: theme.colors.palette.neutral100 })],
+// Reversed preset flips heading/content/footer text to neutral100 (with dark twin).
+const $textPresetClass: Record<Presets, string> = {
+  default: "",
+  reversed: "text-neutral100 dark:text-neutral100-dark",
 }
