@@ -16,17 +16,6 @@ import { setupRootStore } from "./setupRootStore"
  */
 
 const _rootStore = RootStoreModel.create({
-  orderStore: {
-    statistics: {
-      totalOrders: 0,
-      pendingOrders: 0,
-      inProgressOrders: 0,
-      completedOrders: 0,
-      revenue: 0,
-      averageOrderValue: 0,
-      lastUpdated: null,
-    },
-  },
   fabricStore: {
     priceRange: {
       min: 0,

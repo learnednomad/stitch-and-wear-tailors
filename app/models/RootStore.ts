@@ -1,6 +1,5 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
 import { UserStoreModel } from "./stores/UserStore"
-import { OrderStoreModel } from "./stores/OrderStore"
 import { FabricStoreModel } from "./stores/FabricStore"
 import { MeasurementStoreModel } from "./stores/MeasurementStore"
 import { AppointmentStoreModel } from "./stores/AppointmentStore"
@@ -13,17 +12,6 @@ export const RootStoreModel = types
   .model("RootStore")
   .props({
     userStore: types.optional(UserStoreModel, {}),
-    orderStore: types.optional(OrderStoreModel, {
-      statistics: {
-        totalOrders: 0,
-        pendingOrders: 0,
-        inProgressOrders: 0,
-        completedOrders: 0,
-        revenue: 0,
-        averageOrderValue: 0,
-        lastUpdated: null,
-      },
-    }),
     fabricStore: types.optional(FabricStoreModel, {
       priceRange: {
         min: 0,
@@ -90,7 +78,6 @@ export const RootStoreModel = types
      */
     clearUserData() {
       self.userStore.clearCurrentUser()
-      self.orderStore.orders.setItems([])
       self.fabricStore.wishlist = null
       self.measurementStore.measurements.setItems([])
       self.measurementStore.currentMeasurement = null
@@ -141,20 +128,6 @@ export const RootStoreModel = types
     },
 
     /**
-     * Get pending orders count for dashboard
-     */
-    get pendingOrdersCount() {
-      return self.orderStore.getNigerianOrdersByStatus("pending").length
-    },
-
-    /**
-     * Get urgent orders count
-     */
-    get urgentOrdersCount() {
-      return self.orderStore.urgentNigerianOrders.length
-    },
-
-    /**
      * Get unread notifications count
      */
     get unreadNotificationsCount() {
@@ -190,7 +163,6 @@ export const RootStoreModel = types
     get isLoading() {
       return (
         self.userStore.isLoading ||
-        self.orderStore.isLoading ||
         self.fabricStore.isLoading ||
         self.measurementStore.isLoading ||
         self.appointmentStore.isLoading ||
@@ -204,7 +176,6 @@ export const RootStoreModel = types
     get error() {
       return (
         self.userStore.error ||
-        self.orderStore.error ||
         self.fabricStore.error ||
         self.measurementStore.error ||
         self.appointmentStore.error ||
@@ -217,7 +188,6 @@ export const RootStoreModel = types
      */
     clearErrors() {
       self.userStore.clearError()
-      self.orderStore.clearError()
       self.fabricStore.clearError()
       self.measurementStore.clearError()
       self.appointmentStore.clearError()
