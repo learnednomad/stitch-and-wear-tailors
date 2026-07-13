@@ -5,18 +5,31 @@
  */
 import { FC } from "react"
 import { observer } from "mobx-react-lite"
-import { TextStyle, ViewStyle } from "react-native"
+import { TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
-import { NotificationList, Screen, Text } from "@/components"
+import { Icon, NotificationList, Screen, Text } from "@/components"
 import { spacing } from "@/theme"
 
 interface NotificationsScreenProps extends AppStackScreenProps<"ClientNotifications"> {}
 
 export const ClientNotificationsScreen: FC<NotificationsScreenProps> = observer(
-  function NotificationsScreen() {
+  function NotificationsScreen({ navigation }) {
     return (
       <Screen style={$root} preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$content}>
-        <Text preset="heading" text="Notifications" style={$heading} />
+        <View style={$header}>
+          {navigation.canGoBack() && (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              hitSlop={8}
+              style={$backButton}
+            >
+              <Icon icon="back" size={24} />
+            </TouchableOpacity>
+          )}
+          <Text preset="heading" text="Notifications" />
+        </View>
         <NotificationList />
       </Screen>
     )
@@ -31,7 +44,14 @@ const $content: ViewStyle = {
   flex: 1,
 }
 
-const $heading: TextStyle = {
+const $header: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: spacing.xs,
   paddingHorizontal: spacing.md,
   paddingTop: spacing.md,
+}
+
+const $backButton: ViewStyle = {
+  padding: spacing.xxs,
 }
