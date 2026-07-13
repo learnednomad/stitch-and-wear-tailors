@@ -18,6 +18,8 @@ import {
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useStores } from "@/models"
+import { useClientOrders } from "@/api/orders"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useAuthStore } from "@/state/authStore"
 import { useNavigation } from "@react-navigation/native"
 import { appointmentApi, PBAppointment } from "@/services/api/appointment-api"
@@ -37,9 +39,10 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [nextAppointment, setNextAppointment] = useState<PBAppointment | null>(null)
 
-  // Get stores
-  const { orderStore, measurementStore, notificationStore } = useStores()
+  // Get stores (measurement + notification stay on MST for now)
+  const { measurementStore, notificationStore } = useStores()
   const authStore = useAuthStore()
+  const getTranslation = useOrderDraftStore((s) => s.getTranslation)
 
   // Get user data from stores
   const currentUser = authStore.user
@@ -48,8 +51,8 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
 
   const unreadNotifications = notificationStore.unreadCount || 0
 
-  // Real order data (loaded from PocketBase on mount)
-  const myOrders = orderStore?.orders?.items || []
+  // Real order data via React Query (loaded/kept fresh automatically)
+  const { data: myOrders = [], refetch: refetchOrders } = useClientOrders(currentUser?.id)
   const activeOrdersCount = myOrders.filter((order: any) =>
     ["pending", "confirmed", "in_progress", "ready"].includes(order.status),
   ).length
@@ -88,10 +91,8 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
 
     try {
       await Promise.all([
-        // Own orders drive the stat tiles and the recent-orders rail
-        orderStore
-          .loadNigerianOrders({ customerId: currentUser.id, perPage: 50 }, true)
-          .catch((error: unknown) => console.warn("Failed to load orders:", error)),
+        // Own orders drive the stat tiles and the recent-orders rail (React Query)
+        refetchOrders(),
         // Next upcoming appointment
         appointmentApi.listUpcoming().then((result) => {
           if (result.success) {
@@ -151,9 +152,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
         numberOfLines={1}
       >
         {item.items?.[0]?.garmentType
-          ? (orderStore.getTranslation
-              ? orderStore.getTranslation("garments", item.items[0].garmentType)
-              : item.items[0].garmentType) || item.items[0].garmentType
+          ? getTranslation("garments", item.items[0].garmentType) || item.items[0].garmentType
           : "Custom Order"}
       </Text>
       <Text className="mb-2 text-[13px] leading-[18px] text-textDim dark:text-textDim-dark">

@@ -3,42 +3,37 @@
  * Main orders listing and management screen with Nigerian business context
  */
 
-import { FC, useState, useEffect, useCallback } from "react"
-import { View, RefreshControl, ViewStyle, TextStyle, TouchableOpacity, FlatList, Alert } from "react-native"
-import { observer } from "mobx-react-lite"
+import { FC, useState, useMemo } from "react"
+import { View, RefreshControl, ViewStyle, TextStyle, TouchableOpacity, FlatList } from "react-native"
 import { TabScreenProps } from "@/navigators/ClientTabsNavigator"
 import { Screen, Text, Button, Icon, Chip, statusTone } from "@/components"
 import {
   OrderFilterBar,
   OrderFilterValue,
   EMPTY_ORDER_FILTER,
-  orderFilterToParams,
   matchesOrderFilter,
   countActiveOrderFilters,
 } from "@/components/OrderFilterBar"
 import { colors, spacing } from "@/theme"
 import { useNavigation } from "@react-navigation/native"
-import { useStores } from "@/models"
+import { useClientOrders, useOrderRealtime } from "@/api/orders"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useAuthStore } from "@/state/authStore"
-import { Instance } from "mobx-state-tree"
-import { NigerianOrderModel } from "@/models/stores/OrderStore"
 import { NigerianGarmentType, OrderStatus } from "@/types/orders"
-
-type OrderInstance = Instance<typeof NigerianOrderModel>
 
 interface OrdersScreenProps extends TabScreenProps<"Orders"> {}
 
-export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScreen() {
-  const { orderStore } = useStores()
+export const OrdersScreen: FC<OrdersScreenProps> = function OrdersScreen() {
   const authStore = useAuthStore()
   const navigation = useNavigation()
+  const getTranslation = useOrderDraftStore((s) => s.getTranslation)
+
+  // Server list via React Query; realtime keeps it fresh (customer filter + poll)
+  const { data: orders = [], isLoading, refetch, isRefetching } = useClientOrders(authStore.user?.id)
+  useOrderRealtime(authStore.user?.id)
 
   // Filters persist in component state for the session (v1)
   const [filter, setFilter] = useState<OrderFilterValue>(EMPTY_ORDER_FILTER)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   const statusOptions = [
     { value: "pending" as OrderStatus, label: "Pending", color: colors.palette.tailorGold },
@@ -49,61 +44,18 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
     { value: "cancelled" as OrderStatus, label: "Cancelled", color: colors.palette.alertRed },
   ]
 
-  const loadOrders = useCallback(async () => {
-    if (!authStore.user?.id) return
-
-    try {
-      setIsLoading(true)
-      setPage(1)
-      await orderStore.loadNigerianOrders(
-        { customerId: authStore.user.id, page: 1, ...orderFilterToParams(filter) },
-        true,
-      )
-    } catch (error) {
-      console.error("Failed to load orders:", error)
-      Alert.alert("Error", "Failed to load orders. Please try again.")
-    } finally {
-      setIsLoading(false)
-    }
-  }, [authStore.user?.id, orderStore, filter])
-
-  useEffect(() => {
-    loadOrders()
-  }, [loadOrders])
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await loadOrders()
-    setIsRefreshing(false)
+  const handleRefresh = () => {
+    refetch()
   }
 
-  const handleLoadMore = async () => {
-    if (isLoadingMore || isLoading || !orderStore.orders.hasMore || !authStore.user?.id) return
-
-    try {
-      setIsLoadingMore(true)
-      const nextPage = page + 1
-      await orderStore.loadNigerianOrders({
-        customerId: authStore.user.id,
-        page: nextPage,
-        ...orderFilterToParams(filter),
-      })
-      setPage(nextPage)
-    } catch (error) {
-      console.error("Failed to load more orders:", error)
-    } finally {
-      setIsLoadingMore(false)
-    }
-  }
-
-  // Server-side filters do the heavy lifting; the client-side predicate adds
-  // multi-status selection and name/garment search matching on top
-  const filteredOrders = orderStore.orders.items.filter((order) =>
-    matchesOrderFilter(order, filter),
+  // Client-side predicate handles multi-status selection and name/garment search
+  const filteredOrders = useMemo(
+    () => orders.filter((order) => matchesOrderFilter(order, filter)),
+    [orders, filter],
   )
 
   const getGarmentDisplayName = (garmentType: NigerianGarmentType) => {
-    return orderStore.getTranslation("garments", garmentType) || garmentType
+    return getTranslation("garments", garmentType) || garmentType
   }
 
   const formatOrderDate = (dateString: string) => {
@@ -114,7 +66,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
     })
   }
 
-  const renderOrderCard = ({ item: order }: { item: OrderInstance }) => {
+  const renderOrderCard = ({ item: order }: { item: any }) => {
     const garmentSummary =
       order.items.length === 0
         ? "Custom Order"
@@ -236,13 +188,11 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
             keyExtractor={(item) => item.id}
             refreshControl={
               <RefreshControl
-                refreshing={isRefreshing}
+                refreshing={isRefetching}
                 onRefresh={handleRefresh}
                 tintColor={colors.palette.tailorGold}
               />
             }
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.4}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={$listContainer}
           />
@@ -250,7 +200,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
       </View>
     </Screen>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay

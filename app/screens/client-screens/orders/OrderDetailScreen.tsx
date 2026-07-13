@@ -1,6 +1,6 @@
-import React, { FC, useCallback, useEffect, useState } from "react"
+import React, { FC, useCallback, useState } from "react"
 import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle, Alert, Modal } from "react-native"
-import { observer } from "mobx-react-lite"
+import { useQueryClient } from "@tanstack/react-query"
 import { AppStackScreenProps } from "@/navigators"
 import {
   Button,
@@ -15,7 +15,8 @@ import {
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
-import { useStores } from "@/models"
+import { useOrder, orderKeys } from "@/api/orders"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useAuthStore } from "@/state/authStore"
 import { orderApi } from "@/services/api/order-api"
 import { messageApi } from "@/services/api/message-api"
@@ -89,13 +90,12 @@ const STAGE_STEPS: { id: string; title: string; description: string }[] = [
 
 interface OrderDetailScreenProps extends AppStackScreenProps<"OrderDetail"> {}
 
-export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }) => {
+export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
-  const { orderStore } = useStores()
   const authStore = useAuthStore()
+  const queryClient = useQueryClient()
 
-  const [isLoading, setIsLoading] = useState(true)
   const [isStatusSheetVisible, setIsStatusSheetVisible] = useState(false)
   const [isActing, setIsActing] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -105,6 +105,9 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
 
   // Extract order ID from route params
   const { orderId } = route?.params || { orderId: "" }
+
+  // Order detail (items + stages) via React Query
+  const { data: order, isLoading } = useOrder(orderId)
 
   // Refresh the chat unread badge whenever the screen gains focus
   useFocusEffect(
@@ -119,30 +122,6 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
       }
     }, [orderId]),
   )
-
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      if (!orderId) {
-        setIsLoading(false)
-        return
-      }
-      try {
-        setIsLoading(true)
-        await orderStore.loadNigerianOrder(orderId)
-      } catch (error) {
-        console.error("Failed to load order:", error)
-      } finally {
-        if (!cancelled) setIsLoading(false)
-      }
-    }
-    load()
-    return () => {
-      cancelled = true
-    }
-  }, [orderId, orderStore])
-
-  const order = orderStore.currentOrder
 
   // Tailor-facing action flags: the assigned tailor (or any tailor viewing an
   // unassigned order) gets accept/reject and status-update controls
@@ -163,7 +142,8 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
   const canReorder = !isTailorViewer && ["delivered", "cancelled"].includes(order?.status ?? "")
 
   const reloadOrder = async () => {
-    if (orderId) await orderStore.loadNigerianOrder(orderId)
+    // Invalidate the order cache so the detail (and any list) refetch
+    await queryClient.invalidateQueries({ queryKey: orderKeys.all })
   }
 
   const handleAccept = async () => {
@@ -248,7 +228,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
     if (!order) return
     // Hydrate the creation workflow from this order, then jump into the
     // routed creation path with the matching catalog selections pre-picked
-    orderStore.startReorderFrom(order)
+    useOrderDraftStore.getState().startReorderFrom(order)
     ;(navigation as any).navigate("NewOrder", {
       reorderStyleId: GARMENT_TO_STYLE_ID[order.garmentType],
       reorderFabricId: FABRIC_TYPE_TO_ID[order.fabricSelection.type],
@@ -732,14 +712,14 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
       {/* Status update bottom sheet (tailor) */}
       <StatusUpdateSheet
         visible={isStatusSheetVisible}
-        currentStatus={domainToCurrentPBStatus(order)}
+        currentStatus={domainToCurrentPBStatus(order as any)}
         onClose={() => setIsStatusSheetVisible(false)}
         onSubmit={handleStatusUpdate}
         isSubmitting={isActing}
       />
     </Screen>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay
