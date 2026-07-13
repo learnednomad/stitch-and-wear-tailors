@@ -254,12 +254,16 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
   }
 
   const renderMeasurementField = (field: MeasurementField) => (
-    <View key={field.id} style={$measurementField}>
-      <Text style={$fieldLabel}>
+    <View key={field.id} className="mb-sm">
+      <Text className="text-[14px] font-medium mb-xs" style={$fieldLabelColor}>
         {field.label}
-        {field.required && <Text style={$requiredIndicator}> *</Text>}
+        {field.required && (
+          <Text className="text-[14px]" style={$requiredIndicatorColor}>
+            {" *"}
+          </Text>
+        )}
       </Text>
-      <View style={$inputContainer}>
+      <View className="flex-row items-center bg-neutral100 rounded-[8px] border border-neutral300">
         <TextInput
           style={$textInput}
           placeholder={field.placeholder}
@@ -269,8 +273,10 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
           keyboardType="numeric"
           returnKeyType="next"
         />
-        <View style={$unitContainer}>
-          <Text style={$unitText}>{field.unit}</Text>
+        <View className="px-md py-sm bg-neutral200 rounded-r-[8px]">
+          <Text className="text-[14px] font-medium" style={$unitTextColor}>
+            {field.unit}
+          </Text>
         </View>
       </View>
     </View>
@@ -285,9 +291,9 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
     >
       <ScrollView style={$container} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={$header}>
+        <View className="flex-row items-center px-lg py-md border-b border-b-neutral200">
           <TouchableOpacity
-            style={$backButton}
+            className="w-[40px] h-[40px] justify-center items-center"
             onPress={() => navigation.goBack()}
             accessible
             accessibilityLabel="Go back"
@@ -295,17 +301,21 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
           >
             <Icon icon="back" size={24} color={colors.palette.neutral900} />
           </TouchableOpacity>
-          <Text style={$headerTitle}>Measurements</Text>
-          <View style={$headerSpacer} />
+          <Text className="flex-1 text-[18px] font-semibold text-center" style={$headerTitleColor}>
+            Measurements
+          </Text>
+          <View className="w-[40px]" />
         </View>
 
         {/* Introduction */}
-        <View style={$section}>
-          <View style={$introCard}>
+        <View className="px-lg py-lg">
+          <View className="flex-row bg-primary100 rounded-[8px] p-md items-start">
             <Icon icon="settings" size={24} color={colors.palette.primary500} />
-            <View style={$introContent}>
-              <Text style={$introTitle}>Precise Measurements Required</Text>
-              <Text style={$introText}>
+            <View className="flex-1 ml-sm">
+              <Text className="text-[14px] font-semibold mb-xs" style={$introTitleColor}>
+                Precise Measurements Required
+              </Text>
+              <Text className="text-[13px] leading-[18px]" style={$introTextColor}>
                 Accurate measurements ensure a perfect fit. Please use a measuring tape and have
                 someone assist you for best results.
               </Text>
@@ -314,22 +324,34 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
         </View>
 
         {/* Unit Selector */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Measurement Unit</Text>
-          <View style={$unitSelector}>
+        <View className="px-lg py-lg">
+          <Text className="text-[16px] font-semibold mb-sm" style={$sectionTitleColor}>
+            Measurement Unit
+          </Text>
+          <View className="flex-row gap-sm">
             <TouchableOpacity
-              style={[$unitOption, unit === "cm" && $selectedUnitOption]}
+              className={`flex-1 py-sm px-md rounded-[8px] border items-center ${
+                unit === "cm" ? "bg-primary500 border-primary500" : "border-neutral300"
+              }`}
               onPress={() => setUnit("cm")}
             >
-              <Text style={[$unitOptionText, unit === "cm" && $selectedUnitOptionText]}>
+              <Text
+                className="text-[14px] font-medium"
+                style={unit === "cm" ? $selectedUnitOptionTextColor : $unitOptionTextColor}
+              >
                 Centimeters (cm)
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[$unitOption, unit === "inches" && $selectedUnitOption]}
+              className={`flex-1 py-sm px-md rounded-[8px] border items-center ${
+                unit === "inches" ? "bg-primary500 border-primary500" : "border-neutral300"
+              }`}
               onPress={() => setUnit("inches")}
             >
-              <Text style={[$unitOptionText, unit === "inches" && $selectedUnitOptionText]}>
+              <Text
+                className="text-[14px] font-medium"
+                style={unit === "inches" ? $selectedUnitOptionTextColor : $unitOptionTextColor}
+              >
                 Inches (in)
               </Text>
             </TouchableOpacity>
@@ -337,18 +359,22 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
         </View>
 
         {/* Measurement Fields */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Body Measurements</Text>
-          <View style={$measurementContainer}>{measurementFields.map(renderMeasurementField)}</View>
+        <View className="px-lg py-lg">
+          <Text className="text-[16px] font-semibold mb-sm" style={$sectionTitleColor}>
+            Body Measurements
+          </Text>
+          <View className="gap-md">{measurementFields.map(renderMeasurementField)}</View>
         </View>
 
         {/* Special Instructions */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Special Instructions</Text>
-          <Text style={$sectionDescription}>
+        <View className="px-lg py-lg">
+          <Text className="text-[16px] font-semibold mb-sm" style={$sectionTitleColor}>
+            Special Instructions
+          </Text>
+          <Text className="text-[13px] mb-md leading-[18px]" style={$sectionDescriptionColor}>
             Any specific preferences or modifications you'd like us to know about
           </Text>
-          <View style={$textAreaContainer}>
+          <View className="bg-neutral100 rounded-[8px] border border-neutral300">
             <TextInput
               style={$textArea}
               placeholder="e.g., Extra room in sleeves, specific fit preferences, color matching requests..."
@@ -363,34 +389,48 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
         </View>
 
         {/* Measurement Tips */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Measurement Tips</Text>
-          <View style={$tipsContainer}>
-            <View style={$tipItem}>
+        <View className="px-lg py-lg">
+          <Text className="text-[16px] font-semibold mb-sm" style={$sectionTitleColor}>
+            Measurement Tips
+          </Text>
+          <View className="gap-sm">
+            <View className="flex-row items-center">
               <Icon icon="check" size={16} color={colors.palette.success500} />
-              <Text style={$tipText}>Use a flexible measuring tape</Text>
+              <Text className="text-[13px] ml-sm" style={$tipTextColor}>
+                Use a flexible measuring tape
+              </Text>
             </View>
-            <View style={$tipItem}>
+            <View className="flex-row items-center">
               <Icon icon="check" size={16} color={colors.palette.success500} />
-              <Text style={$tipText}>Measure over fitted undergarments</Text>
+              <Text className="text-[13px] ml-sm" style={$tipTextColor}>
+                Measure over fitted undergarments
+              </Text>
             </View>
-            <View style={$tipItem}>
+            <View className="flex-row items-center">
               <Icon icon="check" size={16} color={colors.palette.success500} />
-              <Text style={$tipText}>Keep the tape parallel to the floor</Text>
+              <Text className="text-[13px] ml-sm" style={$tipTextColor}>
+                Keep the tape parallel to the floor
+              </Text>
             </View>
-            <View style={$tipItem}>
+            <View className="flex-row items-center">
               <Icon icon="check" size={16} color={colors.palette.success500} />
-              <Text style={$tipText}>Don't pull the tape too tight</Text>
+              <Text className="text-[13px] ml-sm" style={$tipTextColor}>
+                Don't pull the tape too tight
+              </Text>
             </View>
           </View>
         </View>
       </ScrollView>
 
       {/* Bottom Actions */}
-      <View style={[$bottomContainer, $bottomContainerInsets]}>
-        <View style={$totalContainer}>
-          <Text style={$totalText}>Order Total</Text>
-          <Text style={$totalAmount}>₦{amount.toLocaleString()}</Text>
+      <View className="px-lg pt-md pb-md bg-neutral100 border-t border-t-neutral200" style={$bottomContainerInsets}>
+        <View className="flex-row justify-between items-center mb-md py-sm px-md bg-primary100 rounded-[8px]">
+          <Text className="text-[16px] font-semibold" style={$totalTextColor}>
+            Order Total
+          </Text>
+          <Text className="text-[20px] font-bold" style={$totalAmountColor}>
+            ₦{amount.toLocaleString()}
+          </Text>
         </View>
         <Button
           text={isSubmitting ? "Creating Order..." : "Create Order"}
@@ -405,168 +445,36 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
 }
 
 // Styles
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (light in both schemes) — no `dark:` variants. Layout, spacing,
+// and container backgrounds/borders are className token utilities. The two raw
+// react-native <TextInput> styles and the Button style overrides stay inline.
 const $container: ViewStyle = {
   flex: 1,
 }
 
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
-}
+// Text color overrides (static, light-only).
+const $headerTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $sectionTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $sectionDescriptionColor: TextStyle = { color: colors.palette.neutral600 }
+const $introTitleColor: TextStyle = { color: colors.palette.primary700 }
+const $introTextColor: TextStyle = { color: colors.palette.primary700 }
+const $fieldLabelColor: TextStyle = { color: colors.palette.neutral900 }
+const $requiredIndicatorColor: TextStyle = { color: colors.palette.error500 }
+const $unitTextColor: TextStyle = { color: colors.palette.neutral600 }
+const $unitOptionTextColor: TextStyle = { color: colors.palette.neutral700 }
+const $selectedUnitOptionTextColor: TextStyle = { color: colors.palette.neutral100 }
+const $tipTextColor: TextStyle = { color: colors.palette.neutral700 }
+const $totalTextColor: TextStyle = { color: colors.palette.primary700 }
+const $totalAmountColor: TextStyle = { color: colors.palette.primary600 }
 
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $headerTitle: TextStyle = {
-  flex: 1,
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  textAlign: "center",
-}
-
-const $headerSpacer: ViewStyle = {
-  width: 40,
-}
-
-const $section: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.lg,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.sm,
-}
-
-const $sectionDescription: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.md,
-  lineHeight: 18,
-}
-
-const $introCard: ViewStyle = {
-  flexDirection: "row",
-  backgroundColor: colors.palette.primary100,
-  borderRadius: 8,
-  padding: spacing.md,
-  alignItems: "flex-start",
-}
-
-const $introContent: ViewStyle = {
-  flex: 1,
-  marginLeft: spacing.sm,
-}
-
-const $introTitle: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.primary700,
-  marginBottom: spacing.xs,
-}
-
-const $introText: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.primary700,
-  lineHeight: 18,
-}
-
-const $unitSelector: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.sm,
-}
-
-const $unitOption: ViewStyle = {
-  flex: 1,
-  paddingVertical: spacing.sm,
-  paddingHorizontal: spacing.md,
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-  alignItems: "center",
-}
-
-const $selectedUnitOption: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
-  borderColor: colors.palette.primary500,
-}
-
-const $unitOptionText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral700,
-}
-
-const $selectedUnitOptionText: TextStyle = {
-  color: colors.palette.neutral100,
-}
-
-const $measurementContainer: ViewStyle = {
-  gap: spacing.md,
-}
-
-const $measurementField: ViewStyle = {
-  marginBottom: spacing.sm,
-}
-
-const $fieldLabel: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xs,
-}
-
-const $requiredIndicator: TextStyle = {
-  color: colors.palette.error500,
-}
-
-const $inputContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
+// Raw <TextInput> styles must stay inline (TextInput does not take className here).
 const $textInput: TextStyle = {
   flex: 1,
   paddingVertical: spacing.sm,
   paddingHorizontal: spacing.md,
   fontSize: 16,
   color: colors.palette.neutral900,
-}
-
-const $unitContainer: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-  backgroundColor: colors.palette.neutral200,
-  borderTopRightRadius: 8,
-  borderBottomRightRadius: 8,
-}
-
-const $unitText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral600,
-}
-
-const $textAreaContainer: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
 }
 
 const $textArea: TextStyle = {
@@ -577,53 +485,7 @@ const $textArea: TextStyle = {
   minHeight: 100,
 }
 
-const $tipsContainer: ViewStyle = {
-  gap: spacing.sm,
-}
-
-const $tipItem: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $tipText: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral700,
-  marginLeft: spacing.sm,
-}
-
-const $totalContainer: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.md,
-  paddingVertical: spacing.sm,
-  paddingHorizontal: spacing.md,
-  backgroundColor: colors.palette.primary100,
-  borderRadius: 8,
-}
-
-const $totalText: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.primary700,
-}
-
-const $totalAmount: TextStyle = {
-  fontSize: 20,
-  fontWeight: "700",
-  color: colors.palette.primary600,
-}
-
-const $bottomContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.md,
-  paddingBottom: spacing.md,
-  backgroundColor: colors.palette.neutral100,
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral200,
-}
-
+// Button style overrides stay inline (Button owns its className).
 const $primaryButton: ViewStyle = {
   backgroundColor: colors.palette.primary500,
   borderRadius: 12,

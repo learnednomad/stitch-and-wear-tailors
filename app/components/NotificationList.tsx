@@ -9,18 +9,9 @@
  */
 import { useCallback, useEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
-import {
-  RefreshControl,
-  ScrollView,
-  TextStyle,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native"
+import { RefreshControl, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { Text } from "./Text"
-import { spacing } from "@/theme"
-import { useAppTheme } from "@/utils/useAppTheme"
 import { useStores } from "@/models"
 import { PBNotification } from "@/services/api/notification-api"
 import { subscribeToCollection, COLLECTIONS, pb } from "@/services/pocketbase/pocketbase-client"
@@ -45,7 +36,6 @@ function formatTime(iso: string): string {
 
 export const NotificationList = observer(function NotificationList() {
   const navigation = useNavigation<any>()
-  const { theme } = useAppTheme()
   const { notificationStore } = useStores()
   const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -93,31 +83,33 @@ export const NotificationList = observer(function NotificationList() {
   const renderItem = (notification: PBNotification) => (
     <TouchableOpacity
       key={notification.id}
-      style={[$item, { backgroundColor: theme.colors.palette.neutral100 }]}
+      className="mx-4 mb-2 rounded-xl bg-neutral100 p-4 dark:bg-neutral100-dark"
       onPress={() => handlePress(notification)}
       accessible
       accessibilityRole="button"
       accessibilityLabel={notification.title}
     >
-      <View style={$itemRow}>
-        {!notification.isRead && <View style={[$unreadDot, { backgroundColor: theme.colors.tint }]} />}
-        <View style={$itemBody}>
-          <View style={$itemHeader}>
+      <View className="flex-row items-start">
+        {!notification.isRead && (
+          <View className="mr-2 mt-1.5 h-2 w-2 rounded-full bg-tint dark:bg-tint-dark" />
+        )}
+        <View className="flex-1">
+          <View className="flex-row items-center justify-between">
             <Text
-              style={[
-                $itemTitle,
-                { color: theme.colors.text },
-                !notification.isRead && $itemTitleUnread,
-              ]}
+              className="mr-2 flex-1 text-[14px] text-text dark:text-text-dark"
+              weight={notification.isRead ? "medium" : "bold"}
               numberOfLines={1}
             >
               {notification.title}
             </Text>
-            <Text style={[$itemTime, { color: theme.colors.textDim }]}>
+            <Text className="text-[12px] text-textDim dark:text-textDim-dark">
               {formatTime(notification.created)}
             </Text>
           </View>
-          <Text style={[$itemMessage, { color: theme.colors.textDim }]} numberOfLines={2}>
+          <Text
+            className="mt-0.5 text-[13px] leading-[18px] text-textDim dark:text-textDim-dark"
+            numberOfLines={2}
+          >
             {notification.body}
           </Text>
         </View>
@@ -132,110 +124,46 @@ export const NotificationList = observer(function NotificationList() {
     >
       {items.length > 0 && notificationStore.unreadCount > 0 && (
         <TouchableOpacity
-          style={$markAllButton}
+          className="self-end px-4 pt-3"
           onPress={() => notificationStore.markAllServerNotificationsRead()}
         >
-          <Text style={[$markAllText, { color: theme.colors.tint }]} text="Mark all as read" />
+          <Text
+            className="text-[13px] text-tint dark:text-tint-dark"
+            weight="semiBold"
+            text="Mark all as read"
+          />
         </TouchableOpacity>
       )}
       {todayItems.length > 0 && (
         <>
-          <Text style={[$sectionTitle, { color: theme.colors.textDim }]} text="Today" />
+          <Text
+            className="mb-2 mt-4 px-4 text-[13px] uppercase tracking-[0.5px] text-textDim dark:text-textDim-dark"
+            weight="bold"
+            text="Today"
+          />
           {todayItems.map(renderItem)}
         </>
       )}
       {earlierItems.length > 0 && (
         <>
-          <Text style={[$sectionTitle, { color: theme.colors.textDim }]} text="Earlier" />
+          <Text
+            className="mb-2 mt-4 px-4 text-[13px] uppercase tracking-[0.5px] text-textDim dark:text-textDim-dark"
+            weight="bold"
+            text="Earlier"
+          />
           {earlierItems.map(renderItem)}
         </>
       )}
       {items.length === 0 && !notificationStore.isLoading && (
-        <View style={$empty}>
-          <Text text="No notifications yet" style={{ color: theme.colors.textDim }} />
+        <View className="items-center p-8">
+          <Text text="No notifications yet" className="text-textDim dark:text-textDim-dark" />
         </View>
       )}
     </ScrollView>
   )
 })
 
+// ScrollView `style` stays inline per the recipe.
 const $container: ViewStyle = {
   flex: 1,
-}
-
-const $markAllButton: ViewStyle = {
-  alignSelf: "flex-end",
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-}
-
-const $markAllText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 13,
-  fontWeight: "700",
-  textTransform: "uppercase",
-  letterSpacing: 0.5,
-  paddingHorizontal: spacing.md,
-  marginTop: spacing.md,
-  marginBottom: spacing.xs,
-}
-
-const $item: ViewStyle = {
-  marginHorizontal: spacing.md,
-  marginBottom: spacing.xs,
-  borderRadius: 12,
-  padding: spacing.md,
-}
-
-const $itemRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "flex-start",
-}
-
-const $unreadDot: ViewStyle = {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-  marginTop: 6,
-  marginRight: spacing.xs,
-}
-
-const $itemBody: ViewStyle = {
-  flex: 1,
-}
-
-const $itemHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $itemTitle: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  flex: 1,
-  marginRight: spacing.xs,
-}
-
-const $itemTitleUnread: TextStyle = {
-  fontWeight: "700",
-}
-
-const $itemTime: TextStyle = {
-  fontSize: 12,
-}
-
-const $itemMessage: TextStyle = {
-  fontSize: 13,
-  marginTop: 2,
-  lineHeight: 18,
-}
-
-const $empty: ViewStyle = {
-  padding: spacing.xl,
-  alignItems: "center",
 }

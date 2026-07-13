@@ -11,8 +11,7 @@ import {
   ViewStyle,
 } from "react-native"
 import { isRTL, translate } from "@/i18n"
-import type { ThemedStyle, ThemedStyleArray } from "@/theme"
-import { $styles } from "../theme"
+import type { ThemedStyle } from "@/theme"
 import { Text, TextProps } from "./Text"
 import { useAppTheme } from "@/utils/useAppTheme"
 
@@ -141,13 +140,11 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
     ? translate(placeholderTx, placeholderTxOptions)
     : placeholder
 
-  const $containerStyles = [$containerStyleOverride]
-
-  const $labelStyles = [$labelStyle, LabelTextProps?.style]
-
+  // Base layout/typography/color live in className token utilities (with `dark:`
+  // twins, since this component reads the themed palette). Only the genuinely
+  // dynamic bits (error border, multiline sizing, accessory padding, RTL,
+  // disabled color) and caller overrides remain as inline style arrays.
   const $inputWrapperStyles = [
-    $styles.row,
-    $inputWrapperStyle,
     status === "error" && { borderColor: colors.error },
     TextInputProps.multiline && { minHeight: 112 },
     LeftAccessory && { paddingStart: 0 },
@@ -155,19 +152,14 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
     $inputWrapperStyleOverride,
   ]
 
-  const $inputStyles: ThemedStyleArray<TextStyle> = [
-    $inputStyle,
+  const $inputStyles = [
     disabled && { color: colors.textDim },
     isRTL && { textAlign: "right" as TextStyle["textAlign"] },
-    TextInputProps.multiline && { height: "auto" },
+    TextInputProps.multiline && { height: "auto" as const },
     $inputStyleOverride,
   ]
 
-  const $helperStyles = [
-    $helperStyle,
-    status === "error" && { color: colors.error },
-    HelperTextProps?.style,
-  ]
+  const $helperStyles = [status === "error" && { color: colors.error }, HelperTextProps?.style]
 
   /**
    *
@@ -183,7 +175,7 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
   return (
     <TouchableOpacity
       activeOpacity={1}
-      style={$containerStyles}
+      style={$containerStyleOverride}
       onPress={focusInput}
       accessibilityState={{ disabled }}
     >
@@ -194,11 +186,14 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
           tx={labelTx}
           txOptions={labelTxOptions}
           {...LabelTextProps}
-          style={themed($labelStyles)}
+          className={["mb-xs", LabelTextProps?.className].filter(Boolean).join(" ")}
         />
       )}
 
-      <View style={themed($inputWrapperStyles)}>
+      <View
+        className="flex-row items-start overflow-hidden rounded border border-neutral400 bg-neutral200 dark:border-neutral400-dark dark:bg-neutral200-dark"
+        style={$inputWrapperStyles}
+      >
         {!!LeftAccessory && (
           <LeftAccessory
             style={themed($leftAccessoryStyle)}
@@ -214,9 +209,10 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
           textAlignVertical="top"
           placeholder={placeholderContent}
           placeholderTextColor={colors.textDim}
+          className="mx-sm my-xs h-6 flex-1 self-stretch px-0 py-0 font-spaceRegular text-[16px] text-text dark:text-text-dark"
           {...TextInputProps}
           editable={!disabled}
-          style={themed($inputStyles)}
+          style={$inputStyles}
         />
 
         {!!RightAccessory && (
@@ -236,42 +232,12 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
           tx={helperTx}
           txOptions={helperTxOptions}
           {...HelperTextProps}
-          style={themed($helperStyles)}
+          className={["mt-xs", HelperTextProps?.className].filter(Boolean).join(" ")}
+          style={$helperStyles}
         />
       )}
     </TouchableOpacity>
   )
-})
-
-const $labelStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginBottom: spacing.xs,
-})
-
-const $inputWrapperStyle: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  alignItems: "flex-start",
-  borderWidth: 1,
-  borderRadius: 4,
-  backgroundColor: colors.palette.neutral200,
-  borderColor: colors.palette.neutral400,
-  overflow: "hidden",
-})
-
-const $inputStyle: ThemedStyle<ViewStyle> = ({ colors, typography, spacing }) => ({
-  flex: 1,
-  alignSelf: "stretch",
-  fontFamily: typography.primary.normal,
-  color: colors.text,
-  fontSize: 16,
-  height: 24,
-  // https://github.com/facebook/react-native/issues/21720#issuecomment-532642093
-  paddingVertical: 0,
-  paddingHorizontal: 0,
-  marginVertical: spacing.xs,
-  marginHorizontal: spacing.sm,
-})
-
-const $helperStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginTop: spacing.xs,
 })
 
 const $rightAccessoryStyle: ThemedStyle<ViewStyle> = ({ spacing }) => ({

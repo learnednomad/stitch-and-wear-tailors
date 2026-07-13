@@ -1,4 +1,4 @@
-import { StyleProp, TextStyle, View, ViewStyle } from "react-native"
+import { StyleProp, View, ViewStyle } from "react-native"
 import { Icon, IconTypes } from "./Icon"
 import { Text } from "./Text"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -34,56 +34,35 @@ export interface StatTileProps {
 export function StatTile(props: StatTileProps) {
   const { value, label, icon, iconColor, iconBackgroundColor, style: $styleOverride } = props
   const { theme } = useAppTheme()
-  const { colors } = theme
 
   return (
     <View
-      style={[
-        $tile,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-        $styleOverride,
-      ]}
+      className="flex-1 rounded-2xl border border-border bg-surface p-[14px] dark:border-border-dark dark:bg-surface-dark"
+      style={$styleOverride}
     >
       {!!icon && (
-        <View style={[$iconWell, { backgroundColor: iconBackgroundColor ?? colors.accentSoft }]}>
-          <Icon icon={icon} size={16} color={iconColor ?? colors.accent} />
+        <View
+          className={`mb-2.5 h-[30px] w-[30px] items-center justify-center rounded-[15px] ${
+            iconBackgroundColor ? "" : "bg-accentSoft dark:bg-accentSoft-dark"
+          }`}
+          style={iconBackgroundColor ? { backgroundColor: iconBackgroundColor } : undefined}
+        >
+          <Icon icon={icon} size={16} color={iconColor ?? theme.colors.accent} />
         </View>
       )}
       <Text
         weight="bold"
-        style={[$value, { color: colors.text }]}
+        className="text-lg leading-[26px] text-text dark:text-text-dark"
         numberOfLines={1}
         adjustsFontSizeToFit
         text={value}
       />
-      <Text weight="medium" style={[$label, { color: colors.textDim }]} numberOfLines={1} text={label} />
+      <Text
+        weight="medium"
+        className="text-xxs leading-[17px] text-textDim dark:text-textDim-dark"
+        numberOfLines={1}
+        text={label}
+      />
     </View>
   )
-}
-
-const $tile: ViewStyle = {
-  flex: 1,
-  borderRadius: 16,
-  borderWidth: 1,
-  paddingVertical: 14,
-  paddingHorizontal: 14,
-}
-
-const $iconWell: ViewStyle = {
-  width: 30,
-  height: 30,
-  borderRadius: 15,
-  alignItems: "center",
-  justifyContent: "center",
-  marginBottom: 10,
-}
-
-const $value: TextStyle = {
-  fontSize: 20,
-  lineHeight: 26,
-}
-
-const $label: TextStyle = {
-  fontSize: 12,
-  lineHeight: 17,
 }

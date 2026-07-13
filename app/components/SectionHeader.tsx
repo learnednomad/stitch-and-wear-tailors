@@ -1,6 +1,5 @@
-import { StyleProp, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
+import { StyleProp, TouchableOpacity, View, ViewStyle } from "react-native"
 import { Text } from "./Text"
-import { useAppTheme } from "@/utils/useAppTheme"
 
 export interface SectionHeaderProps {
   /**
@@ -26,11 +25,14 @@ export interface SectionHeaderProps {
  */
 export function SectionHeader(props: SectionHeaderProps) {
   const { title, actionText, onActionPress, style: $styleOverride } = props
-  const { theme } = useAppTheme()
 
   return (
-    <View style={[$row, $styleOverride]}>
-      <Text weight="semiBold" style={[$title, { color: theme.colors.text }]} text={title} />
+    <View className="flex-row items-baseline justify-between" style={$styleOverride}>
+      <Text
+        weight="semiBold"
+        className="text-md leading-6 text-text dark:text-text-dark"
+        text={title}
+      />
       {!!actionText && (
         <TouchableOpacity
           onPress={onActionPress}
@@ -41,27 +43,11 @@ export function SectionHeader(props: SectionHeaderProps) {
         >
           <Text
             weight="medium"
-            style={[$action, { color: theme.colors.accent }]}
+            className="text-xs leading-5 text-accent dark:text-accent-dark"
             text={actionText}
           />
         </TouchableOpacity>
       )}
     </View>
   )
-}
-
-const $row: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "baseline",
-}
-
-const $title: TextStyle = {
-  fontSize: 18,
-  lineHeight: 24,
-}
-
-const $action: TextStyle = {
-  fontSize: 14,
-  lineHeight: 20,
 }

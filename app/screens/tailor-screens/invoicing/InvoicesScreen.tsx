@@ -113,8 +113,8 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
   const renderStatusChip = (status: InvoiceStatus) => {
     const palette = STATUS_COLORS[status] ?? STATUS_COLORS.draft
     return (
-      <View style={[$statusChip, { backgroundColor: palette.bg }]}>
-        <Text style={[$statusChipText, { color: palette.text }]}>
+      <View className="py-[3px] px-3 rounded-xl" style={{ backgroundColor: palette.bg }}>
+        <Text className="text-[12px]" weight="semiBold" style={{ color: palette.text }}>
           {STATUS_LABELS[status] ?? status}
         </Text>
       </View>
@@ -130,9 +130,9 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
       contentContainerStyle={$screenContent}
     >
       {/* Header */}
-      <View style={$header}>
+      <View className="flex-row items-center px-6 py-4 border-b border-neutral200">
         <TouchableOpacity
-          style={$backButton}
+          className="w-10 h-10 items-center justify-center"
           onPress={() => navigation.goBack()}
           accessible
           accessibilityLabel="Go back"
@@ -140,19 +140,23 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
         >
           <Icon icon="back" size={24} color={colors.palette.neutral900} />
         </TouchableOpacity>
-        <Text style={$headerTitle}>Invoices</Text>
+        <Text className="flex-1 text-[18px] text-center" weight="semiBold" style={$headerTitleColor}>
+          Invoices
+        </Text>
         <TouchableOpacity
-          style={$backButton}
+          className="w-10 h-10 items-center justify-center"
           onPress={() => navigation.navigate("CreateInvoice")}
           accessibilityLabel="New invoice"
           accessibilityRole="button"
         >
-          <Text style={$plusText}>＋</Text>
+          <Text className="text-[22px]" weight="semiBold" style={$plusTextColor}>
+            ＋
+          </Text>
         </TouchableOpacity>
       </View>
 
       {isLoading ? (
-        <View style={$loadingContainer}>
+        <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : (
@@ -167,32 +171,42 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
           }
           showsVerticalScrollIndicator={false}
         >
-          {error && <Text style={$errorText}>{error}</Text>}
+          {error && (
+            <Text className="text-[13px] px-6 py-3" style={$errorTextColor}>
+              {error}
+            </Text>
+          )}
 
           {/* Pending payment claims */}
           {claims.length > 0 && (
-            <View style={$section}>
-              <Text style={$sectionTitle}>Pending Payment Claims</Text>
+            <View className="px-6 pt-4">
+              <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+                Pending Payment Claims
+              </Text>
               {claims.map((claim) => (
-                <View key={claim.id} style={$claimCard}>
-                  <View style={$claimInfo}>
-                    <Text style={$claimAmount}>{formatMoney(claim.amount, claim.currency)}</Text>
-                    <Text style={$claimMeta}>
+                <View key={claim.id} className="rounded-xl bg-warning100 p-4 mb-3">
+                  <View className="mb-3">
+                    <Text className="text-[16px]" weight="bold" style={$claimAmountColor}>
+                      {formatMoney(claim.amount, claim.currency)}
+                    </Text>
+                    <Text className="text-[13px] mt-0.5" style={$claimMetaColor}>
                       Order {claim.expand?.order?.orderNumber ?? claim.order} ·{" "}
                       {claim.method.replace("_", " ")}
                       {claim.reference ? ` · ${claim.reference}` : ""}
                     </Text>
                   </View>
-                  <View style={$claimActions}>
+                  <View className="flex-row gap-3">
                     <TouchableOpacity
-                      style={$confirmButton}
+                      className="flex-1 rounded-lg bg-success500 py-3 items-center"
                       disabled={actingClaimId === claim.id}
                       onPress={() => handleClaim(claim, "confirm")}
                     >
-                      <Text style={$confirmButtonText}>Confirm</Text>
+                      <Text className="text-[14px]" weight="semiBold" style={$confirmButtonTextColor}>
+                        Confirm
+                      </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={$rejectButton}
+                      className="flex-1 rounded-lg border border-error500 py-3 items-center"
                       disabled={actingClaimId === claim.id}
                       onPress={() =>
                         Alert.alert("Reject Claim", "Reject this payment claim?", [
@@ -205,7 +219,9 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
                         ])
                       }
                     >
-                      <Text style={$rejectButtonText}>Reject</Text>
+                      <Text className="text-[14px]" weight="semiBold" style={$rejectButtonTextColor}>
+                        Reject
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -223,10 +239,15 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
             {(["all", ...INVOICE_STATUSES] as (InvoiceStatus | "all")[]).map((status) => (
               <TouchableOpacity
                 key={status}
-                style={[$filterChip, statusFilter === status && $selectedFilterChip]}
+                className="py-2 px-4 rounded-2xl border border-neutral300"
+                style={statusFilter === status ? $selectedFilterChip : undefined}
                 onPress={() => setStatusFilter(status)}
               >
-                <Text style={[$filterChipText, statusFilter === status && $selectedFilterChipText]}>
+                <Text
+                  className="text-[13px]"
+                  weight="medium"
+                  style={statusFilter === status ? $selectedFilterChipTextColor : $filterChipTextColor}
+                >
                   {status === "all" ? "All" : STATUS_LABELS[status]}
                 </Text>
               </TouchableOpacity>
@@ -234,11 +255,13 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
           </ScrollView>
 
           {/* Invoice list */}
-          <View style={$section}>
+          <View className="px-6 pt-4">
             {filtered.length === 0 ? (
-              <View style={$emptyContainer}>
-                <Text style={$emptyTitle}>No invoices</Text>
-                <Text style={$emptyText}>
+              <View className="items-center py-8">
+                <Text className="text-[16px] mb-2" weight="semiBold" style={$emptyTitleColor}>
+                  No invoices
+                </Text>
+                <Text className="text-[13px] text-center leading-[18px]" style={$emptyTextColor}>
                   {statusFilter === "all"
                     ? "Create your first invoice for an order with the + button."
                     : `No ${STATUS_LABELS[statusFilter as InvoiceStatus]} invoices.`}
@@ -248,22 +271,26 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
               filtered.map((invoice) => (
                 <TouchableOpacity
                   key={invoice.id}
-                  style={$invoiceCard}
+                  className="rounded-2xl border border-border bg-surface p-4 mb-3"
                   onPress={() => navigation.navigate("InvoiceDetail", { invoiceId: invoice.id })}
                 >
-                  <View style={$invoiceTopRow}>
-                    <Text style={$invoiceNumber}>{invoice.invoiceNumber}</Text>
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-[15px]" weight="bold" style={$invoiceNumberColor}>
+                      {invoice.invoiceNumber}
+                    </Text>
                     {renderStatusChip(invoice.status)}
                   </View>
-                  <Text style={$invoiceMeta}>
+                  <Text className="text-[13px] mt-2" style={$invoiceMetaColor}>
                     {customerDisplayName(invoice, nameMap)} · Order{" "}
                     {invoice.expand?.order?.orderNumber ?? invoice.order}
                   </Text>
-                  <View style={$invoiceBottomRow}>
-                    <Text style={$invoiceAmount}>
+                  <View className="flex-row items-center justify-between mt-3">
+                    <Text className="text-[16px]" weight="bold" style={$invoiceAmountColor}>
                       {formatMoney(invoice.subtotal, invoice.currency)}
                     </Text>
-                    <Text style={$invoiceDue}>Due {formatDate(invoice.dueAt)}</Text>
+                    <Text className="text-[13px]" style={$invoiceDueColor}>
+                      Due {formatDate(invoice.dueAt)}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))
@@ -276,7 +303,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
             textStyle={$newInvoiceButtonText}
             onPress={() => navigation.navigate("CreateInvoice")}
           />
-          <View style={$scrollFooterSpace} />
+          <View className="h-12" />
         </ScrollView>
       )}
     </Screen>
@@ -284,6 +311,13 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
 })
 
 // Styles
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (light in both schemes) — no `dark:` variants. Layout, spacing,
+// and container backgrounds/borders are className token utilities. Data-driven
+// status-chip colors, the selection-state filter-chip background, the flex/filter
+// ScrollView styles + contentContainerStyle, the Screen contentContainerStyle,
+// and Button style overrides stay inline.
+//
 // Screen's fixed preset gives its inner container no height; without flex the
 // invoice list collapses to zero height.
 const $screenContent: ViewStyle = {
@@ -294,118 +328,7 @@ const $container: ViewStyle = {
   flex: 1,
 }
 
-const $loadingContainer: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $headerTitle: TextStyle = {
-  flex: 1,
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  textAlign: "center",
-}
-
-const $plusText: TextStyle = {
-  fontSize: 22,
-  fontWeight: "600",
-  color: colors.accent,
-}
-
-const $errorText: TextStyle = {
-  color: colors.palette.error500,
-  fontSize: 13,
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.sm,
-}
-
-const $section: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.md,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.sm,
-}
-
-const $claimCard: ViewStyle = {
-  backgroundColor: colors.palette.warning100,
-  borderRadius: 12,
-  padding: spacing.md,
-  marginBottom: spacing.sm,
-}
-
-const $claimInfo: ViewStyle = {
-  marginBottom: spacing.sm,
-}
-
-const $claimAmount: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-}
-
-const $claimMeta: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-  marginTop: 2,
-}
-
-const $claimActions: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.sm,
-}
-
-const $confirmButton: ViewStyle = {
-  flex: 1,
-  backgroundColor: colors.palette.success500,
-  borderRadius: 8,
-  paddingVertical: spacing.sm,
-  alignItems: "center",
-}
-
-const $confirmButtonText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.neutral100,
-}
-
-const $rejectButton: ViewStyle = {
-  flex: 1,
-  borderWidth: 1,
-  borderColor: colors.palette.error500,
-  borderRadius: 8,
-  paddingVertical: spacing.sm,
-  alignItems: "center",
-}
-
-const $rejectButtonText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.error500,
-}
-
+// Horizontal filter ScrollView style + its contentContainerStyle take style objects.
 const $filterScroll: ViewStyle = {
   flexGrow: 0,
   marginTop: spacing.md,
@@ -416,85 +339,13 @@ const $filterRow: ViewStyle = {
   gap: spacing.sm,
 }
 
-const $filterChip: ViewStyle = {
-  paddingVertical: spacing.xs,
-  paddingHorizontal: spacing.md,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
+// Selection-state filter-chip background/border stays inline (conditional style).
 const $selectedFilterChip: ViewStyle = {
   backgroundColor: colors.accent,
   borderColor: colors.accent,
 }
 
-const $filterChipText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "500",
-  color: colors.palette.neutral700,
-}
-
-const $selectedFilterChipText: TextStyle = {
-  color: colors.palette.neutral100,
-}
-
-const $invoiceCard: ViewStyle = {
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.border,
-  padding: spacing.md,
-  marginBottom: spacing.sm,
-}
-
-const $invoiceTopRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $invoiceNumber: TextStyle = {
-  fontSize: 15,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-}
-
-const $statusChip: ViewStyle = {
-  paddingVertical: 3,
-  paddingHorizontal: spacing.sm,
-  borderRadius: 12,
-}
-
-const $statusChipText: TextStyle = {
-  fontSize: 12,
-  fontWeight: "600",
-}
-
-const $invoiceMeta: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-  marginTop: spacing.xs,
-}
-
-const $invoiceBottomRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginTop: spacing.sm,
-}
-
-const $invoiceAmount: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.accent,
-}
-
-const $invoiceDue: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-}
-
+// Button style overrides stay inline (Button owns its className).
 const $newInvoiceButton: ViewStyle = {
   backgroundColor: colors.accent,
   borderRadius: 12,
@@ -508,25 +359,20 @@ const $newInvoiceButtonText: TextStyle = {
   color: colors.palette.neutral100,
 }
 
-const $emptyContainer: ViewStyle = {
-  alignItems: "center",
-  paddingVertical: spacing.xl,
-}
-
-const $emptyTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xs,
-}
-
-const $emptyText: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-  textAlign: "center",
-  lineHeight: 18,
-}
-
-const $scrollFooterSpace: ViewStyle = {
-  height: spacing.xxl,
-}
+// Text color overrides (static, light-only).
+const $headerTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $plusTextColor: TextStyle = { color: colors.accent }
+const $errorTextColor: TextStyle = { color: colors.palette.error500 }
+const $sectionTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $claimAmountColor: TextStyle = { color: colors.palette.neutral900 }
+const $claimMetaColor: TextStyle = { color: colors.textDim }
+const $confirmButtonTextColor: TextStyle = { color: colors.palette.neutral100 }
+const $rejectButtonTextColor: TextStyle = { color: colors.palette.error500 }
+const $filterChipTextColor: TextStyle = { color: colors.palette.neutral700 }
+const $selectedFilterChipTextColor: TextStyle = { color: colors.palette.neutral100 }
+const $invoiceNumberColor: TextStyle = { color: colors.palette.neutral900 }
+const $invoiceMetaColor: TextStyle = { color: colors.textDim }
+const $invoiceAmountColor: TextStyle = { color: colors.accent }
+const $invoiceDueColor: TextStyle = { color: colors.textDim }
+const $emptyTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $emptyTextColor: TextStyle = { color: colors.textDim }

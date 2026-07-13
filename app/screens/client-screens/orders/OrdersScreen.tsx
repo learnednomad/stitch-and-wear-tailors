@@ -4,15 +4,7 @@
  */
 
 import { FC, useState, useEffect, useCallback } from "react"
-import {
-  View,
-  RefreshControl,
-  ViewStyle,
-  TextStyle,
-  TouchableOpacity,
-  FlatList,
-  Alert,
-} from "react-native"
+import { View, RefreshControl, ViewStyle, TextStyle, TouchableOpacity, FlatList, Alert } from "react-native"
 import { observer } from "mobx-react-lite"
 import { TabScreenProps } from "@/navigators/ClientTabsNavigator"
 import { Screen, Text, Button, Icon, Chip, statusTone } from "@/components"
@@ -133,16 +125,20 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
 
     return (
       <TouchableOpacity
-        style={$orderCard}
+        className="flex-row items-center gap-2 rounded-2xl border border-border bg-surface p-4"
         activeOpacity={0.7}
         onPress={() => {
           // Navigate to order detail screen
           ;(navigation as any).navigate("OrderDetail", { orderId: order.id })
         }}
       >
-        <View style={$orderCardBody}>
-          <View style={$orderHeader}>
-            <Text style={$orderNumber} numberOfLines={1}>
+        <View className="flex-1">
+          <View className="mb-2 flex-row items-center justify-between gap-2">
+            <Text
+              className="shrink text-[15px] font-semibold"
+              style={$orderNumberColor}
+              numberOfLines={1}
+            >
               #{order.orderNumber}
             </Text>
             <Chip
@@ -151,13 +147,17 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
             />
           </View>
 
-          <Text style={$garmentText} numberOfLines={1}>
+          <Text className="mb-3 text-[13px]" style={$garmentTextColor} numberOfLines={1}>
             {garmentSummary}
           </Text>
 
-          <View style={$orderFooter}>
-            <Text style={$totalAmount}>₦{order.pricing.totalPrice.toLocaleString()}</Text>
-            <Text style={$orderDate}>{dateLine}</Text>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-[16px] font-bold" style={$totalAmountColor}>
+              ₦{order.pricing.totalPrice.toLocaleString()}
+            </Text>
+            <Text className="text-[12px]" style={$orderDateColor}>
+              {dateLine}
+            </Text>
           </View>
         </View>
         <Icon icon="caretRight" size={18} color={colors.palette.gray500} />
@@ -168,20 +168,24 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
   const renderEmptyState = () => {
     if (countActiveOrderFilters(filter) > 0) {
       return (
-        <View style={$emptyState}>
+        <View className="flex-1 items-center justify-center p-8">
           <Icon icon="view" size={64} color={colors.palette.gray500} />
-          <Text style={$emptyTitle}>No Matching Orders</Text>
-          <Text style={$emptyDescription}>
+          <Text className="mb-2 mt-6 text-[20px] font-semibold" style={$emptyTitleColor}>
+            No Matching Orders
+          </Text>
+          <Text className="mb-8 text-center text-[14px] leading-5" style={$emptyDescriptionColor}>
             Try adjusting your search or clearing some filters
           </Text>
         </View>
       )
     }
     return (
-      <View style={$emptyState}>
+      <View className="flex-1 items-center justify-center p-8">
         <Icon icon="sew" size={64} color={colors.palette.gray500} />
-        <Text style={$emptyTitle}>No Orders Yet</Text>
-        <Text style={$emptyDescription}>
+        <Text className="mb-2 mt-6 text-[20px] font-semibold" style={$emptyTitleColor}>
+          No Orders Yet
+        </Text>
+        <Text className="mb-8 text-center text-[14px] leading-5" style={$emptyDescriptionColor}>
           Start your tailoring journey by creating your first order
         </Text>
         <Button
@@ -195,16 +199,13 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
   }
 
   return (
-    <Screen
-      style={$root}
-      contentContainerStyle={$screenContent}
-      preset="fixed"
-      safeAreaEdges={["top"]}
-    >
-      <View style={$header}>
-        <Text style={$title}>My Orders</Text>
+    <Screen style={$root} contentContainerStyle={$screenContent} preset="fixed" safeAreaEdges={["top"]}>
+      <View className="flex-row items-center justify-between px-4 pb-4 pt-3">
+        <Text className="text-[24px] font-bold" style={$titleColor}>
+          My Orders
+        </Text>
         <TouchableOpacity
-          style={$addButton}
+          className="h-[42px] w-[42px] items-center justify-center rounded-full bg-accent"
           onPress={() => navigation.navigate("NewOrder" as never)}
         >
           <Icon icon="sew" size={22} color={colors.palette.neutral100} />
@@ -212,19 +213,17 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
       </View>
 
       {/* Search and Filter */}
-      <View style={$filterBarContainer}>
-        <OrderFilterBar
-          value={filter}
-          onChange={setFilter}
-          statusOptions={statusOptions}
-        />
+      <View className="px-4 pb-4">
+        <OrderFilterBar value={filter} onChange={setFilter} statusOptions={statusOptions} />
       </View>
 
       {/* Orders List */}
-      <View style={$content}>
+      <View className="flex-1">
         {isLoading ? (
-          <View style={$loadingState}>
-            <Text style={$loadingText}>Loading orders...</Text>
+          <View className="flex-1 items-center justify-center p-8">
+            <Text className="text-[16px]" style={$loadingTextColor}>
+              Loading orders...
+            </Text>
           </View>
         ) : filteredOrders.length === 0 ? (
           renderEmptyState()
@@ -252,6 +251,9 @@ export const OrdersScreen: FC<OrdersScreenProps> = observer(function OrdersScree
 })
 
 // Styles
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (light in both schemes) — no `dark:` variants. Layout, spacing,
+// and container backgrounds/borders are className token utilities.
 const $root: ViewStyle = {
   flex: 1,
   backgroundColor: colors.background,
@@ -263,39 +265,6 @@ const $screenContent: ViewStyle = {
   flex: 1,
 }
 
-const $header: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-  paddingBottom: spacing.md,
-}
-
-const $title: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.text,
-}
-
-const $addButton: ViewStyle = {
-  width: 42,
-  height: 42,
-  borderRadius: 21,
-  backgroundColor: colors.accent,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $filterBarContainer: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingBottom: spacing.md,
-}
-
-const $content: ViewStyle = {
-  flex: 1,
-}
-
 const $listContainer: ViewStyle = {
   paddingHorizontal: spacing.md,
   paddingTop: spacing.xs,
@@ -303,82 +272,18 @@ const $listContainer: ViewStyle = {
   gap: spacing.sm,
 }
 
-const $orderCard: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  padding: spacing.md,
-  borderWidth: 1,
-  borderColor: colors.border,
-  gap: spacing.xs,
-}
+// Text color overrides (static, light-only).
+const $titleColor: TextStyle = { color: colors.text }
+const $orderNumberColor: TextStyle = { color: colors.text }
+const $garmentTextColor: TextStyle = { color: colors.textDim }
+const $totalAmountColor: TextStyle = { color: colors.accent }
+const $orderDateColor: TextStyle = { color: colors.palette.gray500 }
+const $emptyTitleColor: TextStyle = { color: colors.text }
+const $emptyDescriptionColor: TextStyle = { color: colors.textDim }
+const $loadingTextColor: TextStyle = { color: colors.textDim }
 
-const $orderCardBody: ViewStyle = {
-  flex: 1,
-}
-
-const $orderHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: spacing.xs,
-  marginBottom: spacing.xs,
-}
-
-const $orderNumber: TextStyle = {
-  flexShrink: 1,
-  fontSize: 15,
-  fontWeight: "600",
-  color: colors.text,
-}
-
-const $garmentText: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-  marginBottom: spacing.sm,
-}
-
-const $orderFooter: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $totalAmount: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.accent,
-}
-
-const $orderDate: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.gray500,
-}
-
-const $emptyState: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  padding: spacing.xl,
-}
-
-const $emptyTitle: TextStyle = {
-  fontSize: 20,
-  fontWeight: "600",
-  color: colors.text,
-  marginTop: spacing.lg,
-  marginBottom: spacing.xs,
-}
-
-const $emptyDescription: TextStyle = {
-  fontSize: 14,
-  color: colors.textDim,
-  textAlign: "center",
-  marginBottom: spacing.xl,
-  lineHeight: 20,
-}
-
+// Button style overrides stay inline (Button owns its className; callers never
+// pass one in).
 const $createOrderButton: ViewStyle = {
   backgroundColor: colors.accent,
   borderWidth: 0,
@@ -391,16 +296,4 @@ const $createOrderButtonText: TextStyle = {
   fontSize: 16,
   fontWeight: "600",
   color: colors.palette.neutral100,
-}
-
-const $loadingState: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  padding: spacing.xl,
-}
-
-const $loadingText: TextStyle = {
-  fontSize: 16,
-  color: colors.textDim,
 }

@@ -1,5 +1,6 @@
 import "react-native-url-polyfill/auto" // Required for Appwrite React Native SDK
 import "@expo/metro-runtime" // this is for fast refresh on web w/o expo-router
+import "./global.css" // NativeWind styles (matches withNativeWind `input` in metro.config.js)
 import { registerRootComponent } from "expo"
 
 import { App } from "@/app"

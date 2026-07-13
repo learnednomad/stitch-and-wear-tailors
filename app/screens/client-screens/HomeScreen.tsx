@@ -1,12 +1,5 @@
 import React, { FC, useEffect, useState, useCallback } from "react"
-import {
-  View,
-  FlatList,
-  TouchableOpacity,
-  ViewStyle,
-  TextStyle,
-  RefreshControl,
-} from "react-native"
+import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle, RefreshControl } from "react-native"
 import { observer } from "mobx-react-lite"
 import { AppStackScreenProps } from "@/navigators"
 import {
@@ -24,7 +17,6 @@ import {
 } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
-import type { ThemedStyle } from "@/theme"
 import { useStores } from "@/models"
 import { useNavigation } from "@react-navigation/native"
 import { appointmentApi, PBAppointment } from "@/services/api/appointment-api"
@@ -37,7 +29,7 @@ const getGreeting = () => {
 }
 
 export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
-  const { theme, themed } = useAppTheme()
+  const { theme } = useAppTheme()
   const navigation = useNavigation()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const [greeting] = React.useState(getGreeting())
@@ -66,6 +58,23 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   // Get recent data with safe access
   const recentOrders = myOrders.slice(0, 3) // Get first 3 orders
   const recentMeasurements = (measurementStore?.measurements?.items || []).slice(0, 3) // Get first 3 measurements
+
+  // Button style overrides (Button owns its className; these inline overrides
+  // read the live theme so they stay dark-aware).
+  const $primaryButton: ViewStyle = {
+    backgroundColor: theme.colors.accent,
+    borderWidth: 0,
+    borderRadius: 14,
+    paddingVertical: 12,
+    minHeight: 52,
+  }
+  const $primaryButtonPressed: ViewStyle = {
+    backgroundColor: theme.colors.palette.emerald600,
+  }
+  const $primaryButtonText: TextStyle = {
+    fontSize: 16,
+    color: theme.colors.palette.neutral100,
+  }
 
   // Load data on component mount
   useEffect(() => {
@@ -118,30 +127,40 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
 
   const renderOrder = ({ item }: { item: any }) => (
     <TouchableOpacity
-      style={themed($orderCard)}
+      className="w-60 rounded-2xl border border-border bg-surface p-4 dark:border-border-dark dark:bg-surface-dark"
       onPress={() => (navigation as any).navigate("OrderDetail", { orderId: item.id })}
       accessible
       accessibilityLabel={`Order: ${item.orderNumber}`}
       accessibilityRole="button"
       activeOpacity={0.7}
     >
-      <View style={themed($orderHeader)}>
-        <Text style={themed($orderId)} numberOfLines={1}>
+      <View className="mb-3 flex-row items-center justify-between gap-2">
+        <Text
+          className="shrink text-[12px] leading-4 tracking-[0.4px] text-gray500 dark:text-gray500-dark"
+          numberOfLines={1}
+        >
           #{item.orderNumber}
         </Text>
         <Chip text={statusLabel(item.status)} tone={statusTone(item.status)} />
       </View>
-      <Text weight="semiBold" style={themed($orderTitle)} numberOfLines={1}>
+      <Text
+        weight="semiBold"
+        className="mb-1 text-[16px] leading-[22px] text-text dark:text-text-dark"
+        numberOfLines={1}
+      >
         {item.items?.[0]?.garmentType
           ? (orderStore.getTranslation
               ? orderStore.getTranslation("garments", item.items[0].garmentType)
               : item.items[0].garmentType) || item.items[0].garmentType
           : "Custom Order"}
       </Text>
-      <Text style={themed($orderText)}>
+      <Text className="mb-2 text-[13px] leading-[18px] text-textDim dark:text-textDim-dark">
         Due {item.estimatedDeliveryDate ? formatDate(item.estimatedDeliveryDate) : "TBD"}
       </Text>
-      <Text weight="semiBold" style={themed($orderAmount)}>
+      <Text
+        weight="semiBold"
+        className="text-[16px] leading-[22px] text-accent dark:text-accent-dark"
+      >
         {formatCurrency(item.pricing?.totalPrice || 0)}
       </Text>
     </TouchableOpacity>
@@ -188,18 +207,24 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
   }) => (
     <TouchableOpacity
       key={item.title}
-      style={themed($quickActionCard)}
+      className="basis-[31%] grow rounded-2xl border border-border bg-surface p-3 dark:border-border-dark dark:bg-surface-dark"
       onPress={item.onPress}
       accessible
       accessibilityLabel={item.title}
       accessibilityRole="button"
       activeOpacity={0.7}
     >
-      <View style={themed($quickActionIconWell)}>
+      <View className="mb-2 h-[34px] w-[34px] items-center justify-center rounded-[17px] bg-accentSoft dark:bg-accentSoft-dark">
         <Icon icon={item.icon} size={18} color={theme.colors.accent} />
       </View>
-      <Text weight="semiBold" style={themed($quickActionTitle)} text={item.title} />
-      <Text style={themed($quickActionSubtitle)}>{item.subtitle}</Text>
+      <Text
+        weight="semiBold"
+        className="text-[13px] leading-[18px] text-text dark:text-text-dark"
+        text={item.title}
+      />
+      <Text className="text-[11px] leading-[15px] text-textDim dark:text-textDim-dark">
+        {item.subtitle}
+      </Text>
     </TouchableOpacity>
   )
 
@@ -226,36 +251,42 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
         ),
       }}
     >
-      <View style={$container}>
+      <View className="flex-1">
         {/* Greeting header */}
-        <View style={themed($header)}>
-          <View style={$headerTextGroup}>
-            <Text style={themed($greetingText)} accessibilityLabel={greeting}>
+        <View className="mb-6 flex-row items-center justify-between px-4 pt-3">
+          <View className="mr-3 flex-1">
+            <Text
+              className="text-[14px] leading-5 text-textDim dark:text-textDim-dark"
+              accessibilityLabel={greeting}
+            >
               {greeting},
             </Text>
             <Text
               weight="bold"
-              style={themed($nameText)}
+              className="text-[24px] leading-8 text-text dark:text-text-dark"
               numberOfLines={1}
               accessibilityLabel="Client Name"
             >
               {userName}
             </Text>
           </View>
-          <View style={themed($headerActions)}>
-            <View style={themed($iconButton)}>
+          <View className="flex-row items-center gap-2">
+            <View className="h-[42px] w-[42px] items-center justify-center rounded-full border border-border bg-surface dark:border-border-dark dark:bg-surface-dark">
               <ThemeToggle size={20} />
             </View>
             <TouchableOpacity
-              style={themed($iconButton)}
+              className="h-[42px] w-[42px] items-center justify-center rounded-full border border-border bg-surface dark:border-border-dark dark:bg-surface-dark"
               onPress={() => navigation.navigate("ClientNotifications" as never)}
               accessible
               accessibilityLabel="Notifications"
             >
               <Icon icon="bell" size={20} color={theme.colors.text} />
               {unreadNotifications > 0 && (
-                <View style={themed($notificationBadge)}>
-                  <Text style={themed($notificationBadgeText)}>
+                <View className="absolute -right-1 -top-1 h-[18px] min-w-[18px] items-center justify-center rounded-[9px] border-2 border-background bg-error px-1 dark:border-background-dark dark:bg-error-dark">
+                  <Text
+                    weight="semiBold"
+                    className="text-[10px] leading-3 text-neutral100 dark:text-neutral100-dark"
+                  >
                     {unreadNotifications > 99 ? "99+" : unreadNotifications}
                   </Text>
                 </View>
@@ -265,27 +296,27 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
         </View>
 
         {/* Stat tiles */}
-        <View style={themed($statRow)}>
+        <View className="mb-8 flex-row gap-2 px-4">
           <StatTile icon="sew" value={String(activeOrdersCount)} label="Active Orders" />
           <StatTile icon="money" value={formatCurrency(outstandingBalance)} label="Outstanding" />
           <StatTile icon="appointment" value={nextFittingLabel} label="Next Fitting" />
         </View>
 
         {/* Quick Actions */}
-        <View style={themed($section)}>
-          <SectionHeader title="Quick Actions" style={themed($sectionHeader)} />
-          <View style={themed($quickActionGrid)} accessibilityLabel="Quick Actions List">
+        <View className="mb-8">
+          <SectionHeader title="Quick Actions" style={$sectionHeader} />
+          <View className="flex-row flex-wrap gap-2 px-4" accessibilityLabel="Quick Actions List">
             {quickActions.map(renderQuickAction)}
           </View>
         </View>
 
         {/* Recent Orders */}
-        <View style={themed($section)}>
+        <View className="mb-8">
           <SectionHeader
             title="Recent Orders"
             actionText="View All"
             onActionPress={() => navigation.navigate("Orders" as never)}
-            style={themed($sectionHeader)}
+            style={$sectionHeader}
           />
           <FlatList
             data={recentOrders}
@@ -295,55 +326,63 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
             showsHorizontalScrollIndicator={false}
             snapToInterval={252}
             decelerationRate="fast"
-            contentContainerStyle={themed($orderListContent)}
+            contentContainerStyle={$orderListContent}
             accessibilityLabel="Recent Orders List"
           />
         </View>
 
         {/* Recent Measurements */}
-        <View style={themed($section)}>
+        <View className="mb-8">
           <SectionHeader
             title="Recent Measurements"
             actionText="View All"
             onActionPress={() => navigation.navigate("Measurement" as never)}
-            style={themed($sectionHeader)}
+            style={$sectionHeader}
           />
           {recentMeasurements.map((item) => (
             <TouchableOpacity
               key={item.id}
-              style={themed($measurementCard)}
+              className="mx-4 mb-3 rounded-2xl border border-border bg-surface p-4 dark:border-border-dark dark:bg-surface-dark"
               onPress={() => console.log(`Navigate to Measurement Details: ${item.id}`)}
               accessible
               accessibilityLabel={`Measurement: ${item.type || "Custom"}`}
               accessibilityRole="button"
               activeOpacity={0.7}
             >
-              <View style={themed($measurementHeader)}>
-                <View style={$measurementInfo}>
-                  <Text weight="semiBold" style={themed($measurementTitle)}>
+              <View className="mb-3 flex-row items-center justify-between">
+                <View className="flex-1">
+                  <Text
+                    weight="semiBold"
+                    className="text-[15px] leading-[21px] text-text dark:text-text-dark"
+                  >
                     {item.type || "Custom Measurement"}
                   </Text>
-                  <Text style={themed($measurementCategory)}>
+                  <Text className="text-[12px] leading-[17px] text-textDim dark:text-textDim-dark">
                     {item.garmentType || "General"} · {item.status || "Active"}
                   </Text>
                 </View>
                 <Icon icon="caretRight" size={18} color={theme.colors.palette.gray500} />
               </View>
-              <View style={themed($measurementDetails)}>
+              <View className="flex-row justify-between border-t border-separator py-3 dark:border-separator-dark">
                 {[
                   { label: "Chest", value: item.measurements?.chest },
                   { label: "Waist", value: item.measurements?.waist },
                   { label: "Length", value: item.measurements?.length },
                 ].map(({ label, value }) => (
-                  <View key={label} style={$measurementItem}>
-                    <Text style={themed($measurementLabel)}>{label}</Text>
-                    <Text weight="semiBold" style={themed($measurementValue)}>
+                  <View key={label} className="flex-1 items-center">
+                    <Text className="mb-1 text-[12px] leading-[17px] text-textDim dark:text-textDim-dark">
+                      {label}
+                    </Text>
+                    <Text
+                      weight="semiBold"
+                      className="text-[14px] leading-5 text-text dark:text-text-dark"
+                    >
                       {value || 0} cm
                     </Text>
                   </View>
                 ))}
               </View>
-              <Text style={themed($measurementDate)}>
+              <Text className="text-[12px] leading-[17px] text-gray500 dark:text-gray500-dark">
                 Measured on {item.createdAt ? formatDate(item.createdAt) : "Unknown"}
               </Text>
             </TouchableOpacity>
@@ -351,12 +390,12 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
         </View>
 
         {/* CTA Button */}
-        <View style={[themed($bottomContainer), $bottomContainerInsets]}>
+        <View className="px-4 pb-4" style={$bottomContainerInsets}>
           <Button
             text="Add Measurement"
-            style={themed($primaryButton)}
-            pressedStyle={themed($primaryButtonPressed)}
-            textStyle={themed($primaryButtonText)}
+            style={$primaryButton}
+            pressedStyle={$primaryButtonPressed}
+            textStyle={$primaryButtonText}
             onPress={() => navigation.navigate("Measurement" as never)}
             accessible
             accessibilityLabel="Add new measurement"
@@ -368,264 +407,10 @@ export const HomeScreen: FC<ClientPortalScreenProps> = observer(() => {
 })
 
 // Styles
-
-const $container: ViewStyle = {
-  flex: 1,
-}
-
-const $header: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-  marginBottom: spacing.lg,
-})
-
-const $headerTextGroup: ViewStyle = {
-  flex: 1,
-  marginRight: 12,
-}
-
-const $greetingText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 14,
-  lineHeight: 20,
-  color: colors.textDim,
-})
-
-const $nameText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 24,
-  lineHeight: 32,
-  color: colors.text,
-})
-
-const $headerActions: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.xs,
-})
-
-const $iconButton: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  width: 42,
-  height: 42,
-  borderRadius: 21,
-  backgroundColor: colors.surface,
-  borderWidth: 1,
-  borderColor: colors.border,
-  justifyContent: "center",
-  alignItems: "center",
-})
-
-const $notificationBadge: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  position: "absolute",
-  top: -4,
-  right: -4,
-  minWidth: 18,
-  height: 18,
-  borderRadius: 9,
-  paddingHorizontal: 4,
-  backgroundColor: colors.error,
-  justifyContent: "center",
-  alignItems: "center",
-  borderWidth: 2,
-  borderColor: colors.background,
-})
-
-const $notificationBadgeText: ThemedStyle<TextStyle> = ({ colors, typography }) => ({
-  color: colors.palette.neutral100,
-  fontSize: 10,
-  lineHeight: 12,
-  fontFamily: typography.primary.semiBold,
-})
-
-const $statRow: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexDirection: "row",
-  gap: spacing.xs,
-  paddingHorizontal: spacing.md,
-  marginBottom: spacing.xl,
-})
-
-const $section: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginBottom: spacing.xl,
-})
-
-const $sectionHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingHorizontal: spacing.md,
-  marginBottom: spacing.sm,
-})
-
-const $quickActionGrid: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexDirection: "row",
-  flexWrap: "wrap",
-  paddingHorizontal: spacing.md,
-  gap: spacing.xs,
-})
-
-const $quickActionCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  flexBasis: "31%",
-  flexGrow: 1,
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.border,
-  padding: spacing.sm,
-})
-
-const $quickActionIconWell: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  width: 34,
-  height: 34,
-  borderRadius: 17,
-  backgroundColor: colors.accentSoft,
-  justifyContent: "center",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-})
-
-const $quickActionTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 13,
-  lineHeight: 18,
-  color: colors.text,
-})
-
-const $quickActionSubtitle: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 11,
-  lineHeight: 15,
-  color: colors.textDim,
-})
-
-const $orderListContent: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingHorizontal: spacing.md,
-  gap: spacing.sm,
-})
-
-const $orderCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  width: 240,
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.border,
-  padding: spacing.md,
-})
-
-const $orderHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-  gap: spacing.xs,
-})
-
-const $orderId: ThemedStyle<TextStyle> = ({ colors }) => ({
-  flexShrink: 1,
-  fontSize: 12,
-  lineHeight: 16,
-  color: colors.palette.gray500,
-  letterSpacing: 0.4,
-})
-
-const $orderTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  fontSize: 16,
-  lineHeight: 22,
-  color: colors.text,
-  marginBottom: spacing.xxs,
-})
-
-const $orderText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  fontSize: 13,
-  lineHeight: 18,
-  color: colors.textDim,
-  marginBottom: spacing.xs,
-})
-
-const $orderAmount: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 16,
-  lineHeight: 22,
-  color: colors.accent,
-})
-
-const $measurementCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.border,
-  padding: spacing.md,
-  marginHorizontal: spacing.md,
-  marginBottom: spacing.sm,
-})
-
-const $measurementHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-})
-
-const $measurementInfo: ViewStyle = {
-  flex: 1,
-}
-
-const $measurementTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 15,
-  lineHeight: 21,
-  color: colors.text,
-})
-
-const $measurementCategory: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 12,
-  lineHeight: 17,
-  color: colors.textDim,
-})
-
-const $measurementDetails: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  flexDirection: "row",
-  justifyContent: "space-between",
-  paddingVertical: spacing.sm,
-  borderTopWidth: 1,
-  borderColor: colors.separator,
-})
-
-const $measurementItem: ViewStyle = {
-  alignItems: "center",
-  flex: 1,
-}
-
-const $measurementLabel: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  fontSize: 12,
-  lineHeight: 17,
-  color: colors.textDim,
-  marginBottom: spacing.xxs,
-})
-
-const $measurementValue: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 14,
-  lineHeight: 20,
-  color: colors.text,
-})
-
-const $measurementDate: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 12,
-  lineHeight: 17,
-  color: colors.palette.gray500,
-})
-
-const $bottomContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingHorizontal: spacing.md,
-  paddingBottom: spacing.md,
-})
-
-const $primaryButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  backgroundColor: colors.accent,
-  borderWidth: 0,
-  borderRadius: 14,
-  paddingVertical: spacing.sm,
-  minHeight: 52,
-})
-
-const $primaryButtonPressed: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  backgroundColor: colors.palette.emerald600,
-})
-
-const $primaryButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 16,
-  color: colors.palette.neutral100,
-})
+// This screen was fully themed(); container colors are now className token
+// utilities with `dark:` twins. Non-className surfaces (Screen background, Icon
+// color, RefreshControl tint, Button style overrides) read the live theme so
+// they stay dark-aware. These two plain layout objects feed props that take a
+// style (SectionHeader.style and FlatList.contentContainerStyle).
+const $sectionHeader: ViewStyle = { paddingHorizontal: 16, marginBottom: 12 }
+const $orderListContent: ViewStyle = { paddingHorizontal: 16, gap: 12 }

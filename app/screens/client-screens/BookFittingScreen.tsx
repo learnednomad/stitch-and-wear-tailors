@@ -73,6 +73,10 @@ const STATUS_COLORS: Record<string, string> = {
   rescheduled: "#E8B04B",
 }
 
+// Shared chip layout/border classes (dynamic bg + text color stay inline).
+const CHIP_CLASS = "rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
+const CHIP_TEXT_CLASS = "text-center text-[13px] font-semibold"
+
 export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function BookFittingScreen({
   navigation,
 }) {
@@ -158,18 +162,15 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
     ])
   }
 
-  const chipStyle = (active: boolean): ViewStyle[] => [
-    $chip,
-    {
-      backgroundColor: active ? theme.colors.tint : theme.colors.palette.neutral100,
-      borderColor: theme.colors.border,
-    },
-  ]
+  // Selection-state tinted background stays inline; layout + solid-token border
+  // move to the CHIP_CLASS className.
+  const chipBg = (active: boolean): ViewStyle => ({
+    backgroundColor: active ? theme.colors.tint : theme.colors.palette.neutral100,
+  })
 
-  const chipTextStyle = (active: boolean): TextStyle[] => [
-    $chipText,
-    { color: active ? theme.colors.palette.neutral100 : theme.colors.text },
-  ]
+  const chipTextColor = (active: boolean): TextStyle => ({
+    color: active ? theme.colors.palette.neutral100 : theme.colors.text,
+  })
 
   return (
     <Screen
@@ -180,9 +181,9 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
         refreshControl: <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />,
       }}
     >
-      <View style={$headerRow}>
+      <View className="flex-row items-center px-4 pt-4">
         <TouchableOpacity
-          style={$backButton}
+          className="mr-2 h-10 w-10 items-center justify-center"
           onPress={() => navigation.goBack()}
           accessible
           accessibilityLabel="Go back"
@@ -190,57 +191,70 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
         >
           <Icon icon="back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text preset="heading" text="Book an Appointment" style={$headingText} />
+        <Text preset="heading" text="Book an Appointment" className="flex-1" />
       </View>
 
       {/* tailor picker */}
-      <Text preset="formLabel" text="Tailor" style={$label} />
+      <Text preset="formLabel" text="Tailor" className="mt-3 px-4" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={$chips}>
         {tailors.map((tailor) => (
           <TouchableOpacity
             key={tailor.id}
-            style={chipStyle(selectedTailor === tailor.id)}
+            className={CHIP_CLASS}
+            style={chipBg(selectedTailor === tailor.id)}
             onPress={() => setSelectedTailor(tailor.id)}
           >
-            <Text style={chipTextStyle(selectedTailor === tailor.id)} text={tailorName(tailor)} />
+            <Text
+              className={CHIP_TEXT_CLASS}
+              style={chipTextColor(selectedTailor === tailor.id)}
+              text={tailorName(tailor)}
+            />
           </TouchableOpacity>
         ))}
         {tailors.length === 0 && (
-          <Text style={{ color: theme.colors.textDim }} text="No tailors available" />
+          <Text className="text-textDim dark:text-textDim-dark" text="No tailors available" />
         )}
       </ScrollView>
 
       {/* appointment type */}
-      <Text preset="formLabel" text="Type" style={$label} />
+      <Text preset="formLabel" text="Type" className="mt-3 px-4" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={$chips}>
         {APPOINTMENT_TYPES.map((option) => (
           <TouchableOpacity
             key={option.value}
-            style={chipStyle(type === option.value)}
+            className={CHIP_CLASS}
+            style={chipBg(type === option.value)}
             onPress={() => setType(option.value)}
           >
-            <Text style={chipTextStyle(type === option.value)} text={option.label} />
+            <Text
+              className={CHIP_TEXT_CLASS}
+              style={chipTextColor(type === option.value)}
+              text={option.label}
+            />
           </TouchableOpacity>
         ))}
       </ScrollView>
 
       {/* day picker: next 14 days */}
-      <Text preset="formLabel" text="Day" style={$label} />
+      <Text preset="formLabel" text="Day" className="mt-3 px-4" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={$chips}>
         {days.map((day) => {
           const active = selectedDay?.getTime() === day.getTime()
           return (
             <TouchableOpacity
               key={day.toISOString()}
-              style={[...chipStyle(active), $dayChip]}
+              className={`${CHIP_CLASS} min-w-[64px] items-center`}
+              style={chipBg(active)}
               onPress={() => setSelectedDay(day)}
             >
               <Text
-                style={chipTextStyle(active)}
+                className={CHIP_TEXT_CLASS}
+                style={chipTextColor(active)}
                 text={day.toLocaleDateString("en-NG", { weekday: "short" })}
               />
               <Text
-                style={chipTextStyle(active)}
+                className={CHIP_TEXT_CLASS}
+                style={chipTextColor(active)}
                 text={day.toLocaleDateString("en-NG", { day: "numeric", month: "short" })}
               />
             </TouchableOpacity>
@@ -249,24 +263,25 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
       </ScrollView>
 
       {/* time slots 9:00-17:00 */}
-      <Text preset="formLabel" text="Time" style={$label} />
-      <View style={$slotGrid}>
+      <Text preset="formLabel" text="Time" className="mt-3 px-4" />
+      <View className="flex-row flex-wrap gap-2 px-4 py-2">
         {TIME_SLOTS.map((hour) => {
           const active = selectedHour === hour
           return (
             <TouchableOpacity
               key={hour}
-              style={chipStyle(active)}
+              className={CHIP_CLASS}
+              style={chipBg(active)}
               onPress={() => setSelectedHour(hour)}
             >
-              <Text style={chipTextStyle(active)} text={`${hour}:00`} />
+              <Text className={CHIP_TEXT_CLASS} style={chipTextColor(active)} text={`${hour}:00`} />
             </TouchableOpacity>
           )
         })}
       </View>
 
       {/* optional note */}
-      <View style={$noteContainer}>
+      <View className="px-4 pt-3">
         <TextField
           label="Note (optional)"
           placeholder="Anything the tailor should know?"
@@ -284,10 +299,10 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
       />
 
       {/* upcoming appointments */}
-      <Text preset="subheading" text="Upcoming appointments" style={$upcomingTitle} />
+      <Text preset="subheading" text="Upcoming appointments" className="mb-2 mt-6 px-4" />
       {appointments.filter((a) => a.status !== "cancelled").length === 0 && (
         <Text
-          style={[$emptyText, { color: theme.colors.textDim }]}
+          className="px-4 pb-6 text-textDim dark:text-textDim-dark"
           text="No upcoming appointments"
         />
       )}
@@ -296,33 +311,31 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
         .map((appointment) => (
           <View
             key={appointment.id}
-            style={[$appointmentCard, { backgroundColor: theme.colors.palette.neutral100 }]}
+            className="mx-4 mb-3 rounded-xl bg-neutral100 p-4 dark:bg-neutral100-dark"
           >
-            <View style={$appointmentHeader}>
+            <View className="flex-row items-center justify-between">
               <Text
-                style={[$appointmentType, { color: theme.colors.text }]}
+                className="text-[15px] font-bold text-text dark:text-text-dark"
                 text={
                   APPOINTMENT_TYPES.find((t) => t.value === appointment.type)?.label ??
                   appointment.type
                 }
               />
               <View
-                style={[
-                  $statusChip,
-                  { backgroundColor: (STATUS_COLORS[appointment.status] ?? "#8B9D83") + "33" },
-                ]}
+                className="rounded-[10px] px-2 py-0.5"
+                style={{
+                  backgroundColor: (STATUS_COLORS[appointment.status] ?? "#8B9D83") + "33",
+                }}
               >
                 <Text
-                  style={[
-                    $statusChipText,
-                    { color: STATUS_COLORS[appointment.status] ?? "#8B9D83" },
-                  ]}
+                  className="text-[11px] font-bold"
+                  style={{ color: STATUS_COLORS[appointment.status] ?? "#8B9D83" }}
                   text={appointment.status}
                 />
               </View>
             </View>
             <Text
-              style={[$appointmentMeta, { color: theme.colors.textDim }]}
+              className="mt-1 text-[13px] text-textDim dark:text-textDim-dark"
               text={`${new Date(appointment.scheduledAt).toLocaleString("en-NG", {
                 weekday: "short",
                 day: "numeric",
@@ -333,13 +346,16 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
             />
             {!!appointment.notes && (
               <Text
-                style={[$appointmentMeta, { color: theme.colors.textDim }]}
+                className="mt-1 text-[13px] text-textDim dark:text-textDim-dark"
                 text={appointment.notes}
                 numberOfLines={2}
               />
             )}
             <TouchableOpacity onPress={() => handleCancel(appointment)}>
-              <Text style={[$cancelText, { color: theme.colors.error }]} text="Cancel" />
+              <Text
+                className="mt-2 text-[13px] font-bold text-error dark:text-error-dark"
+                text="Cancel"
+              />
             </TouchableOpacity>
           </View>
         ))}
@@ -351,30 +367,7 @@ const $root: ViewStyle = {
   flex: 1,
 }
 
-const $headerRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.md,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: spacing.xs,
-}
-
-const $headingText: TextStyle = {
-  flex: 1,
-}
-
-const $label: TextStyle = {
-  paddingHorizontal: spacing.md,
-  marginTop: spacing.sm,
-}
-
+// ScrollView contentContainerStyle prop — stays an inline style object.
 const $chips: ViewStyle = {
   paddingHorizontal: spacing.md,
   paddingVertical: spacing.xs,
@@ -382,89 +375,8 @@ const $chips: ViewStyle = {
   alignItems: "center",
 }
 
-const $chip: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-  borderRadius: 16,
-  borderWidth: 1,
-}
-
-const $chipText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-  textAlign: "center",
-}
-
-const $dayChip: ViewStyle = {
-  alignItems: "center",
-  minWidth: 64,
-}
-
-const $slotGrid: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.xs,
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.xs,
-}
-
-const $noteContainer: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-}
-
+// Button style override — stays inline.
 const $submitButton: ViewStyle = {
   marginHorizontal: spacing.md,
   marginTop: spacing.md,
-}
-
-const $upcomingTitle: TextStyle = {
-  paddingHorizontal: spacing.md,
-  marginTop: spacing.lg,
-  marginBottom: spacing.xs,
-}
-
-const $emptyText: TextStyle = {
-  paddingHorizontal: spacing.md,
-  paddingBottom: spacing.lg,
-}
-
-const $appointmentCard: ViewStyle = {
-  marginHorizontal: spacing.md,
-  marginBottom: spacing.sm,
-  borderRadius: 12,
-  padding: spacing.md,
-}
-
-const $appointmentHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $appointmentType: TextStyle = {
-  fontSize: 15,
-  fontWeight: "700",
-}
-
-const $statusChip: ViewStyle = {
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-  borderRadius: 10,
-}
-
-const $statusChipText: TextStyle = {
-  fontSize: 11,
-  fontWeight: "700",
-}
-
-const $appointmentMeta: TextStyle = {
-  fontSize: 13,
-  marginTop: spacing.xxs,
-}
-
-const $cancelText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "700",
-  marginTop: spacing.xs,
 }

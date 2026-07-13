@@ -309,9 +309,9 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
         statusBarStyle="dark"
         contentContainerStyle={$screenContent}
       >
-        <View style={$header}>
+        <View className="flex-row items-center px-lg py-md border-b border-b-border">
           <TouchableOpacity
-            style={$backButton}
+            className="w-[40px] h-[40px] justify-center items-center"
             onPress={() => navigation.goBack()}
             accessible
             accessibilityLabel="Go back"
@@ -319,11 +319,15 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
           >
             <Icon icon="back" size={24} color={colors.palette.neutral900} />
           </TouchableOpacity>
-          <Text style={$headerTitle}>Order Details</Text>
-          <View style={$headerSpacer} />
+          <Text className="flex-1 text-[18px] font-semibold text-center" style={$headerTitleColor}>
+            Order Details
+          </Text>
+          <View className="w-[40px]" />
         </View>
-        <View style={$loadingContainer}>
-          <Text style={$loadingText}>{isLoading ? "Loading order..." : "Order not found"}</Text>
+        <View className="flex-1 justify-center items-center p-xl">
+          <Text className="text-[16px]" style={$loadingTextColor}>
+            {isLoading ? "Loading order..." : "Order not found"}
+          </Text>
         </View>
       </Screen>
     )
@@ -352,26 +356,35 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
   }
 
   const renderProgressStep = (step: ProgressStep, index: number) => (
-    <View key={step.id} style={$progressStepContainer}>
-      <View style={$progressStepContent}>
-        <View style={[$progressIcon, { backgroundColor: getStepColor(step.status) + "20" }]}>
+    <View key={step.id} className="relative">
+      <View className="flex-row items-center mb-md">
+        <View
+          className="w-[40px] h-[40px] rounded-[20px] justify-center items-center mr-md"
+          style={{ backgroundColor: getStepColor(step.status) + "20" }}
+        >
           <Icon icon={getStepIcon(step.status)} size={20} color={getStepColor(step.status)} />
         </View>
-        <View style={$progressStepInfo}>
-          <Text style={$progressStepTitle}>{step.title}</Text>
-          <Text style={$progressStepDescription}>{step.description}</Text>
-          {step.date && <Text style={$progressStepDate}>{step.date}</Text>}
+        <View className="flex-1">
+          <Text className="text-[14px] font-semibold mb-xxs" style={$progressTitleColor}>
+            {step.title}
+          </Text>
+          <Text className="text-[12px] mb-xxs" style={$progressDescColor}>
+            {step.description}
+          </Text>
+          {step.date && (
+            <Text className="text-[11px] italic" style={$progressDateColor}>
+              {step.date}
+            </Text>
+          )}
         </View>
       </View>
       {index < progressSteps.length - 1 && (
         <View
-          style={[
-            $progressLine,
-            {
-              backgroundColor:
-                step.status === "completed" ? colors.palette.success500 : colors.palette.neutral300,
-            },
-          ]}
+          className="absolute left-[19px] top-[40px] w-[2px] h-[20px] z-[-1]"
+          style={{
+            backgroundColor:
+              step.status === "completed" ? colors.palette.success500 : colors.palette.neutral300,
+          }}
         />
       )}
     </View>
@@ -398,9 +411,9 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
     >
       <ScrollView style={$container} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={$header}>
+        <View className="flex-row items-center px-lg py-md border-b border-b-border">
           <TouchableOpacity
-            style={$backButton}
+            className="w-[40px] h-[40px] justify-center items-center"
             onPress={() => navigation.goBack()}
             accessible
             accessibilityLabel="Go back"
@@ -408,115 +421,169 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
           >
             <Icon icon="back" size={24} color={colors.palette.neutral900} />
           </TouchableOpacity>
-          <Text style={$headerTitle}>Order Details</Text>
-          <View style={$headerSpacer} />
+          <Text className="flex-1 text-[18px] font-semibold text-center" style={$headerTitleColor}>
+            Order Details
+          </Text>
+          <View className="w-[40px]" />
         </View>
 
         {/* Order Summary Card */}
-        <View style={$section}>
-          <View style={$orderSummaryCard}>
-            <View style={$orderHeader}>
-              <Text style={$orderIdText}>#{orderDetail.id}</Text>
+        <View className="px-lg py-lg">
+          <View
+            className="bg-neutral100 rounded-[12px] p-lg border border-border"
+            style={$cardShadow}
+          >
+            <View className="flex-row justify-between items-center mb-sm">
+              <Text className="text-[14px] font-semibold" style={$orderIdColor}>
+                #{orderDetail.id}
+              </Text>
               <Chip text={orderDetail.status} tone={statusTone(order.status)} />
             </View>
-            <Text style={$orderTitle}>{orderDetail.measurementName}</Text>
-            <View style={$orderDetailsGrid}>
-              <View style={$orderDetailItem}>
-                <Text style={$orderDetailLabel}>Style</Text>
-                <Text style={$orderDetailValue}>{orderDetail.style}</Text>
+            <Text className="text-[20px] font-bold mb-md" style={$orderTitleColor}>
+              {orderDetail.measurementName}
+            </Text>
+            <View className="flex-row flex-wrap mx-[-8px]">
+              <View className="w-1/2 px-xs mb-sm">
+                <Text className="text-[12px] mb-xxs" style={$detailLabelColor}>
+                  Style
+                </Text>
+                <Text className="text-[14px] font-semibold" style={$detailValueColor}>
+                  {orderDetail.style}
+                </Text>
               </View>
-              <View style={$orderDetailItem}>
-                <Text style={$orderDetailLabel}>Fabric</Text>
-                <Text style={$orderDetailValue}>{orderDetail.fabric}</Text>
+              <View className="w-1/2 px-xs mb-sm">
+                <Text className="text-[12px] mb-xxs" style={$detailLabelColor}>
+                  Fabric
+                </Text>
+                <Text className="text-[14px] font-semibold" style={$detailValueColor}>
+                  {orderDetail.fabric}
+                </Text>
               </View>
-              <View style={$orderDetailItem}>
-                <Text style={$orderDetailLabel}>Due Date</Text>
-                <Text style={$orderDetailValue}>{orderDetail.dueDate}</Text>
+              <View className="w-1/2 px-xs mb-sm">
+                <Text className="text-[12px] mb-xxs" style={$detailLabelColor}>
+                  Due Date
+                </Text>
+                <Text className="text-[14px] font-semibold" style={$detailValueColor}>
+                  {orderDetail.dueDate}
+                </Text>
               </View>
-              <View style={$orderDetailItem}>
-                <Text style={$orderDetailLabel}>Amount</Text>
-                <Text style={$orderDetailValue}>₦{orderDetail.amount.toLocaleString()}</Text>
+              <View className="w-1/2 px-xs mb-sm">
+                <Text className="text-[12px] mb-xxs" style={$detailLabelColor}>
+                  Amount
+                </Text>
+                <Text className="text-[14px] font-semibold" style={$detailValueColor}>
+                  ₦{orderDetail.amount.toLocaleString()}
+                </Text>
               </View>
             </View>
           </View>
         </View>
 
         {/* Progress Tracking */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Order Progress</Text>
-          <View style={$progressContainer}>
+        <View className="px-lg py-lg">
+          <Text className="text-[16px] font-semibold mb-md" style={$sectionTitleColor}>
+            Order Progress
+          </Text>
+          <View className="bg-neutral100 rounded-[12px] p-lg border border-border">
             {progressSteps.map((step, index) => renderProgressStep(step, index))}
           </View>
         </View>
 
         {/* Special Instructions */}
         {orderDetail.specialInstructions && (
-          <View style={$section}>
-            <Text style={$sectionTitle}>Special Instructions</Text>
-            <View style={$instructionsCard}>
+          <View className="px-lg py-lg">
+            <Text className="text-[16px] font-semibold mb-md" style={$sectionTitleColor}>
+              Special Instructions
+            </Text>
+            <View className="flex-row bg-accentSoft rounded-[8px] p-md items-start">
               <Icon icon="view" size={20} color={colors.accent} />
-              <Text style={$instructionsText}>{orderDetail.specialInstructions}</Text>
+              <Text className="flex-1 text-[14px] ml-sm leading-[20px]" style={$instructionsTextColor}>
+                {orderDetail.specialInstructions}
+              </Text>
             </View>
           </View>
         )}
 
         {/* Order Timeline */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Timeline</Text>
-          <View style={$timelineCard}>
-            <View style={$timelineItem}>
-              <Text style={$timelineLabel}>Order Created</Text>
-              <Text style={$timelineValue}>{orderDetail.createdAt}</Text>
+        <View className="px-lg py-lg">
+          <Text className="text-[16px] font-semibold mb-md" style={$sectionTitleColor}>
+            Timeline
+          </Text>
+          <View className="bg-neutral100 rounded-[12px] p-lg border border-border">
+            <View className="flex-row justify-between mb-sm">
+              <Text className="text-[14px]" style={$timelineLabelColor}>
+                Order Created
+              </Text>
+              <Text className="text-[14px] font-medium" style={$timelineValueColor}>
+                {orderDetail.createdAt}
+              </Text>
             </View>
-            <View style={$timelineItem}>
-              <Text style={$timelineLabel}>Estimated Delivery</Text>
-              <Text style={$timelineValue}>{orderDetail.dueDate}</Text>
+            <View className="flex-row justify-between mb-sm">
+              <Text className="text-[14px]" style={$timelineLabelColor}>
+                Estimated Delivery
+              </Text>
+              <Text className="text-[14px] font-medium" style={$timelineValueColor}>
+                {orderDetail.dueDate}
+              </Text>
             </View>
             {order.actualDeliveryDate && (
-              <View style={$timelineItem}>
-                <Text style={$timelineLabel}>Delivered</Text>
-                <Text style={$timelineValue}>{formatDate(order.actualDeliveryDate)}</Text>
+              <View className="flex-row justify-between mb-sm">
+                <Text className="text-[14px]" style={$timelineLabelColor}>
+                  Delivered
+                </Text>
+                <Text className="text-[14px] font-medium" style={$timelineValueColor}>
+                  {formatDate(order.actualDeliveryDate)}
+                </Text>
               </View>
             )}
           </View>
         </View>
 
         {/* Contact Section */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Need Help?</Text>
-          <View style={$contactActions}>
+        <View className="px-lg py-lg">
+          <Text className="text-[16px] font-semibold mb-md" style={$sectionTitleColor}>
+            Need Help?
+          </Text>
+          <View className="flex-row justify-between">
             {canMessage && (
               <TouchableOpacity
-                style={$contactButton}
+                className="flex-1 flex-row items-center justify-center bg-accentSoft rounded-[8px] p-md mx-xs"
                 onPress={handleOpenChat}
                 accessible
                 accessibilityLabel={`Message ${isTailorViewer ? "client" : "tailor"}${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
                 accessibilityRole="button"
               >
                 <Icon icon="menu" size={20} color={colors.accent} />
-                <Text style={$contactButtonText}>
+                <Text className="text-[14px] font-medium ml-xs" style={$contactButtonTextColor}>
                   {isTailorViewer ? "Message Client" : "Message Tailor"}
                 </Text>
                 {unreadCount > 0 && (
-                  <View style={$unreadBadge}>
-                    <Text style={$unreadBadgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
+                  <View className="min-w-[20px] h-[20px] rounded-[10px] bg-error500 justify-center items-center px-xxs ml-xs">
+                    <Text className="text-[11px] font-bold" style={$unreadBadgeTextColor}>
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </Text>
                   </View>
                 )}
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={$contactButton}>
+            <TouchableOpacity className="flex-1 flex-row items-center justify-center bg-accentSoft rounded-[8px] p-md mx-xs">
               <Icon icon="bell" size={20} color={colors.accent} />
-              <Text style={$contactButtonText}>Call Shop</Text>
+              <Text className="text-[14px] font-medium ml-xs" style={$contactButtonTextColor}>
+                Call Shop
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
       {/* Bottom Actions */}
-      <View style={[$bottomContainer, $bottomContainerInsets]}>
+      <View
+        className="px-lg pt-md pb-md gap-sm bg-neutral100 border-t border-t-border"
+        style={$bottomContainerInsets}
+      >
         {/* Tailor actions: accept/reject a pending order */}
         {canAcceptOrReject && (
-          <View style={$actionRow}>
+          <View className="flex-row gap-sm">
             <Button
               text={isActing ? "Working..." : "Accept Order"}
               style={[$primaryButton, $actionRowButton]}
@@ -596,11 +663,17 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
         animationType="slide"
         onRequestClose={closeCancelModal}
       >
-        <View style={$modalOverlay}>
-          <TouchableOpacity style={$modalBackdrop} activeOpacity={1} onPress={closeCancelModal} />
-          <View style={$modalSheet}>
-            <View style={$modalHeader}>
-              <Text style={$modalTitle}>Cancel Order</Text>
+        <View className="flex-1 justify-end">
+          <TouchableOpacity
+            className="absolute top-0 left-0 right-0 bottom-0 bg-overlay50"
+            activeOpacity={1}
+            onPress={closeCancelModal}
+          />
+          <View className="bg-neutral100 rounded-t-[20px] p-lg pb-xl">
+            <View className="flex-row justify-between items-center mb-sm">
+              <Text className="text-[18px] font-bold" style={$modalTitleColor}>
+                Cancel Order
+              </Text>
               <TouchableOpacity
                 onPress={closeCancelModal}
                 accessible
@@ -610,19 +683,24 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
                 <Icon icon="x" size={22} color={colors.palette.neutral700} />
               </TouchableOpacity>
             </View>
-            <Text style={$modalSubtitle}>Why are you cancelling this order?</Text>
-            <View style={$reasonChips}>
+            <Text className="text-[14px] mb-md" style={$modalSubtitleColor}>
+              Why are you cancelling this order?
+            </Text>
+            <View className="flex-row flex-wrap gap-xs mb-sm">
               {CANCEL_REASONS.map((reason) => (
                 <TouchableOpacity
                   key={reason}
-                  style={[$reasonChip, cancelReason === reason && $reasonChipSelected]}
+                  className={`px-md py-xs rounded-[20px] border ${
+                    cancelReason === reason ? "border-accent bg-accentSoft" : "border-neutral300"
+                  }`}
                   onPress={() => setCancelReason(reason)}
                   accessible
                   accessibilityLabel={reason}
                   accessibilityRole="button"
                 >
                   <Text
-                    style={[$reasonChipText, cancelReason === reason && $reasonChipTextSelected]}
+                    className={`text-[14px] ${cancelReason === reason ? "font-semibold" : ""}`}
+                    style={cancelReason === reason ? $reasonChipTextSelectedColor : $reasonChipTextColor}
                   >
                     {reason}
                   </Text>
@@ -662,21 +740,9 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = observer(({ route }
 })
 
 // Styles
-const $container: ViewStyle = {
-  flex: 1,
-}
-
-const $loadingContainer: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  padding: spacing.xl,
-}
-
-const $loadingText: TextStyle = {
-  fontSize: 16,
-  color: colors.palette.neutral600,
-}
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (light in both schemes) — no `dark:` variants. Layout, spacing,
+// and container backgrounds/borders are className token utilities.
 
 // Screen's fixed preset gives its inner container no height; without flex the
 // scrollable body collapses to zero height.
@@ -684,52 +750,12 @@ const $screenContent: ViewStyle = {
   flex: 1,
 }
 
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.border,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $headerTitle: TextStyle = {
+const $container: ViewStyle = {
   flex: 1,
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  textAlign: "center",
 }
 
-const $headerSpacer: ViewStyle = {
-  width: 40,
-}
-
-const $section: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.lg,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.md,
-}
-
-const $orderSummaryCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderWidth: 1,
-  borderColor: colors.border,
+// Card shadow (RN shadows stay inline).
+const $cardShadow: ViewStyle = {
   shadowColor: colors.palette.neutral900,
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.05,
@@ -737,199 +763,29 @@ const $orderSummaryCard: ViewStyle = {
   elevation: 3,
 }
 
-const $orderHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
+// Text color overrides (static, light-only).
+const $headerTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $loadingTextColor: TextStyle = { color: colors.palette.neutral600 }
+const $orderIdColor: TextStyle = { color: colors.palette.neutral600 }
+const $orderTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $detailLabelColor: TextStyle = { color: colors.palette.neutral600 }
+const $detailValueColor: TextStyle = { color: colors.palette.neutral900 }
+const $sectionTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $progressTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $progressDescColor: TextStyle = { color: colors.palette.neutral600 }
+const $progressDateColor: TextStyle = { color: colors.palette.neutral500 }
+const $instructionsTextColor: TextStyle = { color: colors.palette.emerald600 }
+const $timelineLabelColor: TextStyle = { color: colors.palette.neutral600 }
+const $timelineValueColor: TextStyle = { color: colors.palette.neutral900 }
+const $contactButtonTextColor: TextStyle = { color: colors.palette.emerald600 }
+const $unreadBadgeTextColor: TextStyle = { color: colors.palette.neutral100 }
+const $modalTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $modalSubtitleColor: TextStyle = { color: colors.palette.neutral600 }
+const $reasonChipTextColor: TextStyle = { color: colors.palette.neutral800 }
+const $reasonChipTextSelectedColor: TextStyle = { color: colors.palette.emerald600 }
 
-const $orderIdText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.neutral600,
-}
-
-const $statusBadge: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-  borderRadius: 6,
-}
-
-const $statusText: TextStyle = {
-  fontSize: 12,
-  fontWeight: "600",
-}
-
-const $orderTitle: TextStyle = {
-  fontSize: 20,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.md,
-}
-
-const $orderDetailsGrid: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  marginHorizontal: -spacing.xs,
-}
-
-const $orderDetailItem: ViewStyle = {
-  width: "50%",
-  paddingHorizontal: spacing.xs,
-  marginBottom: spacing.sm,
-}
-
-const $orderDetailLabel: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.xxs,
-}
-
-const $orderDetailValue: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-}
-
-const $progressContainer: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderWidth: 1,
-  borderColor: colors.border,
-}
-
-const $progressStepContainer: ViewStyle = {
-  position: "relative",
-}
-
-const $progressStepContent: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: spacing.md,
-}
-
-const $progressIcon: ViewStyle = {
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: spacing.md,
-}
-
-const $progressStepInfo: ViewStyle = {
-  flex: 1,
-}
-
-const $progressStepTitle: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xxs,
-}
-
-const $progressStepDescription: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.xxs,
-}
-
-const $progressStepDate: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.neutral500,
-  fontStyle: "italic",
-}
-
-const $progressLine: ViewStyle = {
-  position: "absolute",
-  left: 19,
-  top: 40,
-  width: 2,
-  height: 20,
-  zIndex: -1,
-}
-
-const $instructionsCard: ViewStyle = {
-  flexDirection: "row",
-  backgroundColor: colors.accentSoft,
-  borderRadius: 8,
-  padding: spacing.md,
-  alignItems: "flex-start",
-}
-
-const $instructionsText: TextStyle = {
-  flex: 1,
-  fontSize: 14,
-  color: colors.palette.emerald600,
-  marginLeft: spacing.sm,
-  lineHeight: 20,
-}
-
-const $timelineCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderWidth: 1,
-  borderColor: colors.border,
-}
-
-const $timelineItem: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  marginBottom: spacing.sm,
-}
-
-const $timelineLabel: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral600,
-}
-
-const $timelineValue: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral900,
-}
-
-const $contactActions: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-}
-
-const $contactButton: ViewStyle = {
-  flex: 1,
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  backgroundColor: colors.accentSoft,
-  borderRadius: 8,
-  padding: spacing.md,
-  marginHorizontal: spacing.xs,
-}
-
-const $contactButtonText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.emerald600,
-  marginLeft: spacing.xs,
-}
-
-const $bottomContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.md,
-  paddingBottom: spacing.md,
-  gap: spacing.sm,
-  backgroundColor: colors.palette.neutral100,
-  borderTopWidth: 1,
-  borderTopColor: colors.border,
-}
-
-const $actionRow: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.sm,
-}
-
+// Button style overrides stay inline (Button owns its className; callers never
+// pass one in). RN shadows stay inline too.
 const $actionRowButton: ViewStyle = {
   flex: 1,
 }
@@ -975,23 +831,6 @@ const $secondaryButtonText: TextStyle = {
   color: colors.palette.neutral900,
 }
 
-const $unreadBadge: ViewStyle = {
-  minWidth: 20,
-  height: 20,
-  borderRadius: 10,
-  backgroundColor: colors.palette.error500,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingHorizontal: spacing.xxs,
-  marginLeft: spacing.xs,
-}
-
-const $unreadBadgeText: TextStyle = {
-  fontSize: 11,
-  fontWeight: "700",
-  color: colors.palette.neutral100,
-}
-
 const $cancelButton: ViewStyle = {
   backgroundColor: colors.palette.error100,
   borderRadius: 12,
@@ -1002,77 +841,6 @@ const $cancelButtonText: TextStyle = {
   fontSize: 16,
   fontWeight: "600",
   color: colors.palette.error500,
-}
-
-const $modalOverlay: ViewStyle = {
-  flex: 1,
-  justifyContent: "flex-end",
-}
-
-const $modalBackdrop: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: colors.palette.overlay50,
-}
-
-const $modalSheet: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  padding: spacing.lg,
-  paddingBottom: spacing.xl,
-}
-
-const $modalHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
-
-const $modalTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-}
-
-const $modalSubtitle: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.md,
-}
-
-const $reasonChips: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.xs,
-  marginBottom: spacing.sm,
-}
-
-const $reasonChip: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.xs,
-  borderRadius: 20,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
-const $reasonChipSelected: ViewStyle = {
-  borderColor: colors.accent,
-  backgroundColor: colors.accentSoft,
-}
-
-const $reasonChipText: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral800,
-}
-
-const $reasonChipTextSelected: TextStyle = {
-  fontWeight: "600",
-  color: colors.palette.emerald600,
 }
 
 const $reasonDetailField: ViewStyle = {

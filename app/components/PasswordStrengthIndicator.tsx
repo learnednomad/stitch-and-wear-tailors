@@ -1,5 +1,5 @@
 import { FC } from "react"
-import { View, ViewStyle, TextStyle } from "react-native"
+import { View, ViewStyle } from "react-native"
 import { Text } from "./Text"
 import { useAppTheme } from "@/utils/useAppTheme"
 import {
@@ -38,6 +38,9 @@ interface PasswordStrengthIndicatorProps {
 /**
  * Password strength indicator component with visual feedback
  * Shows strength bar, label, criteria, and improvement suggestions
+ *
+ * NativeWind: layout/spacing are className token utilities; every color is
+ * data-driven (strength.color, met state, theme palette) so it stays inline.
  */
 export const PasswordStrengthIndicator: FC<PasswordStrengthIndicatorProps> = ({
   password,
@@ -48,39 +51,40 @@ export const PasswordStrengthIndicator: FC<PasswordStrengthIndicatorProps> = ({
   compact = false,
 }) => {
   const { theme } = useAppTheme()
-  const strength = calculatePasswordStrength(password, rules)
+  const strength: PasswordStrength = calculatePasswordStrength(password, rules)
 
   if (!password) {
     return null
   }
 
   return (
-    <View style={[$container, styleOverride]}>
+    <View className="mt-2" style={styleOverride}>
       {/* Strength Bar */}
-      <View style={$strengthBarContainer}>
-        <View style={$strengthBarTrack}>
+      <View className="mb-sm flex-row items-center justify-between">
+        <View className="mr-sm h-2 flex-1 flex-row gap-[2px] rounded">
           {[0, 1, 2, 3, 4].map((level) => (
             <View
               key={level}
-              style={[
-                $strengthBarSegment,
-                {
-                  backgroundColor:
-                    level <= strength.score ? strength.color : theme.colors.palette.neutral300,
-                },
-              ]}
+              className="h-full flex-1 rounded-sm"
+              style={{
+                backgroundColor:
+                  level <= strength.score ? strength.color : theme.colors.palette.neutral300,
+              }}
             />
           ))}
         </View>
         <Text
           text={strength.label}
-          style={[$strengthLabel, { color: strength.color }, compact && $strengthLabelCompact]}
+          className={`min-w-[80px] text-right text-[14px] font-semibold ${
+            compact ? "min-w-[60px] text-[12px]" : ""
+          }`}
+          style={{ color: strength.color }}
         />
       </View>
 
       {/* Criteria Checklist */}
       {showCriteria && !compact && (
-        <View style={$criteriaContainer}>
+        <View className="mb-sm">
           <CriteriaItem
             label="Length"
             met={strength.criteria.length}
@@ -111,18 +115,13 @@ export const PasswordStrengthIndicator: FC<PasswordStrengthIndicatorProps> = ({
 
       {/* Feedback Messages */}
       {showFeedback && strength.feedback.length > 0 && (
-        <View style={$feedbackContainer}>
+        <View className="mt-2">
           {strength.feedback.map((feedback, index) => (
             <Text
               key={index}
               text={`• ${feedback}`}
-              style={[
-                $feedbackText,
-                {
-                  color: strength.score >= 3 ? "#16a34a" : theme.colors.text,
-                },
-                compact && $feedbackTextCompact,
-              ]}
+              className={`mb-1 text-[13px] leading-[18px] ${compact ? "mb-[2px] text-[12px]" : ""}`}
+              style={{ color: strength.score >= 3 ? "#16a34a" : theme.colors.text }}
             />
           ))}
         </View>
@@ -141,122 +140,25 @@ const CriteriaItem: FC<CriteriaItemProps> = ({ label, met, description }) => {
   const { theme } = useAppTheme()
 
   return (
-    <View style={$criteriaItem}>
+    <View className="mb-2 flex-row items-center">
       <View
-        style={[
-          $criteriaIcon,
-          {
-            backgroundColor: met ? "#16a34a" : theme.colors.palette.neutral400,
-          },
-        ]}
+        className="mr-sm h-5 w-5 items-center justify-center rounded-[10px]"
+        style={{ backgroundColor: met ? "#16a34a" : theme.colors.palette.neutral400 }}
       >
         <Text
           text={met ? "✓" : ""}
-          style={[
-            $criteriaIconText,
-            { color: met ? theme.colors.palette.neutral100 : "transparent" },
-          ]}
+          className="text-[12px] font-bold"
+          style={{ color: met ? theme.colors.palette.neutral100 : "transparent" }}
         />
       </View>
-      <View style={$criteriaContent}>
+      <View className="flex-1">
         <Text
           text={label}
-          style={[$criteriaLabel, { color: met ? "#16a34a" : theme.colors.text }]}
+          className="mb-[2px] text-[14px] font-medium"
+          style={{ color: met ? "#16a34a" : theme.colors.text }}
         />
-        <Text text={description} style={[$criteriaDescription, { color: theme.colors.textDim }]} />
+        <Text text={description} className="text-[12px]" style={{ color: theme.colors.textDim }} />
       </View>
     </View>
   )
-}
-
-// Styles
-const $container: ViewStyle = {
-  marginTop: 8,
-}
-
-const $strengthBarContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-  marginBottom: 12,
-}
-
-const $strengthBarTrack: ViewStyle = {
-  flexDirection: "row",
-  flex: 1,
-  height: 8,
-  borderRadius: 4,
-  marginRight: 12,
-  gap: 2,
-}
-
-const $strengthBarSegment: ViewStyle = {
-  flex: 1,
-  height: "100%",
-  borderRadius: 2,
-}
-
-const $strengthLabel: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  minWidth: 80,
-  textAlign: "right",
-}
-
-const $strengthLabelCompact: TextStyle = {
-  fontSize: 12,
-  minWidth: 60,
-}
-
-const $criteriaContainer: ViewStyle = {
-  marginBottom: 12,
-}
-
-const $criteriaItem: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: 8,
-}
-
-const $criteriaIcon: ViewStyle = {
-  width: 20,
-  height: 20,
-  borderRadius: 10,
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: 12,
-}
-
-const $criteriaIconText: TextStyle = {
-  fontSize: 12,
-  fontWeight: "bold",
-}
-
-const $criteriaContent: ViewStyle = {
-  flex: 1,
-}
-
-const $criteriaLabel: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  marginBottom: 2,
-}
-
-const $criteriaDescription: TextStyle = {
-  fontSize: 12,
-}
-
-const $feedbackContainer: ViewStyle = {
-  marginTop: 8,
-}
-
-const $feedbackText: TextStyle = {
-  fontSize: 13,
-  marginBottom: 4,
-  lineHeight: 18,
-}
-
-const $feedbackTextCompact: TextStyle = {
-  fontSize: 12,
-  marginBottom: 2,
 }

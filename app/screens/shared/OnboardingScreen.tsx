@@ -11,7 +11,6 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
-  TextStyle,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -73,9 +72,17 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = observer(function Onb
   const isLast = page === SLIDES.length - 1
 
   return (
-    <Screen style={$root} preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$content}>
-      <TouchableOpacity style={$skip} onPress={finish}>
-        <Text style={[$skipText, { color: theme.colors.textDim }]} text="Skip" />
+    <Screen
+      style={$root}
+      preset="fixed"
+      safeAreaEdges={["top", "bottom"]}
+      contentContainerStyle={$content}
+    >
+      <TouchableOpacity className="self-end p-4" onPress={finish}>
+        <Text
+          className="text-[15px] font-semibold text-textDim dark:text-textDim-dark"
+          text="Skip"
+        />
       </TouchableOpacity>
 
       <ScrollView
@@ -87,39 +94,37 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = observer(function Onb
         style={$carousel}
       >
         {SLIDES.map((slide) => (
-          <View key={slide.title} style={[$slide, { width }]}>
-            <Text style={$emoji} text={slide.emoji} />
-            <Text preset="heading" text={slide.title} style={$slideTitle} />
-            <Text style={[$slideBody, { color: theme.colors.textDim }]} text={slide.body} />
+          <View key={slide.title} className="items-center justify-center px-8" style={{ width }}>
+            <Text className="mb-6 text-[72px]" text={slide.emoji} />
+            <Text preset="heading" text={slide.title} className="mb-3 text-center" />
+            <Text
+              className="text-center leading-[22px] text-textDim dark:text-textDim-dark"
+              text={slide.body}
+            />
           </View>
         ))}
       </ScrollView>
 
       {/* page dots */}
-      <View style={$dots}>
+      <View className="my-4 flex-row justify-center gap-2">
         {SLIDES.map((slide, index) => (
           <View
             key={slide.title}
-            style={[
-              $dot,
-              {
-                backgroundColor:
-                  index === page ? theme.colors.tint : theme.colors.palette.neutral300,
-              },
-            ]}
+            className="h-2 w-2 rounded-full"
+            style={{
+              backgroundColor:
+                index === page ? theme.colors.tint : theme.colors.palette.neutral300,
+            }}
           />
         ))}
       </View>
 
-      <Button
-        text={isLast ? "Get Started" : "Next"}
-        onPress={handleNext}
-        style={$nextButton}
-      />
+      <Button text={isLast ? "Get Started" : "Next"} onPress={handleNext} style={$nextButton} />
     </Screen>
   )
 })
 
+// Screen style + contentContainerStyle props — stay inline style objects.
 const $root: ViewStyle = {
   flex: 1,
 }
@@ -128,54 +133,12 @@ const $content: ViewStyle = {
   flex: 1,
 }
 
-const $skip: ViewStyle = {
-  alignSelf: "flex-end",
-  padding: spacing.md,
-}
-
-const $skipText: TextStyle = {
-  fontSize: 15,
-  fontWeight: "600",
-}
-
+// ScrollView style prop — stays inline.
 const $carousel: ViewStyle = {
   flex: 1,
 }
 
-const $slide: ViewStyle = {
-  alignItems: "center",
-  justifyContent: "center",
-  paddingHorizontal: spacing.xl,
-}
-
-const $emoji: TextStyle = {
-  fontSize: 72,
-  marginBottom: spacing.lg,
-}
-
-const $slideTitle: TextStyle = {
-  textAlign: "center",
-  marginBottom: spacing.sm,
-}
-
-const $slideBody: TextStyle = {
-  textAlign: "center",
-  lineHeight: 22,
-}
-
-const $dots: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "center",
-  gap: spacing.xs,
-  marginVertical: spacing.md,
-}
-
-const $dot: ViewStyle = {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-}
-
+// Button style override — stays inline.
 const $nextButton: ViewStyle = {
   marginHorizontal: spacing.lg,
   marginBottom: spacing.md,

@@ -191,9 +191,9 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
         contentContainerStyle={$screenContent}
       >
         {/* Header */}
-        <View style={$header}>
+        <View className="flex-row items-center px-6 py-4 border-b border-neutral200">
           <TouchableOpacity
-            style={$backButton}
+            className="w-10 h-10 items-center justify-center"
             onPress={() => navigation.goBack()}
             accessible
             accessibilityLabel="Go back"
@@ -201,46 +201,60 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
           >
             <Icon icon="back" size={24} color={colors.palette.neutral900} />
           </TouchableOpacity>
-          <Text style={$headerTitle}>New Invoice</Text>
-          <View style={$headerSpacer} />
+          <Text className="flex-1 text-[18px] text-center" weight="semiBold" style={$headerTitleColor}>
+            New Invoice
+          </Text>
+          <View className="w-10" />
         </View>
 
         {isLoading ? (
-          <View style={$loadingContainer}>
+          <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color={colors.accent} />
           </View>
         ) : (
           <ScrollView style={$container} showsVerticalScrollIndicator={false}>
             {/* Order picker */}
-            <View style={$section}>
-              <Text style={$sectionTitle}>Order</Text>
+            <View className="px-6 pt-6">
+              <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+                Order
+              </Text>
               {orders.length === 0 ? (
-                <Text style={$emptyText}>All your active orders already have an invoice.</Text>
+                <Text className="text-[13px] leading-[18px]" style={$emptyTextColor}>
+                  All your active orders already have an invoice.
+                </Text>
               ) : (
                 orders.map((order) => (
                   <TouchableOpacity
                     key={order.id}
-                    style={[$orderRow, selectedOrderId === order.id && $selectedOrderRow]}
+                    className="flex-row items-center p-4 rounded-xl border border-neutral300 mb-3"
+                    style={selectedOrderId === order.id ? $selectedOrderRow : undefined}
                     onPress={() => handleSelectOrder(order)}
                   >
-                    <View style={$orderInfo}>
-                      <Text style={$orderNumber}>{order.orderNumber}</Text>
-                      <Text style={$orderMeta}>
+                    <View className="flex-1">
+                      <Text className="text-[15px]" weight="semiBold" style={$orderNumberColor}>
+                        {order.orderNumber}
+                      </Text>
+                      <Text className="text-[13px] mt-0.5 capitalize" style={$orderMetaColor}>
                         {order.status} · {formatMoney(order.totalAmount ?? 0, order.currency)}
                       </Text>
                     </View>
-                    <View style={[$radio, selectedOrderId === order.id && $radioSelected]} />
+                    <View
+                      className="w-5 h-5 rounded-full border-2 border-neutral300"
+                      style={selectedOrderId === order.id ? $radioSelected : undefined}
+                    />
                   </TouchableOpacity>
                 ))
               )}
             </View>
 
             {/* Line items */}
-            <View style={$section}>
-              <Text style={$sectionTitle}>Line Items</Text>
+            <View className="px-6 pt-6">
+              <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+                Line Items
+              </Text>
               {fields.map((field, index) => (
-                <View key={field.id} style={$lineItemCard}>
-                  <View style={$inputContainer}>
+                <View key={field.id} className="mb-3 gap-2">
+                  <View className="rounded-lg border border-neutral300 bg-neutral100">
                     <Controller
                       control={control}
                       name={`lineItems.${index}.description`}
@@ -256,8 +270,8 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
                       )}
                     />
                   </View>
-                  <View style={$lineItemNumbersRow}>
-                    <View style={[$inputContainer, $qtyInput]}>
+                  <View className="flex-row items-center gap-2">
+                    <View className="rounded-lg border border-neutral300 bg-neutral100" style={$qtyInput}>
                       <Controller
                         control={control}
                         name={`lineItems.${index}.quantity`}
@@ -274,7 +288,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
                         )}
                       />
                     </View>
-                    <View style={[$inputContainer, $amountInput]}>
+                    <View className="rounded-lg border border-neutral300 bg-neutral100" style={$amountInput}>
                       <Controller
                         control={control}
                         name={`lineItems.${index}.amount`}
@@ -293,7 +307,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
                     </View>
                     {fields.length > 1 && (
                       <TouchableOpacity
-                        style={$removeItemButton}
+                        className="w-9 h-9 items-center justify-center"
                         onPress={() => remove(index)}
                         accessibilityLabel="Remove line item"
                       >
@@ -303,26 +317,31 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
                   </View>
                 </View>
               ))}
-              <TouchableOpacity
-                style={$addItemButton}
-                onPress={() => append({ ...EMPTY_LINE_ITEM })}
-              >
-                <Text style={$addItemText}>+ Add line item</Text>
+              <TouchableOpacity className="py-3" onPress={() => append({ ...EMPTY_LINE_ITEM })}>
+                <Text className="text-[14px]" weight="semiBold" style={$addItemTextColor}>
+                  + Add line item
+                </Text>
               </TouchableOpacity>
 
-              <View style={$subtotalRow}>
-                <Text style={$subtotalLabel}>Subtotal</Text>
-                <Text style={$subtotalValue}>
+              <View className="flex-row justify-between py-3 border-t border-neutral200">
+                <Text className="text-[15px]" weight="semiBold" style={$subtotalLabelColor}>
+                  Subtotal
+                </Text>
+                <Text className="text-[16px]" weight="bold" style={$subtotalValueColor}>
                   {formatMoney(subtotal, selectedOrder?.currency || "NGN")}
                 </Text>
               </View>
             </View>
 
             {/* Deposit */}
-            <View style={$section}>
-              <Text style={$sectionTitle}>Deposit Required</Text>
-              <Text style={$sectionDescription}>Defaults to 50% of the subtotal.</Text>
-              <View style={$inputContainer}>
+            <View className="px-6 pt-6">
+              <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+                Deposit Required
+              </Text>
+              <Text className="text-[13px] mb-3" style={$sectionDescriptionColor}>
+                Defaults to 50% of the subtotal.
+              </Text>
+              <View className="rounded-lg border border-neutral300 bg-neutral100">
                 <TextInput
                   style={$textInput}
                   placeholder="0"
@@ -338,29 +357,43 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
             </View>
 
             {/* Due date */}
-            <View style={$section}>
-              <Text style={$sectionTitle}>Due Date</Text>
-              <View style={$chipRow}>
+            <View className="px-6 pt-6">
+              <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+                Due Date
+              </Text>
+              <View className="flex-row flex-wrap gap-3">
                 {DUE_DATE_OPTIONS.map((days) => (
                   <TouchableOpacity
                     key={days}
-                    style={[$chip, dueInDays === days && $selectedChip]}
+                    className="py-2 px-4 rounded-2xl border border-neutral300"
+                    style={dueInDays === days ? $selectedChip : undefined}
                     onPress={() => setDueInDays(days)}
                   >
-                    <Text style={[$chipText, dueInDays === days && $selectedChipText]}>
+                    <Text
+                      className="text-[14px]"
+                      weight="medium"
+                      style={dueInDays === days ? $selectedChipTextColor : $chipTextColor}
+                    >
                       In {days} days
                     </Text>
                   </TouchableOpacity>
                 ))}
                 <TouchableOpacity
-                  style={[$chip, dueInDays === null && $selectedChip]}
+                  className="py-2 px-4 rounded-2xl border border-neutral300"
+                  style={dueInDays === null ? $selectedChip : undefined}
                   onPress={() => setDueInDays(null)}
                 >
-                  <Text style={[$chipText, dueInDays === null && $selectedChipText]}>Custom</Text>
+                  <Text
+                    className="text-[14px]"
+                    weight="medium"
+                    style={dueInDays === null ? $selectedChipTextColor : $chipTextColor}
+                  >
+                    Custom
+                  </Text>
                 </TouchableOpacity>
               </View>
               {dueInDays === null ? (
-                <View style={[$inputContainer, $dueAtInput]}>
+                <View className="rounded-lg border border-neutral300 bg-neutral100 mt-3">
                   <TextInput
                     style={$textInput}
                     placeholder="YYYY-MM-DD"
@@ -371,16 +404,18 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
                   />
                 </View>
               ) : (
-                <Text style={$dueAtPreview}>
+                <Text className="text-[13px] mt-3" style={$dueAtPreviewColor}>
                   Due {formatDate(new Date(Date.now() + dueInDays * 86400000).toISOString())}
                 </Text>
               )}
             </View>
 
             {/* Notes */}
-            <View style={$section}>
-              <Text style={$sectionTitle}>Notes</Text>
-              <View style={$inputContainer}>
+            <View className="px-6 pt-6">
+              <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+                Notes
+              </Text>
+              <View className="rounded-lg border border-neutral300 bg-neutral100">
                 <TextInput
                   style={[$textInput, $notesInput]}
                   placeholder="Payment instructions, terms..."
@@ -394,20 +429,36 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
             </View>
 
             {/* Draft / send toggle */}
-            <View style={$section}>
-              <Text style={$sectionTitle}>Status</Text>
-              <View style={$chipRow}>
+            <View className="px-6 pt-6">
+              <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+                Status
+              </Text>
+              <View className="flex-row flex-wrap gap-3">
                 <TouchableOpacity
-                  style={[$chip, !sendNow && $selectedChip]}
+                  className="py-2 px-4 rounded-2xl border border-neutral300"
+                  style={!sendNow ? $selectedChip : undefined}
                   onPress={() => setSendNow(false)}
                 >
-                  <Text style={[$chipText, !sendNow && $selectedChipText]}>Save as Draft</Text>
+                  <Text
+                    className="text-[14px]"
+                    weight="medium"
+                    style={!sendNow ? $selectedChipTextColor : $chipTextColor}
+                  >
+                    Save as Draft
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[$chip, sendNow && $selectedChip]}
+                  className="py-2 px-4 rounded-2xl border border-neutral300"
+                  style={sendNow ? $selectedChip : undefined}
                   onPress={() => setSendNow(true)}
                 >
-                  <Text style={[$chipText, sendNow && $selectedChipText]}>Send Now</Text>
+                  <Text
+                    className="text-[14px]"
+                    weight="medium"
+                    style={sendNow ? $selectedChipTextColor : $chipTextColor}
+                  >
+                    Send Now
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -425,7 +476,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
               onPress={handleCreate}
               disabled={isSubmitting || orders.length === 0}
             />
-            <View style={$scrollFooterSpace} />
+            <View className="h-12" />
           </ScrollView>
         )}
       </Screen>
@@ -434,14 +485,14 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
 )
 
 // Styles
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (light in both schemes) — no `dark:` variants. Layout, spacing,
+// and container backgrounds/borders are className token utilities. Raw TextInput
+// styles, the flex-ratio qty/amount inputs, selection-state order/radio/chip
+// backgrounds, the flex ScrollView style, the Screen contentContainerStyle, and
+// Button style overrides stay inline.
 const $container: ViewStyle = {
   flex: 1,
-}
-
-const $loadingContainer: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
 }
 
 // Screen's fixed preset gives its inner container no height; without flex the
@@ -450,90 +501,10 @@ const $screenContent: ViewStyle = {
   flex: 1,
 }
 
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $headerTitle: TextStyle = {
-  flex: 1,
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  textAlign: "center",
-}
-
-const $headerSpacer: ViewStyle = {
-  width: 40,
-}
-
-const $section: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.lg,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.sm,
-}
-
-const $sectionDescription: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-  marginBottom: spacing.sm,
-}
-
-const $orderRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  padding: spacing.md,
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-  marginBottom: spacing.sm,
-}
-
+// Selection-state backgrounds/borders stay inline (conditional style).
 const $selectedOrderRow: ViewStyle = {
   borderColor: colors.palette.primary500,
   backgroundColor: colors.palette.primary100,
-}
-
-const $orderInfo: ViewStyle = {
-  flex: 1,
-}
-
-const $orderNumber: TextStyle = {
-  fontSize: 15,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-}
-
-const $orderMeta: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-  marginTop: 2,
-  textTransform: "capitalize",
-}
-
-const $radio: ViewStyle = {
-  width: 20,
-  height: 20,
-  borderRadius: 10,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral300,
 }
 
 const $radioSelected: ViewStyle = {
@@ -541,17 +512,12 @@ const $radioSelected: ViewStyle = {
   backgroundColor: colors.accent,
 }
 
-const $lineItemCard: ViewStyle = {
-  marginBottom: spacing.sm,
-  gap: spacing.xs,
+const $selectedChip: ViewStyle = {
+  backgroundColor: colors.accent,
+  borderColor: colors.palette.primary500,
 }
 
-const $lineItemNumbersRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.xs,
-}
-
+// Flex-ratio number inputs stay inline (RN `flex: n` semantics).
 const $qtyInput: ViewStyle = {
   flex: 1,
 }
@@ -560,50 +526,7 @@ const $amountInput: ViewStyle = {
   flex: 2,
 }
 
-const $removeItemButton: ViewStyle = {
-  width: 36,
-  height: 36,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $addItemButton: ViewStyle = {
-  paddingVertical: spacing.sm,
-}
-
-const $addItemText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.accent,
-}
-
-const $subtotalRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  paddingVertical: spacing.sm,
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral200,
-}
-
-const $subtotalLabel: TextStyle = {
-  fontSize: 15,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-}
-
-const $subtotalValue: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.accent,
-}
-
-const $inputContainer: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
+// Raw TextInput styles stay inline.
 const $textInput: TextStyle = {
   paddingVertical: spacing.sm,
   paddingHorizontal: spacing.md,
@@ -615,45 +538,7 @@ const $notesInput: TextStyle = {
   minHeight: 80,
 }
 
-const $chipRow: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.sm,
-}
-
-const $chip: ViewStyle = {
-  paddingVertical: spacing.xs,
-  paddingHorizontal: spacing.md,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
-const $selectedChip: ViewStyle = {
-  backgroundColor: colors.accent,
-  borderColor: colors.palette.primary500,
-}
-
-const $chipText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral700,
-}
-
-const $selectedChipText: TextStyle = {
-  color: colors.palette.neutral100,
-}
-
-const $dueAtInput: ViewStyle = {
-  marginTop: spacing.sm,
-}
-
-const $dueAtPreview: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-  marginTop: spacing.sm,
-}
-
+// Button style overrides stay inline (Button owns its className).
 const $submitButton: ViewStyle = {
   backgroundColor: colors.accent,
   borderRadius: 12,
@@ -667,12 +552,16 @@ const $submitButtonText: TextStyle = {
   color: colors.palette.neutral100,
 }
 
-const $emptyText: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-  lineHeight: 18,
-}
-
-const $scrollFooterSpace: ViewStyle = {
-  height: spacing.xxl,
-}
+// Text color overrides (static, light-only).
+const $headerTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $sectionTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $sectionDescriptionColor: TextStyle = { color: colors.textDim }
+const $orderNumberColor: TextStyle = { color: colors.palette.neutral900 }
+const $orderMetaColor: TextStyle = { color: colors.textDim }
+const $addItemTextColor: TextStyle = { color: colors.accent }
+const $subtotalLabelColor: TextStyle = { color: colors.palette.neutral900 }
+const $subtotalValueColor: TextStyle = { color: colors.accent }
+const $chipTextColor: TextStyle = { color: colors.palette.neutral700 }
+const $selectedChipTextColor: TextStyle = { color: colors.palette.neutral100 }
+const $dueAtPreviewColor: TextStyle = { color: colors.textDim }
+const $emptyTextColor: TextStyle = { color: colors.textDim }

@@ -6,15 +6,7 @@
  */
 import { FC, useMemo, useState } from "react"
 import { observer } from "mobx-react-lite"
-import {
-  Modal,
-  RefreshControl,
-  ScrollView,
-  TextStyle,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native"
+import { Modal, RefreshControl, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, CatalogGrid, CatalogGridItem, Icon, Screen, Text, TextField } from "@/components"
 import { useStyles } from "@/api/catalog"
@@ -85,11 +77,11 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
         ),
       }}
     >
-      <View style={$headerRow}>
+      <View className="flex-row items-center px-4 pt-4">
         {/* No back affordance when mounted as the Browse tab root */}
         {(navigation as any).getState()?.type !== "tab" && navigation.canGoBack() && (
           <TouchableOpacity
-            style={$backButton}
+            className="mr-2 h-10 w-10 items-center justify-center"
             onPress={() => navigation.goBack()}
             accessible
             accessibilityLabel="Go back"
@@ -98,32 +90,38 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
             <Icon icon="back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
         )}
-        <Text preset="heading" text="Style Catalog" style={$headingText} />
+        <Text preset="heading" text="Style Catalog" className="flex-1" />
       </View>
 
       {/* browse siblings: grouped styles and fabrics */}
-      <View style={$browseLinks}>
+      <View className="flex-row gap-2 px-4 pt-3">
         <TouchableOpacity
-          style={[$browseLink, { borderColor: theme.colors.border }]}
+          className="rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
           onPress={() => (navigation as any).navigate("Styles")}
           accessible
           accessibilityLabel="Browse styles by group"
           accessibilityRole="button"
         >
-          <Text style={[$browseLinkText, { color: theme.colors.accent }]} text="Styles by Group" />
+          <Text
+            className="text-[13px] font-semibold text-accent dark:text-accent-dark"
+            text="Styles by Group"
+          />
         </TouchableOpacity>
         <TouchableOpacity
-          style={[$browseLink, { borderColor: theme.colors.border }]}
+          className="rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
           onPress={() => (navigation as any).navigate("FabricSearch")}
           accessible
           accessibilityLabel="Browse fabrics"
           accessibilityRole="button"
         >
-          <Text style={[$browseLinkText, { color: theme.colors.accent }]} text="Fabrics" />
+          <Text
+            className="text-[13px] font-semibold text-accent dark:text-accent-dark"
+            text="Fabrics"
+          />
         </TouchableOpacity>
       </View>
 
-      <View style={$searchContainer}>
+      <View className="px-4 pt-3">
         <TextField
           placeholder="Search styles..."
           value={search}
@@ -140,20 +138,13 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
           return (
             <TouchableOpacity
               key={cat ?? "all"}
-              style={[
-                $chip,
-                {
-                  backgroundColor: active ? theme.colors.accent : theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
+              className="rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
+              style={{ backgroundColor: active ? theme.colors.accent : theme.colors.surface }}
               onPress={() => setCategory(cat)}
             >
               <Text
-                style={[
-                  $chipText,
-                  { color: active ? theme.colors.palette.neutral100 : theme.colors.text },
-                ]}
+                className="text-[13px] font-semibold"
+                style={{ color: active ? theme.colors.palette.neutral100 : theme.colors.text }}
                 text={cat ? labelize(cat) : "All"}
               />
             </TouchableOpacity>
@@ -162,7 +153,10 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
       </ScrollView>
 
       {error ? (
-        <Text style={[$error, { color: theme.colors.error }]} text={error} />
+        <Text
+          className="p-4 text-center text-error dark:text-error-dark"
+          text={error}
+        />
       ) : (
         <CatalogGrid
           items={gridItems}
@@ -178,20 +172,20 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
         transparent
         onRequestClose={() => setSelected(null)}
       >
-        <View style={$modalOverlay}>
-          <View style={[$modalCard, { backgroundColor: theme.colors.background }]}>
+        <View className="flex-1 justify-end" style={$modalOverlay}>
+          <View className="rounded-t-[20px] bg-background p-6 pb-8 dark:bg-background-dark">
             {selected && (
               <>
                 <Text preset="subheading" text={selected.name} />
                 <Text
-                  style={[$modalMeta, { color: theme.colors.textDim }]}
+                  className="mt-1 text-textDim dark:text-textDim-dark"
                   text={`${labelize(selected.category)} · ${labelize(selected.gender)}`}
                 />
                 {!!selected.description && (
-                  <Text style={$modalDescription} text={selected.description} />
+                  <Text className="mt-3 leading-5" text={selected.description} />
                 )}
                 <Text
-                  style={[$modalPrice, { color: theme.colors.accent }]}
+                  className="mt-3 text-[18px] font-bold text-accent dark:text-accent-dark"
                   text={`From ${formatNaira(selected.basePrice)}`}
                 />
                 <Button text="Start Order" onPress={handleStartOrder} style={$modalButton} />
@@ -209,100 +203,19 @@ const $root: ViewStyle = {
   flex: 1,
 }
 
-const $headerRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.md,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: spacing.xs,
-}
-
-const $headingText: TextStyle = {
-  flex: 1,
-}
-
-const $browseLinks: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.xs,
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-}
-
-const $browseLink: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-  borderRadius: 16,
-  borderWidth: 1,
-}
-
-const $browseLinkText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-}
-
-const $searchContainer: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-}
-
+// ScrollView contentContainerStyle prop — stays an inline style object.
 const $chips: ViewStyle = {
   paddingHorizontal: spacing.md,
   paddingVertical: spacing.sm,
   gap: spacing.xs,
 }
 
-const $chip: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-  borderRadius: 16,
-  borderWidth: 1,
-}
-
-const $chipText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-}
-
-const $error: TextStyle = {
-  padding: spacing.md,
-  textAlign: "center",
-}
-
+// Fixed overlay tint (raw rgba, not a token) — stays inline.
 const $modalOverlay: ViewStyle = {
-  flex: 1,
-  justifyContent: "flex-end",
   backgroundColor: "rgba(0, 0, 0, 0.4)",
 }
 
-const $modalCard: ViewStyle = {
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  padding: spacing.lg,
-  paddingBottom: spacing.xl,
-}
-
-const $modalMeta: TextStyle = {
-  marginTop: spacing.xxs,
-}
-
-const $modalDescription: TextStyle = {
-  marginTop: spacing.sm,
-  lineHeight: 20,
-}
-
-const $modalPrice: TextStyle = {
-  marginTop: spacing.sm,
-  fontSize: 18,
-  fontWeight: "700",
-}
-
+// Button style override — Button owns its className; callers pass style inline.
 const $modalButton: ViewStyle = {
   marginTop: spacing.md,
   marginBottom: spacing.xs,

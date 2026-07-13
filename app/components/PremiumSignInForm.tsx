@@ -191,13 +191,13 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
 
     return (
       <Animated.View
-        style={[
-          styles.container,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
-          },
-        ]}
+        style={{
+          flex: 1,
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.xl,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+        }}
       >
         <LinearGradient
           colors={["rgba(43, 93, 47, 0.1)", "rgba(43, 93, 47, 0.05)", "transparent"]}
@@ -205,15 +205,21 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
         />
 
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Access your premium tailoring experience</Text>
+        <View className="mb-xl items-center">
+          <Text className="mb-sm text-center text-[32px] font-bold text-[#1a202c]">Welcome Back</Text>
+          <Text className="text-center text-[16px] leading-[22px] text-[#4a5568]">
+            Access your premium tailoring experience
+          </Text>
         </View>
 
         {/* Biometric Authentication */}
         {biometricAvailable && (
           <Animated.View
-            style={[styles.biometricContainer, { transform: [{ scale: biometricPulse }] }]}
+            style={{
+              alignItems: "center",
+              marginBottom: spacing.lg,
+              transform: [{ scale: biometricPulse }],
+            }}
           >
             <TouchableOpacity
               style={styles.biometricButton}
@@ -223,7 +229,9 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
             >
               <LinearGradient colors={["#2B5D2F", "#1e4522"]} style={styles.biometricGradient}>
                 <Ionicons name={getBiometricIcon()} size={32} color="white" />
-                <Text style={styles.biometricText}>{getBiometricLabel()}</Text>
+                <Text className="ml-sm text-[16px] font-semibold text-[#FFFFFF]">
+                  {getBiometricLabel()}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
@@ -231,17 +239,17 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
 
         {/* Divider */}
         {biometricAvailable && (
-          <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or continue with email</Text>
-            <View style={styles.dividerLine} />
+          <View className="my-lg flex-row items-center">
+            <View className="h-px flex-1 bg-[#e0e0e0]" />
+            <Text className="mx-md text-[14px] text-[#666]">or continue with email</Text>
+            <View className="h-px flex-1 bg-[#e0e0e0]" />
           </View>
         )}
 
         {/* Form Fields */}
-        <View style={styles.formContainer}>
+        <View className="flex-1">
           {/* Email Input */}
-          <View style={styles.inputContainer}>
+          <View className="mb-lg">
             <Animated.View
               style={[
                 styles.inputWrapper,
@@ -263,7 +271,7 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
                 name="email"
                 render={({ field: { value, onChange, onBlur } }) => (
                   <TextInput
-                    style={styles.textInput}
+                    className="flex-1 py-md text-[16px] text-[#333333]"
                     placeholder="Enter your email"
                     placeholderTextColor="#999"
                     value={value}
@@ -281,11 +289,13 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
                 )}
               />
             </Animated.View>
-            {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+            {errors.email && (
+              <Text className="ml-md mt-xs text-[14px] text-[#dc2626]">{errors.email.message}</Text>
+            )}
           </View>
 
           {/* Password Input */}
-          <View style={styles.inputContainer}>
+          <View className="mb-lg">
             <Animated.View
               style={[
                 styles.inputWrapper,
@@ -312,7 +322,7 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
                 name="password"
                 render={({ field: { value, onChange, onBlur } }) => (
                   <TextInput
-                    style={styles.textInput}
+                    className="flex-1 py-md text-[16px] text-[#333333]"
                     placeholder="Enter your password"
                     placeholderTextColor="#999"
                     value={value}
@@ -329,7 +339,7 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
-                style={styles.passwordToggle}
+                className="p-xs"
                 disabled={isLoading}
               >
                 <Ionicons
@@ -339,24 +349,32 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
                 />
               </TouchableOpacity>
             </Animated.View>
-            {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
+            {errors.password && (
+              <Text className="ml-md mt-xs text-[14px] text-[#dc2626]">
+                {errors.password.message}
+              </Text>
+            )}
           </View>
 
           {/* Remember Me & Forgot Password */}
-          <View style={styles.optionsContainer}>
+          <View className="mb-xl flex-row items-center justify-between">
             <Pressable
-              style={styles.rememberMeContainer}
+              className="flex-row items-center"
               onPress={() => setRememberMe(!rememberMe)}
               disabled={isLoading}
             >
-              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+              <View
+                className={`mr-sm h-5 w-5 items-center justify-center rounded border ${
+                  rememberMe ? "border-emerald500 bg-emerald500" : "border-[#ccc]"
+                }`}
+              >
                 {rememberMe && <Ionicons name="checkmark" size={12} color="white" />}
               </View>
-              <Text style={styles.rememberMeText}>Remember me</Text>
+              <Text className="text-[14px] text-[#666]">Remember me</Text>
             </Pressable>
 
             <TouchableOpacity onPress={onForgotPassword} disabled={isLoading}>
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              <Text className="text-[14px] font-medium text-emerald500">Forgot password?</Text>
             </TouchableOpacity>
           </View>
 
@@ -371,15 +389,17 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
               colors={isLoading ? ["#ccc", "#999"] : ["#2B5D2F", "#1e4522"]}
               style={styles.buttonGradient}
             >
-              <Text style={styles.signInButtonText}>{isLoading ? "Signing In..." : "Sign In"}</Text>
+              <Text className="text-[16px] font-semibold text-[#FFFFFF]">
+                {isLoading ? "Signing In..." : "Sign In"}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
 
           {/* Sign Up Link */}
-          <View style={styles.signUpContainer}>
-            <Text style={styles.signUpPrompt}>Don't have an account? </Text>
+          <View className="flex-row items-center justify-center">
+            <Text className="text-[14px] text-[#666]">Don&apos;t have an account? </Text>
             <TouchableOpacity onPress={onSignUp} disabled={isLoading}>
-              <Text style={styles.signUpLink}>Sign Up</Text>
+              <Text className="text-[14px] font-semibold text-emerald500">Sign Up</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -388,6 +408,11 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
   },
 )
 
+// Only styles that must stay inline remain here: the LinearGradient targets
+// (className is not wired through that third-party component), RN shadows /
+// elevation, the icon offset, dynamic window-relative dimensions, and the base
+// of the animated input wrapper (its borderColor/shadowOpacity are animated).
+// Every static layout/typography style migrated to className token utilities.
 const styles = StyleSheet.create({
   backgroundGradient: {
     position: "absolute",
@@ -407,11 +432,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
   } as ViewStyle,
 
-  biometricContainer: {
-    alignItems: "center",
-    marginBottom: spacing.lg,
-  } as ViewStyle,
-
   biometricGradient: {
     flexDirection: "row",
     alignItems: "center",
@@ -421,87 +441,14 @@ const styles = StyleSheet.create({
     minWidth: width * 0.7,
   } as ViewStyle,
 
-  biometricText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: spacing.sm,
-  } as TextStyle,
-
   buttonGradient: {
     paddingVertical: spacing.md,
     alignItems: "center",
   } as ViewStyle,
 
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: spacing.sm,
-  } as ViewStyle,
-
-  checkboxChecked: {
-    backgroundColor: "#2B5D2F",
-    borderColor: "#2B5D2F",
-  } as ViewStyle,
-
-  container: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xl,
-  } as ViewStyle,
-
   disabledButton: {
     elevation: 2,
     shadowOpacity: 0.1,
-  } as ViewStyle,
-
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: spacing.lg,
-  } as ViewStyle,
-
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#e0e0e0",
-  } as ViewStyle,
-
-  dividerText: {
-    marginHorizontal: spacing.md,
-    fontSize: 14,
-    color: "#666",
-  } as TextStyle,
-
-  errorText: {
-    color: "#dc2626",
-    fontSize: 14,
-    marginTop: spacing.xs,
-    marginLeft: spacing.md,
-  } as TextStyle,
-
-  forgotPasswordText: {
-    fontSize: 14,
-    color: "#2B5D2F",
-    fontWeight: "500",
-  } as TextStyle,
-
-  formContainer: {
-    flex: 1,
-  } as ViewStyle,
-
-  header: {
-    alignItems: "center",
-    marginBottom: spacing.xl,
-  } as ViewStyle,
-
-  inputContainer: {
-    marginBottom: spacing.lg,
   } as ViewStyle,
 
   inputIcon: {
@@ -523,27 +470,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   } as ViewStyle,
 
-  optionsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.xl,
-  } as ViewStyle,
-
-  passwordToggle: {
-    padding: spacing.xs,
-  } as ViewStyle,
-
-  rememberMeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  } as ViewStyle,
-
-  rememberMeText: {
-    fontSize: 14,
-    color: "#666",
-  } as TextStyle,
-
   signInButton: {
     borderRadius: 12,
     overflow: "hidden",
@@ -554,51 +480,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     marginBottom: spacing.lg,
   } as ViewStyle,
-
-  signInButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  } as TextStyle,
-
-  signUpContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  } as ViewStyle,
-
-  signUpLink: {
-    fontSize: 14,
-    color: "#2B5D2F",
-    fontWeight: "600",
-  } as TextStyle,
-
-  signUpPrompt: {
-    fontSize: 14,
-    color: "#666",
-  } as TextStyle,
-
-  subtitle: {
-    fontSize: 16,
-    color: "#4a5568",
-    textAlign: "center",
-    lineHeight: 22,
-  } as TextStyle,
-
-  textInput: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    fontSize: 16,
-    color: "#333",
-  } as TextStyle,
-
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#1a202c",
-    marginBottom: spacing.sm,
-    textAlign: "center",
-  } as TextStyle,
 })
 
 export default PremiumSignInForm

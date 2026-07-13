@@ -135,36 +135,48 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
     return (
       <TouchableOpacity
         key={order.id}
-        style={$orderCard}
+        className="rounded-2xl border border-border bg-surface p-4 mb-3"
         onPress={() => (navigation as any).navigate("OrderDetail", { orderId: order.id })}
         accessible
         accessibilityLabel={`Order ${order.orderNumber}`}
       >
-        <View style={$cardHeader}>
-          <Text style={$orderNumber}>#{order.orderNumber}</Text>
-          <View style={[$statusChip, { backgroundColor: columnColor + "20" }]}>
-            <Text style={[$statusChipText, { color: columnColor }]}>{statusLabel(order)}</Text>
+        <View className="flex-row items-center justify-between mb-2">
+          <Text className="text-[14px]" weight="bold" style={$orderNumberColor}>
+            #{order.orderNumber}
+          </Text>
+          <View className="rounded-full px-2.5 py-[3px]" style={{ backgroundColor: columnColor + "20" }}>
+            <Text className="text-[12px]" weight="medium" style={{ color: columnColor }}>
+              {statusLabel(order)}
+            </Text>
           </View>
         </View>
 
-        <Text style={$customerName}>{customerName}</Text>
-        <Text style={$garmentSummary}>
+        <Text className="text-[14px] mb-1" weight="semiBold" style={$customerNameColor}>
+          {customerName}
+        </Text>
+        <Text className="text-[12px] mb-3" style={$garmentSummaryColor}>
           {titleCase(order.garmentType ?? "custom")}
           {order.styleConfig?.designNotes ? ` • ${order.styleConfig.designNotes}` : ""}
         </Text>
 
-        <View style={$cardFooter}>
-          <Text style={$orderAmount}>₦{(order.pricing?.totalPrice ?? 0).toLocaleString()}</Text>
-          <Text style={$orderTime}>{formatRelativeTime(order.createdAt)}</Text>
+        <View className="flex-row items-center justify-between pt-2 border-t border-separator">
+          <Text className="text-[15px]" weight="bold" style={$orderAmountColor}>
+            ₦{(order.pricing?.totalPrice ?? 0).toLocaleString()}
+          </Text>
+          <Text className="text-[11px]" style={$orderTimeColor}>
+            {formatRelativeTime(order.createdAt)}
+          </Text>
         </View>
       </TouchableOpacity>
     )
   }
 
   const renderEmptyColumn = (label: string) => (
-    <View style={$emptyColumn}>
+    <View className="items-center p-8 gap-3">
       <Icon icon="sew" size={32} color={colors.palette.neutral400} />
-      <Text style={$emptyColumnText}>No {label.toLowerCase()}</Text>
+      <Text className="text-[13px]" style={$emptyColumnTextColor}>
+        No {label.toLowerCase()}
+      </Text>
     </View>
   )
 
@@ -177,24 +189,26 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
       contentContainerStyle={$screenContent}
     >
       {/* Header */}
-      <View style={$header}>
-        <Text style={$title}>Orders</Text>
-        <View style={$connectionIndicator}>
+      <View className="flex-row items-center justify-between px-4 pt-3 pb-4">
+        <Text className="text-[24px]" weight="bold" style={$titleColor}>
+          Orders
+        </Text>
+        <View className="flex-row items-center gap-1">
           <View
-            style={[
-              $connectionDot,
-              {
-                backgroundColor:
-                  realtimeStatus === "live" ? colors.palette.success500 : colors.palette.warning500,
-              },
-            ]}
+            className="h-2 w-2 rounded-full"
+            style={{
+              backgroundColor:
+                realtimeStatus === "live" ? colors.palette.success500 : colors.palette.warning500,
+            }}
           />
-          <Text style={$connectionText}>{realtimeStatus === "live" ? "Live" : "Auto"}</Text>
+          <Text className="text-[11px]" style={$connectionTextColor}>
+            {realtimeStatus === "live" ? "Live" : "Auto"}
+          </Text>
         </View>
       </View>
 
       {/* Search + lightweight filters (statuses are the board columns) */}
-      <View style={$filterBarContainer}>
+      <View className="px-4 pb-3">
         <OrderFilterBar
           value={filter}
           onChange={setFilter}
@@ -210,11 +224,15 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
           contentContainerStyle={$kanbanContainer}
         >
           {COLUMNS.map((column) => (
-            <View key={column.key} style={$kanbanColumn}>
-              <View style={$columnHeader}>
-                <View style={[$columnDot, { backgroundColor: column.color }]} />
-                <Text style={$columnTitle}>{column.label}</Text>
-                <Text style={$columnCount}>{buckets[column.key].length}</Text>
+            <View key={column.key} className="w-[300px] rounded-2xl bg-sand100 p-3">
+              <View className="flex-row items-center gap-2 px-2 pb-3">
+                <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: column.color }} />
+                <Text className="flex-1 text-[14px]" weight="bold" style={$columnTitleColor}>
+                  {column.label}
+                </Text>
+                <Text className="text-[12px]" weight="semiBold" style={$columnCountColor}>
+                  {buckets[column.key].length}
+                </Text>
               </View>
               <ScrollView showsVerticalScrollIndicator={false}>
                 {buckets[column.key].length === 0
@@ -227,21 +245,27 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
       ) : (
         // Segmented single column
         <>
-          <View style={$segmentRow}>
+          <View className="flex-row px-4 py-3 gap-2">
             {COLUMNS.map((column) => (
               <TouchableOpacity
                 key={column.key}
-                style={[$segment, activeColumn === column.key && $segmentActive]}
+                className="flex-1 flex-row items-center justify-center gap-1 py-2 px-1 rounded-lg bg-sand200"
+                style={activeColumn === column.key ? $segmentActive : undefined}
                 onPress={() => setActiveColumn(column.key)}
               >
                 <Text
-                  style={[$segmentText, activeColumn === column.key && $segmentTextActive]}
+                  className="text-[11px] shrink"
+                  weight={activeColumn === column.key ? "semiBold" : "medium"}
+                  style={activeColumn === column.key ? $segmentTextActiveColor : $segmentTextColor}
                   numberOfLines={1}
                 >
                   {column.label}
                 </Text>
-                <View style={[$segmentBadge, { backgroundColor: column.color + "30" }]}>
-                  <Text style={[$segmentBadgeText, { color: column.color }]}>
+                <View
+                  className="min-w-[18px] h-[18px] rounded-full items-center justify-center px-1"
+                  style={{ backgroundColor: column.color + "30" }}
+                >
+                  <Text className="text-[10px]" weight="bold" style={{ color: column.color }}>
                     {buckets[column.key].length}
                   </Text>
                 </View>
@@ -250,8 +274,10 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
           </View>
 
           {isLoading ? (
-            <View style={$loadingState}>
-              <Text style={$loadingText}>Loading orders...</Text>
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-[16px]" style={$loadingTextColor}>
+                Loading orders...
+              </Text>
             </View>
           ) : (
             <FlatList
@@ -279,6 +305,11 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
 })
 
 // Styles
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (light in both schemes) — no `dark:` variants. Layout, spacing,
+// and container backgrounds/borders are className token utilities; data-driven
+// column colors (dots, opacity-tinted chips/badges) and the selection-state
+// segment background stay inline.
 const $root: ViewStyle = {
   flex: 1,
   backgroundColor: colors.background,
@@ -290,94 +321,14 @@ const $screenContent: ViewStyle = {
   flex: 1,
 }
 
-const $header: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-  paddingBottom: spacing.md,
-}
-
-const $title: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.text,
-}
-
-const $connectionIndicator: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.xxs,
-}
-
-const $connectionDot: ViewStyle = {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-}
-
-const $connectionText: TextStyle = {
-  fontSize: 11,
-  color: colors.textDim,
-}
-
-const $filterBarContainer: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingBottom: spacing.sm,
-}
-
-const $segmentRow: ViewStyle = {
-  flexDirection: "row",
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-  gap: spacing.xs,
-}
-
-const $segment: ViewStyle = {
-  flex: 1,
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: spacing.xxs,
-  paddingVertical: spacing.xs,
-  paddingHorizontal: spacing.xxs,
-  borderRadius: 8,
-  backgroundColor: colors.palette.sand200,
-}
-
+// Selection-state background/border stays inline (conditional style).
 const $segmentActive: ViewStyle = {
   backgroundColor: colors.surface,
   borderWidth: 1,
   borderColor: colors.accent,
 }
 
-const $segmentText: TextStyle = {
-  fontSize: 11,
-  fontWeight: "500",
-  color: colors.textDim,
-  flexShrink: 1,
-}
-
-const $segmentTextActive: TextStyle = {
-  color: colors.palette.neutral900,
-  fontWeight: "600",
-}
-
-const $segmentBadge: ViewStyle = {
-  minWidth: 18,
-  height: 18,
-  borderRadius: 9,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingHorizontal: 4,
-}
-
-const $segmentBadgeText: TextStyle = {
-  fontSize: 10,
-  fontWeight: "700",
-}
-
+// FlatList/ScrollView contentContainerStyle props take style objects.
 const $listContainer: ViewStyle = {
   padding: spacing.lg,
   gap: spacing.md,
@@ -389,124 +340,17 @@ const $kanbanContainer: ViewStyle = {
   gap: spacing.md,
 }
 
-const $kanbanColumn: ViewStyle = {
-  width: 300,
-  backgroundColor: colors.palette.sand100,
-  borderRadius: 16,
-  padding: spacing.sm,
-}
-
-const $columnHeader: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.xs,
-  paddingHorizontal: spacing.xs,
-  paddingBottom: spacing.sm,
-}
-
-const $columnDot: ViewStyle = {
-  width: 10,
-  height: 10,
-  borderRadius: 5,
-}
-
-const $columnTitle: TextStyle = {
-  flex: 1,
-  fontSize: 14,
-  fontWeight: "700",
-  color: colors.text,
-}
-
-const $columnCount: TextStyle = {
-  fontSize: 12,
-  fontWeight: "600",
-  color: colors.textDim,
-}
-
-const $orderCard: ViewStyle = {
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  padding: spacing.md,
-  marginBottom: spacing.sm,
-  borderWidth: 1,
-  borderColor: colors.border,
-}
-
-const $cardHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-}
-
-const $orderNumber: TextStyle = {
-  fontSize: 14,
-  fontWeight: "700",
-  color: colors.text,
-}
-
-const $statusChip: ViewStyle = {
-  borderRadius: 999,
-  paddingHorizontal: 10,
-  paddingVertical: 3,
-}
-
-const $statusChipText: TextStyle = {
-  fontSize: 12,
-  fontWeight: "500",
-}
-
-const $customerName: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.text,
-  marginBottom: spacing.xxs,
-}
-
-const $garmentSummary: TextStyle = {
-  fontSize: 12,
-  color: colors.textDim,
-  marginBottom: spacing.sm,
-}
-
-const $cardFooter: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  paddingTop: spacing.xs,
-  borderTopWidth: 1,
-  borderTopColor: colors.separator,
-}
-
-const $orderAmount: TextStyle = {
-  fontSize: 15,
-  fontWeight: "700",
-  color: colors.accent,
-}
-
-const $orderTime: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.neutral500,
-}
-
-const $emptyColumn: ViewStyle = {
-  alignItems: "center",
-  padding: spacing.xl,
-  gap: spacing.sm,
-}
-
-const $emptyColumnText: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral500,
-}
-
-const $loadingState: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $loadingText: TextStyle = {
-  fontSize: 16,
-  color: colors.textDim,
-}
+// Text color overrides (static, light-only).
+const $titleColor: TextStyle = { color: colors.text }
+const $connectionTextColor: TextStyle = { color: colors.textDim }
+const $segmentTextColor: TextStyle = { color: colors.textDim }
+const $segmentTextActiveColor: TextStyle = { color: colors.palette.neutral900 }
+const $columnTitleColor: TextStyle = { color: colors.text }
+const $columnCountColor: TextStyle = { color: colors.textDim }
+const $orderNumberColor: TextStyle = { color: colors.text }
+const $customerNameColor: TextStyle = { color: colors.text }
+const $garmentSummaryColor: TextStyle = { color: colors.textDim }
+const $orderAmountColor: TextStyle = { color: colors.accent }
+const $orderTimeColor: TextStyle = { color: colors.palette.neutral500 }
+const $emptyColumnTextColor: TextStyle = { color: colors.palette.neutral500 }
+const $loadingTextColor: TextStyle = { color: colors.textDim }

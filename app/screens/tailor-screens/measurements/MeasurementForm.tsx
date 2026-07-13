@@ -169,9 +169,9 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
       contentContainerStyle={$screenContent}
     >
       {/* Header */}
-      <View style={$header}>
+      <View className="flex-row items-center px-6 py-4 border-b border-neutral200">
         <TouchableOpacity
-          style={$backButton}
+          className="w-10 h-10 items-center justify-center"
           onPress={() => navigation.goBack()}
           accessible
           accessibilityLabel="Go back"
@@ -179,22 +179,24 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
         >
           <Icon icon="back" size={24} color={colors.palette.neutral900} />
         </TouchableOpacity>
-        <Text style={$headerTitle}>{title}</Text>
-        <View style={$headerSpacer} />
+        <Text className="flex-1 text-[18px] text-center" weight="semiBold" style={$headerTitleColor}>
+          {title}
+        </Text>
+        <View className="w-10" />
       </View>
 
       {isLoading ? (
-        <View style={$loadingContainer}>
+        <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.palette.primary500} />
         </View>
       ) : (
         <ScrollView style={$container} showsVerticalScrollIndicator={false}>
           {/* Profile owner banner for read-only customer profiles */}
           {readOnly && (
-            <View style={$section}>
-              <View style={$readOnlyBanner}>
+            <View className="px-6 pt-6">
+              <View className="flex-row items-center rounded-lg bg-primary100 p-4">
                 <Icon icon="lock" size={18} color={colors.palette.primary700} />
-                <Text style={$readOnlyText}>
+                <Text className="flex-1 text-[13px] ml-3 leading-[18px]" style={$readOnlyTextColor}>
                   Customer profiles are read-only. Only your own templates can be edited.
                 </Text>
               </View>
@@ -202,9 +204,11 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
           )}
 
           {/* Name */}
-          <View style={$section}>
-            <Text style={$sectionTitle}>Profile Name</Text>
-            <View style={$inputContainer}>
+          <View className="px-6 pt-6">
+            <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+              Profile Name
+            </Text>
+            <View className="flex-row items-center rounded-lg border border-neutral300 bg-neutral100">
               <TextInput
                 style={$textInput}
                 placeholder="e.g. Standard Agbada Template"
@@ -217,17 +221,24 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
           </View>
 
           {/* Type */}
-          <View style={$section}>
-            <Text style={$sectionTitle}>Garment Type</Text>
-            <View style={$chipRow}>
+          <View className="px-6 pt-6">
+            <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+              Garment Type
+            </Text>
+            <View className="flex-row flex-wrap gap-3">
               {MEASUREMENT_TYPES.map((type) => (
                 <TouchableOpacity
                   key={type}
-                  style={[$chip, measurementType === type && $selectedChip]}
+                  className="py-2 px-4 rounded-2xl border border-neutral300"
+                  style={measurementType === type ? $selectedChip : undefined}
                   disabled={readOnly}
                   onPress={() => setMeasurementType(type)}
                 >
-                  <Text style={[$chipText, measurementType === type && $selectedChipText]}>
+                  <Text
+                    className="text-[14px]"
+                    weight="medium"
+                    style={measurementType === type ? $selectedChipTextColor : $chipTextColor}
+                  >
                     {type.charAt(0).toUpperCase() + type.slice(1)}
                   </Text>
                 </TouchableOpacity>
@@ -236,17 +247,24 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
           </View>
 
           {/* Unit */}
-          <View style={$section}>
-            <Text style={$sectionTitle}>Measurement Unit</Text>
-            <View style={$chipRow}>
+          <View className="px-6 pt-6">
+            <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+              Measurement Unit
+            </Text>
+            <View className="flex-row flex-wrap gap-3">
               {(["cm", "inch"] as MeasurementUnit[]).map((u) => (
                 <TouchableOpacity
                   key={u}
-                  style={[$unitOption, unit === u && $selectedChip]}
+                  className="flex-1 py-3 px-4 rounded-lg border border-neutral300 items-center"
+                  style={unit === u ? $selectedChip : undefined}
                   disabled={readOnly}
                   onPress={() => setUnit(u)}
                 >
-                  <Text style={[$chipText, unit === u && $selectedChipText]}>
+                  <Text
+                    className="text-[14px]"
+                    weight="medium"
+                    style={unit === u ? $selectedChipTextColor : $chipTextColor}
+                  >
                     {u === "cm" ? "Centimeters (cm)" : "Inches (in)"}
                   </Text>
                 </TouchableOpacity>
@@ -256,13 +274,17 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
 
           {/* Grouped numeric fields */}
           {MEASUREMENT_FIELD_GROUPS.map((group) => (
-            <View key={group.title} style={$section}>
-              <Text style={$sectionTitle}>{group.title}</Text>
-              <View style={$fieldsContainer}>
+            <View key={group.title} className="px-6 pt-6">
+              <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+                {group.title}
+              </Text>
+              <View className="gap-3">
                 {group.fields.map((field) => (
-                  <View key={field.key} style={$measurementField}>
-                    <Text style={$fieldLabel}>{field.label}</Text>
-                    <View style={$inputContainer}>
+                  <View key={field.key} className="mb-2">
+                    <Text className="text-[14px] mb-2" weight="medium" style={$fieldLabelColor}>
+                      {field.label}
+                    </Text>
+                    <View className="flex-row items-center rounded-lg border border-neutral300 bg-neutral100">
                       <TextInput
                         style={$textInput}
                         placeholder="0"
@@ -272,8 +294,10 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
                         keyboardType="numeric"
                         editable={!readOnly}
                       />
-                      <View style={$unitSuffix}>
-                        <Text style={$unitText}>{unit}</Text>
+                      <View className="px-4 py-3 bg-neutral200 rounded-tr-lg rounded-br-lg">
+                        <Text className="text-[14px]" weight="medium" style={$unitTextColor}>
+                          {unit}
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -283,9 +307,11 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
           ))}
 
           {/* Notes */}
-          <View style={$section}>
-            <Text style={$sectionTitle}>Notes</Text>
-            <View style={$textAreaContainer}>
+          <View className="px-6 pt-6">
+            <Text className="text-[16px] mb-3" weight="semiBold" style={$sectionTitleColor}>
+              Notes
+            </Text>
+            <View className="rounded-lg border border-neutral300 bg-neutral100">
               <TextInput
                 style={$textArea}
                 placeholder="Fit preferences, posture notes, adjustments..."
@@ -300,13 +326,16 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
             </View>
           </View>
 
-          <View style={$scrollFooterSpace} />
+          <View className="h-12" />
         </ScrollView>
       )}
 
       {/* Bottom Actions */}
       {!readOnly && !isLoading && (
-        <View style={[$bottomContainer, $bottomContainerInsets]}>
+        <View
+          className="px-6 pt-4 pb-4 bg-neutral100 border-t border-neutral200"
+          style={$bottomContainerInsets}
+        >
           <Button
             text={isSaving ? "Saving..." : mode === "edit" ? "Save Changes" : "Create Template"}
             style={$primaryButton}
@@ -315,8 +344,10 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
             disabled={isSaving}
           />
           {mode === "edit" && measurementId && (
-            <TouchableOpacity style={$deleteButton} onPress={handleDelete}>
-              <Text style={$deleteButtonText}>Delete Template</Text>
+            <TouchableOpacity className="items-center py-3 mt-3" onPress={handleDelete}>
+              <Text className="text-[14px]" weight="semiBold" style={$deleteButtonTextColor}>
+                Delete Template
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -326,14 +357,14 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
 }
 
 // Styles
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (light in both schemes) — no `dark:` variants. Layout, spacing,
+// and container backgrounds/borders are className token utilities. Raw TextInput
+// styles, the selection-state chip background, the flex ScrollView style, the
+// Screen contentContainerStyle, Button style overrides, and the safe-area bottom
+// inset stay inline.
 const $container: ViewStyle = {
   flex: 1,
-}
-
-const $loadingContainer: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
 }
 
 // Screen's fixed preset gives its inner container no height; without flex the
@@ -342,152 +373,19 @@ const $screenContent: ViewStyle = {
   flex: 1,
 }
 
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $headerTitle: TextStyle = {
-  flex: 1,
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  textAlign: "center",
-}
-
-const $headerSpacer: ViewStyle = {
-  width: 40,
-}
-
-const $section: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.lg,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.sm,
-}
-
-const $readOnlyBanner: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: colors.palette.primary100,
-  borderRadius: 8,
-  padding: spacing.md,
-}
-
-const $readOnlyText: TextStyle = {
-  flex: 1,
-  fontSize: 13,
-  color: colors.palette.primary700,
-  marginLeft: spacing.sm,
-  lineHeight: 18,
-}
-
-const $chipRow: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.sm,
-}
-
-const $chip: ViewStyle = {
-  paddingVertical: spacing.xs,
-  paddingHorizontal: spacing.md,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
-const $unitOption: ViewStyle = {
-  flex: 1,
-  paddingVertical: spacing.sm,
-  paddingHorizontal: spacing.md,
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-  alignItems: "center",
-}
-
+// Selection-state chip background/border stays inline (conditional style).
 const $selectedChip: ViewStyle = {
   backgroundColor: colors.palette.primary500,
   borderColor: colors.palette.primary500,
 }
 
-const $chipText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral700,
-}
-
-const $selectedChipText: TextStyle = {
-  color: colors.palette.neutral100,
-}
-
-const $fieldsContainer: ViewStyle = {
-  gap: spacing.sm,
-}
-
-const $measurementField: ViewStyle = {
-  marginBottom: spacing.xs,
-}
-
-const $fieldLabel: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xs,
-}
-
-const $inputContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
+// Raw TextInput styles stay inline.
 const $textInput: TextStyle = {
   flex: 1,
   paddingVertical: spacing.sm,
   paddingHorizontal: spacing.md,
   fontSize: 16,
   color: colors.palette.neutral900,
-}
-
-const $unitSuffix: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-  backgroundColor: colors.palette.neutral200,
-  borderTopRightRadius: 8,
-  borderBottomRightRadius: 8,
-}
-
-const $unitText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral600,
-}
-
-const $textAreaContainer: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
 }
 
 const $textArea: TextStyle = {
@@ -498,19 +396,7 @@ const $textArea: TextStyle = {
   minHeight: 100,
 }
 
-const $scrollFooterSpace: ViewStyle = {
-  height: spacing.xxl,
-}
-
-const $bottomContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.md,
-  paddingBottom: spacing.md,
-  backgroundColor: colors.palette.neutral100,
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral200,
-}
-
+// Button style overrides stay inline (Button owns its className).
 const $primaryButton: ViewStyle = {
   backgroundColor: colors.palette.primary500,
   borderRadius: 12,
@@ -523,14 +409,12 @@ const $primaryButtonText: TextStyle = {
   color: colors.palette.neutral100,
 }
 
-const $deleteButton: ViewStyle = {
-  alignItems: "center",
-  paddingVertical: spacing.sm,
-  marginTop: spacing.sm,
-}
-
-const $deleteButtonText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.error500,
-}
+// Text color overrides (static, light-only).
+const $headerTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $sectionTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $readOnlyTextColor: TextStyle = { color: colors.palette.primary700 }
+const $chipTextColor: TextStyle = { color: colors.palette.neutral700 }
+const $selectedChipTextColor: TextStyle = { color: colors.palette.neutral100 }
+const $fieldLabelColor: TextStyle = { color: colors.palette.neutral900 }
+const $unitTextColor: TextStyle = { color: colors.palette.neutral600 }
+const $deleteButtonTextColor: TextStyle = { color: colors.palette.error500 }

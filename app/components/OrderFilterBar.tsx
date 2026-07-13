@@ -16,14 +16,7 @@
  * - datePresetRange: computes the dateFrom for a preset
  */
 import { FC, useCallback, useEffect, useRef, useState } from "react"
-import {
-  ScrollView,
-  StyleProp,
-  TextStyle,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native"
+import { ScrollView, StyleProp, TouchableOpacity, View, ViewStyle } from "react-native"
 import { Icon } from "./Icon"
 import { Text } from "./Text"
 import { TextField } from "./TextField"
@@ -242,19 +235,26 @@ export const OrderFilterBar: FC<OrderFilterBarProps> = function OrderFilterBar(p
   ) => (
     <TouchableOpacity
       key={key}
-      style={[$chip, isActive && { backgroundColor: activeColor, borderColor: activeColor }]}
+      className="rounded-full border border-border bg-surface px-3 py-1.5"
+      style={isActive ? { backgroundColor: activeColor, borderColor: activeColor } : undefined}
       onPress={onPress}
       accessible
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}
       accessibilityLabel={label}
     >
-      <Text style={[$chipText, isActive && $chipTextActive]}>{label}</Text>
+      <Text
+        className="text-[13px]"
+        weight={isActive ? "semiBold" : "medium"}
+        style={{ color: isActive ? colors.palette.neutral100 : colors.textDim }}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
   )
 
   return (
-    <View style={[$container, style]}>
+    <View className="gap-3" style={style}>
       <TextField
         placeholder={searchPlaceholder}
         value={searchText}
@@ -306,7 +306,7 @@ export const OrderFilterBar: FC<OrderFilterBarProps> = function OrderFilterBar(p
             () => toggleStatus(option.value),
           ),
         )}
-        {statusOptions.length > 0 && <View style={$chipDivider} />}
+        {statusOptions.length > 0 && <View className="mx-1 h-5 w-px bg-separator" />}
         {priorityOptions.map((option) =>
           renderChip(
             `priority-${option.value}`,
@@ -315,7 +315,7 @@ export const OrderFilterBar: FC<OrderFilterBarProps> = function OrderFilterBar(p
             () => togglePriority(option.value),
           ),
         )}
-        {priorityOptions.length > 0 && <View style={$chipDivider} />}
+        {priorityOptions.length > 0 && <View className="mx-1 h-5 w-px bg-separator" />}
         {DATE_PRESET_OPTIONS.map((option) =>
           renderChip(
             `date-${option.value}`,
@@ -329,40 +329,10 @@ export const OrderFilterBar: FC<OrderFilterBarProps> = function OrderFilterBar(p
   )
 }
 
-const $container: ViewStyle = {
-  gap: spacing.sm,
-}
-
+// ScrollView `contentContainerStyle` stays inline per the recipe.
 const $chipRow: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
   gap: spacing.xs,
   paddingRight: spacing.lg,
-}
-
-const $chip: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: 6,
-  borderRadius: 999,
-  backgroundColor: colors.surface,
-  borderWidth: 1,
-  borderColor: colors.border,
-}
-
-const $chipText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "500",
-  color: colors.textDim,
-}
-
-const $chipTextActive: TextStyle = {
-  color: colors.palette.neutral100,
-  fontWeight: "600",
-}
-
-const $chipDivider: ViewStyle = {
-  width: 1,
-  height: 20,
-  backgroundColor: colors.separator,
-  marginHorizontal: spacing.xxs,
 }

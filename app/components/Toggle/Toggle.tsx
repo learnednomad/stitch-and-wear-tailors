@@ -12,10 +12,8 @@ import {
   ViewProps,
   ViewStyle,
 } from "react-native"
-import { $styles } from "../../theme"
 import { Text, TextProps } from "../Text"
 import { useAppTheme } from "@/utils/useAppTheme"
-import type { ThemedStyle } from "@/theme"
 
 export interface ToggleProps<T> extends Omit<TouchableOpacityProps, "style"> {
   /**
@@ -142,7 +140,6 @@ export function Toggle<T>(props: ToggleProps<T>) {
 
   const {
     theme: { colors },
-    themed,
   } = useAppTheme()
 
   const disabled = editable === false || status === "disabled" || props.disabled
@@ -153,12 +150,7 @@ export function Toggle<T>(props: ToggleProps<T>) {
   )
 
   const $containerStyles = [$containerStyleOverride]
-  const $inputWrapperStyles = [$styles.row, $inputWrapper, $inputWrapperStyleOverride]
-  const $helperStyles = themed([
-    $helper,
-    status === "error" && { color: colors.error },
-    HelperTextProps?.style,
-  ])
+  const $helperStyles = [status === "error" && { color: colors.error }, HelperTextProps?.style]
 
   /**
    * @param {GestureResponderEvent} e - The event object.
@@ -178,7 +170,7 @@ export function Toggle<T>(props: ToggleProps<T>) {
       style={$containerStyles}
       onPress={handlePress}
     >
-      <View style={$inputWrapperStyles}>
+      <View className="flex-row items-center" style={$inputWrapperStyleOverride}>
         {labelPosition === "left" && <FieldLabel<T> {...props} labelPosition={labelPosition} />}
 
         <ToggleInput
@@ -200,6 +192,7 @@ export function Toggle<T>(props: ToggleProps<T>) {
           tx={helperTx}
           txOptions={helperTxOptions}
           {...HelperTextProps}
+          className="mt-xs"
           style={$helperStyles}
         />
       )}
@@ -224,19 +217,23 @@ function FieldLabel<T>(props: ToggleProps<T>) {
 
   const {
     theme: { colors },
-    themed,
   } = useAppTheme()
 
   if (!label && !labelTx && !LabelTextProps?.children) return null
 
-  const $labelStyle = themed([
-    $label,
+  const $labelClassName = [
+    "flex-1",
+    labelPosition === "right" && "ms-md",
+    labelPosition === "left" && "me-md",
+  ]
+    .filter(Boolean)
+    .join(" ")
+
+  const $labelStyle = [
     status === "error" && { color: colors.error },
-    labelPosition === "right" && $labelRight,
-    labelPosition === "left" && $labelLeft,
     $labelStyleOverride,
     LabelTextProps?.style,
-  ])
+  ]
 
   return (
     <Text
@@ -245,13 +242,10 @@ function FieldLabel<T>(props: ToggleProps<T>) {
       tx={labelTx}
       txOptions={labelTxOptions}
       {...LabelTextProps}
+      className={$labelClassName}
       style={$labelStyle}
     />
   )
-}
-
-const $inputWrapper: ViewStyle = {
-  alignItems: "center",
 }
 
 export const $inputOuterBase: ViewStyle = {
@@ -265,19 +259,3 @@ export const $inputOuterBase: ViewStyle = {
   justifyContent: "space-between",
   flexDirection: "row",
 }
-
-const $helper: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginTop: spacing.xs,
-})
-
-const $label: TextStyle = {
-  flex: 1,
-}
-
-const $labelRight: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginStart: spacing.md,
-})
-
-const $labelLeft: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginEnd: spacing.md,
-})

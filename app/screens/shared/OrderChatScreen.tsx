@@ -143,9 +143,9 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
       contentContainerStyle={$screenContent}
     >
       {/* Header */}
-      <View style={$header}>
+      <View className="flex-row items-center border-b border-neutral200 px-6 py-4">
         <TouchableOpacity
-          style={$backButton}
+          className="h-10 w-10 items-center justify-center"
           onPress={() => navigation.goBack()}
           accessible
           accessibilityLabel="Go back"
@@ -153,25 +153,47 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
         >
           <Icon icon="back" size={24} color={colors.palette.neutral900} />
         </TouchableOpacity>
-        <View style={$headerCenter}>
-          <Text style={$headerTitle}>
+        <View className="flex-1 items-center">
+          <Text
+            className="text-[16px]"
+            weight="semiBold"
+            style={{ color: colors.palette.neutral900 }}
+          >
             {pbOrder?.orderNumber ? `#${pbOrder.orderNumber}` : "Order Chat"}
           </Text>
-          {!!counterpartName && <Text style={$headerSubtitle}>{counterpartName}</Text>}
+          {!!counterpartName && (
+            <Text className="text-[12px]" style={{ color: colors.palette.neutral600 }}>
+              {counterpartName}
+            </Text>
+          )}
         </View>
-        <View style={$headerSpacer} />
+        <View className="w-10" />
       </View>
 
       {/* Messages */}
       {isLoading ? (
-        <View style={$emptyContainer}>
-          <Text style={$emptyText}>Loading messages...</Text>
+        <View className="flex-1 items-center justify-center gap-3 p-8">
+          <Text
+            className="text-center text-[15px]"
+            weight="semiBold"
+            style={{ color: colors.palette.neutral700 }}
+          >
+            Loading messages...
+          </Text>
         </View>
       ) : !hasTailor ? (
-        <View style={$emptyContainer}>
+        <View className="flex-1 items-center justify-center gap-3 p-8">
           <Icon icon="sew" size={40} color={colors.palette.neutral400} />
-          <Text style={$emptyText}>A tailor hasn&apos;t accepted this order yet</Text>
-          <Text style={$emptyHint}>You can message your tailor once the order is accepted.</Text>
+          <Text
+            className="text-center text-[15px]"
+            weight="semiBold"
+            style={{ color: colors.palette.neutral700 }}
+          >
+            A tailor hasn&apos;t accepted this order yet
+          </Text>
+          <Text className="text-center text-[13px]" style={{ color: colors.palette.neutral500 }}>
+            You can message your tailor once the order is accepted.
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -183,16 +205,30 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
           contentContainerStyle={$listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={$invertedEmpty}>
-              <Text style={$emptyText}>No messages yet</Text>
-              <Text style={$emptyHint}>Say hello to get the conversation started.</Text>
+            <View
+              className="flex-1 items-center justify-center gap-3 p-8"
+              style={{ transform: [{ scaleY: -1 }] }}
+            >
+              <Text
+                className="text-center text-[15px]"
+                weight="semiBold"
+                style={{ color: colors.palette.neutral700 }}
+              >
+                No messages yet
+              </Text>
+              <Text className="text-center text-[13px]" style={{ color: colors.palette.neutral500 }}>
+                Say hello to get the conversation started.
+              </Text>
             </View>
           }
         />
       )}
 
       {/* Input row */}
-      <View style={[$inputRow, $bottomInsets]}>
+      <View
+        className="flex-row items-end gap-3 border-t border-neutral200 bg-neutral100 px-4 py-3"
+        style={$bottomInsets}
+      >
         <TextField
           value={draft}
           onChangeText={setDraft}
@@ -214,41 +250,9 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
 })
 
 // Styles
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $headerCenter: ViewStyle = {
-  flex: 1,
-  alignItems: "center",
-}
-
-const $headerTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-}
-
-const $headerSubtitle: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral600,
-}
-
-const $headerSpacer: ViewStyle = {
-  width: 40,
-}
+// Component style-prop overrides (Screen contentContainerStyle, FlatList
+// style/contentContainerStyle, TextField containerStyle, Button style/textStyle)
+// stay inline per the recipe.
 
 // Screen's fixed preset gives its inner container no height; without flex the
 // message list collapses and the composer renders directly under the header.
@@ -263,48 +267,6 @@ const $list: ViewStyle = {
 const $listContent: ViewStyle = {
   paddingVertical: spacing.md,
   flexGrow: 1,
-}
-
-const $emptyContainer: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  padding: spacing.xl,
-  gap: spacing.sm,
-}
-
-const $invertedEmpty: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  padding: spacing.xl,
-  gap: spacing.sm,
-  transform: [{ scaleY: -1 }],
-}
-
-const $emptyText: TextStyle = {
-  fontSize: 15,
-  fontWeight: "600",
-  color: colors.palette.neutral700,
-  textAlign: "center",
-}
-
-const $emptyHint: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral500,
-  textAlign: "center",
-}
-
-const $inputRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "flex-end",
-  gap: spacing.sm,
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-  paddingBottom: spacing.sm,
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral200,
-  backgroundColor: colors.palette.neutral100,
 }
 
 const $inputField: ViewStyle = {

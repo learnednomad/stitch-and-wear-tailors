@@ -292,103 +292,153 @@ export const StyleSelectionStep: FC = observer(() => {
     }
   }
 
-  const renderStyleCard = (style: StyleOption) => (
-    <TouchableOpacity
-      key={style.garmentType}
-      style={[$styleCard, selectedGarmentType === style.garmentType && $selectedStyleCard]}
-      onPress={() => {
-        setSelectedGarmentType(style.garmentType)
-        setSelectedVariation("") // Reset variation when style changes
-        setErrors((prev) => ({ ...prev, garmentType: "", variation: "" }))
-      }}
-    >
-      <View style={$styleHeader}>
-        <Text style={$styleName}>{style.name}</Text>
-        <View style={$complexityBadge}>
-          <Text style={$complexityText}>
-            {["Simple", "Easy", "Moderate", "Complex", "Expert"][style.complexity - 1]}
+  const renderStyleCard = (style: StyleOption) => {
+    const isSelected = selectedGarmentType === style.garmentType
+    return (
+      <TouchableOpacity
+        key={style.garmentType}
+        className={`bg-neutral100 rounded-[12px] p-lg mb-md border-2 ${
+          isSelected ? "border-tailorGold" : "border-neutral200"
+        }`}
+        style={isSelected ? $selectedStyleCardBg : undefined}
+        onPress={() => {
+          setSelectedGarmentType(style.garmentType)
+          setSelectedVariation("") // Reset variation when style changes
+          setErrors((prev) => ({ ...prev, garmentType: "", variation: "" }))
+        }}
+      >
+        <View className="flex-row justify-between items-center mb-sm">
+          <Text className="text-[16px] font-semibold flex-1" style={$textDeep}>
+            {style.name}
+          </Text>
+          <View className="rounded-[4px] px-xs py-xxxs" style={$complexityBadgeBg}>
+            <Text className="text-[10px] font-semibold uppercase" style={$textThread}>
+              {["Simple", "Easy", "Moderate", "Complex", "Expert"][style.complexity - 1]}
+            </Text>
+          </View>
+        </View>
+
+        <Text className="text-[13px] mb-sm leading-[18px]" style={$textThread}>
+          {style.description}
+        </Text>
+
+        <View className="flex-row items-center rounded-[8px] p-sm mb-sm" style={$culturalInfoBg}>
+          <Icon icon="check" size={16} color={colors.palette.tailorGold} />
+          <Text className="text-[12px] italic ml-xs flex-1" style={$textGold}>
+            {style.culturalSignificance}
           </Text>
         </View>
-      </View>
 
-      <Text style={$styleDescription}>{style.description}</Text>
-
-      <View style={$culturalInfo}>
-        <Icon icon="check" size={16} color={colors.palette.tailorGold} />
-        <Text style={$culturalText}>{style.culturalSignificance}</Text>
-      </View>
-
-      <View style={$styleDetails}>
-        <View style={$styleDetail}>
-          <Text style={$detailLabel}>Base Price:</Text>
-          <Text style={$detailValue}>₦{style.basePrice.toLocaleString()}</Text>
-        </View>
-        <View style={$styleDetail}>
-          <Text style={$detailLabel}>Duration:</Text>
-          <Text style={$detailValue}>{style.estimatedDays} days</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  )
-
-  const renderVariationCard = (variation: StyleVariation) => (
-    <TouchableOpacity
-      key={variation.id}
-      style={[$variationCard, selectedVariation === variation.id && $selectedVariationCard]}
-      onPress={() => {
-        setSelectedVariation(variation.id)
-        setErrors((prev) => ({ ...prev, variation: "" }))
-      }}
-    >
-      <View style={$variationHeader}>
-        <Text style={$variationName}>{variation.name}</Text>
-        {variation.priceAdjustment > 0 && (
-          <Text style={$priceAdjustment}>+₦{variation.priceAdjustment.toLocaleString()}</Text>
-        )}
-      </View>
-
-      <Text style={$variationDescription}>{variation.description}</Text>
-
-      <View style={$featuresList}>
-        {variation.features.map((feature, index) => (
-          <View key={index} style={$featureItem}>
-            <Icon icon="check" size={12} color={colors.palette.sageGreen} />
-            <Text style={$featureText}>{feature}</Text>
+        <View className="flex-row justify-between">
+          <View className="flex-row items-center">
+            <Text className="text-[12px] mr-xs" style={$textNeutral600}>
+              Base Price:
+            </Text>
+            <Text className="text-[12px] font-semibold" style={$textDeep}>
+              ₦{style.basePrice.toLocaleString()}
+            </Text>
           </View>
-        ))}
-      </View>
-    </TouchableOpacity>
-  )
+          <View className="flex-row items-center">
+            <Text className="text-[12px] mr-xs" style={$textNeutral600}>
+              Duration:
+            </Text>
+            <Text className="text-[12px] font-semibold" style={$textDeep}>
+              {style.estimatedDays} days
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    )
+  }
+
+  const renderVariationCard = (variation: StyleVariation) => {
+    const isSelected = selectedVariation === variation.id
+    return (
+      <TouchableOpacity
+        key={variation.id}
+        className={`bg-neutral100 rounded-[8px] p-md mb-sm border ${
+          isSelected ? "border-sageGreen" : "border-neutral300"
+        }`}
+        style={isSelected ? $selectedVariationCardBg : undefined}
+        onPress={() => {
+          setSelectedVariation(variation.id)
+          setErrors((prev) => ({ ...prev, variation: "" }))
+        }}
+      >
+        <View className="flex-row justify-between items-center mb-xs">
+          <Text className="text-[14px] font-semibold" style={$textDeep}>
+            {variation.name}
+          </Text>
+          {variation.priceAdjustment > 0 && (
+            <Text className="text-[12px] font-semibold" style={$textGold}>
+              +₦{variation.priceAdjustment.toLocaleString()}
+            </Text>
+          )}
+        </View>
+
+        <Text className="text-[12px] mb-sm" style={$textThread}>
+          {variation.description}
+        </Text>
+
+        <View className="gap-xs">
+          {variation.features.map((feature, index) => (
+            <View key={index} className="flex-row items-center">
+              <Icon icon="check" size={12} color={colors.palette.sageGreen} />
+              <Text className="text-[11px] ml-xs" style={$textNeutral600}>
+                {feature}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </TouchableOpacity>
+    )
+  }
 
   return (
-    <ScrollView style={$container} showsVerticalScrollIndicator={false}>
-      <View style={$content}>
-        <Text style={$title}>{orderStore.getTranslation("styleSelection", "en")}</Text>
-        <Text style={$subtitle}>
+    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <View className="p-lg">
+        <Text className="text-[24px] font-bold mb-xs" style={$textDeep}>
+          {orderStore.getTranslation("styleSelection", "en")}
+        </Text>
+        <Text className="text-[14px] mb-lg leading-[20px]" style={$textThread}>
           Choose the perfect style that reflects your personality and cultural heritage
         </Text>
 
         {/* Garment Type Selection */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Select Garment Type</Text>
-          {errors.garmentType && <Text style={$errorText}>{errors.garmentType}</Text>}
+        <View className="mb-xl">
+          <Text className="text-[18px] font-semibold mb-md" style={$textDeep}>
+            Select Garment Type
+          </Text>
+          {errors.garmentType && (
+            <Text className="text-[12px] mb-sm" style={$textAlert}>
+              {errors.garmentType}
+            </Text>
+          )}
           {styleOptions.map(renderStyleCard)}
         </View>
 
         {/* Style Variations */}
         {selectedStyle && (
-          <View style={$section}>
-            <Text style={$sectionTitle}>Choose Style Variation</Text>
-            {errors.variation && <Text style={$errorText}>{errors.variation}</Text>}
+          <View className="mb-xl">
+            <Text className="text-[18px] font-semibold mb-md" style={$textDeep}>
+              Choose Style Variation
+            </Text>
+            {errors.variation && (
+              <Text className="text-[12px] mb-sm" style={$textAlert}>
+                {errors.variation}
+              </Text>
+            )}
             {selectedStyle.variations.map(renderVariationCard)}
           </View>
         )}
 
         {/* Fit Preference */}
         {selectedGarmentType && (
-          <View style={$section}>
-            <Text style={$sectionTitle}>Fit Preference</Text>
-            <View style={$fitOptions}>
+          <View className="mb-xl">
+            <Text className="text-[18px] font-semibold mb-md" style={$textDeep}>
+              Fit Preference
+            </Text>
+            <View className="flex-row gap-sm">
               {[
                 {
                   value: "slim" as const,
@@ -423,7 +473,7 @@ export const StyleSelectionStep: FC = observer(() => {
 
         {/* Design Notes */}
         {selectedGarmentType && (
-          <View style={$section}>
+          <View className="mb-xl">
             <TextField
               label="Design Notes (Optional)"
               placeholder="Any specific design preferences, modifications, or special requests..."
@@ -438,7 +488,7 @@ export const StyleSelectionStep: FC = observer(() => {
         {/* Cultural Specifications */}
         {selectedGarmentType &&
           ["agbada", "isi_agu", "babban_riga"].includes(selectedGarmentType) && (
-            <View style={$section}>
+            <View className="mb-xl">
               <TextField
                 label="Cultural Specifications (Optional)"
                 placeholder="Any traditional elements, regional variations, or cultural details to include..."
@@ -452,29 +502,45 @@ export const StyleSelectionStep: FC = observer(() => {
 
         {/* Style Summary */}
         {selectedStyle && selectedVariationData && (
-          <View style={$summarySection}>
-            <Text style={$summaryTitle}>Style Summary</Text>
-            <View style={$summaryCard}>
-              <Text style={$summaryLabel}>{selectedStyle.name}</Text>
-              <Text style={$summaryValue}>{selectedVariationData.name}</Text>
-              <Text style={$summaryDescription}>{selectedVariationData.description}</Text>
+          <View className="mt-lg">
+            <Text className="text-[16px] font-semibold mb-md" style={$textDeep}>
+              Style Summary
+            </Text>
+            <View className="bg-neutral100 rounded-[12px] p-lg border border-neutral200">
+              <Text className="text-[14px] font-semibold" style={$textDeep}>
+                {selectedStyle.name}
+              </Text>
+              <Text className="text-[16px] font-bold mb-xs" style={$textGold}>
+                {selectedVariationData.name}
+              </Text>
+              <Text className="text-[12px] mb-md" style={$textThread}>
+                {selectedVariationData.description}
+              </Text>
 
-              <View style={$summaryPricing}>
-                <View style={$priceRow}>
-                  <Text style={$priceLabel}>Base Price:</Text>
-                  <Text style={$priceValue}>₦{selectedStyle.basePrice.toLocaleString()}</Text>
+              <View className="border-t border-neutral300 pt-sm">
+                <View className="flex-row justify-between items-center mb-xs">
+                  <Text className="text-[12px]" style={$textThread}>
+                    Base Price:
+                  </Text>
+                  <Text className="text-[12px] font-medium" style={$textDeep}>
+                    ₦{selectedStyle.basePrice.toLocaleString()}
+                  </Text>
                 </View>
                 {selectedVariationData.priceAdjustment > 0 && (
-                  <View style={$priceRow}>
-                    <Text style={$priceLabel}>Style Premium:</Text>
-                    <Text style={$priceValue}>
+                  <View className="flex-row justify-between items-center mb-xs">
+                    <Text className="text-[12px]" style={$textThread}>
+                      Style Premium:
+                    </Text>
+                    <Text className="text-[12px] font-medium" style={$textDeep}>
                       ₦{selectedVariationData.priceAdjustment.toLocaleString()}
                     </Text>
                   </View>
                 )}
-                <View style={[$priceRow, $totalRow]}>
-                  <Text style={$totalLabel}>Style Total:</Text>
-                  <Text style={$totalValue}>
+                <View className="flex-row justify-between items-center mb-xs border-t border-neutral300 pt-xs mt-xs">
+                  <Text className="text-[14px] font-semibold" style={$textDeep}>
+                    Style Total:
+                  </Text>
+                  <Text className="text-[16px] font-bold" style={$textGold}>
                     ₦
                     {(
                       selectedStyle.basePrice + selectedVariationData.priceAdjustment
@@ -495,193 +561,29 @@ export const StyleSelectionStep: FC = observer(() => {
           disabled={!selectedGarmentType || !selectedVariation}
         />
 
-        <View style={$spacer} />
+        <View className="h-xl" />
       </View>
     </ScrollView>
   )
 })
 
 // Styles
-const $container: ViewStyle = {
-  flex: 1,
-}
+// Static (light-only) `colors` screen: layout/spacing/container colors moved to
+// className token utilities; text colors and opacity tints stay inline; Button
+// style/textStyle overrides remain inline style objects.
+const $textDeep: TextStyle = { color: colors.palette.deepCharcoal }
+const $textThread: TextStyle = { color: colors.palette.threadBlue }
+const $textGold: TextStyle = { color: colors.palette.tailorGold }
+const $textNeutral600: TextStyle = { color: colors.palette.neutral600 }
+const $textAlert: TextStyle = { color: colors.palette.alertRed }
 
-const $content: ViewStyle = {
-  padding: spacing.lg,
-}
+// Opacity tints (dynamic hex + alpha) stay inline.
+const $complexityBadgeBg: ViewStyle = { backgroundColor: colors.palette.threadBlue + "20" }
+const $culturalInfoBg: ViewStyle = { backgroundColor: colors.palette.tailorGold + "15" }
+const $selectedStyleCardBg: ViewStyle = { backgroundColor: colors.palette.tailorGold + "10" }
+const $selectedVariationCardBg: ViewStyle = { backgroundColor: colors.palette.sageGreen + "10" }
 
-const $title: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xs,
-}
-
-const $subtitle: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.lg,
-  lineHeight: 20,
-}
-
-const $section: ViewStyle = {
-  marginBottom: spacing.xl,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.md,
-}
-
-const $styleCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  marginBottom: spacing.md,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral200,
-}
-
-const $selectedStyleCard: ViewStyle = {
-  borderColor: colors.palette.tailorGold,
-  backgroundColor: colors.palette.tailorGold + "10",
-}
-
-const $styleHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
-
-const $styleName: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  flex: 1,
-}
-
-const $complexityBadge: ViewStyle = {
-  backgroundColor: colors.palette.threadBlue + "20",
-  borderRadius: 4,
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-}
-
-const $complexityText: TextStyle = {
-  fontSize: 10,
-  fontWeight: "600",
-  color: colors.palette.threadBlue,
-  textTransform: "uppercase",
-}
-
-const $styleDescription: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.sm,
-  lineHeight: 18,
-}
-
-const $culturalInfo: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: colors.palette.tailorGold + "15",
-  borderRadius: 8,
-  padding: spacing.sm,
-  marginBottom: spacing.sm,
-}
-
-const $culturalText: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.tailorGold,
-  fontStyle: "italic",
-  marginLeft: spacing.xs,
-  flex: 1,
-}
-
-const $styleDetails: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-}
-
-const $styleDetail: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $detailLabel: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral600,
-  marginRight: spacing.xs,
-}
-
-const $detailValue: TextStyle = {
-  fontSize: 12,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $variationCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 8,
-  padding: spacing.md,
-  marginBottom: spacing.sm,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
-const $selectedVariationCard: ViewStyle = {
-  borderColor: colors.palette.sageGreen,
-  backgroundColor: colors.palette.sageGreen + "10",
-}
-
-const $variationHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-}
-
-const $variationName: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $priceAdjustment: TextStyle = {
-  fontSize: 12,
-  fontWeight: "600",
-  color: colors.palette.tailorGold,
-}
-
-const $variationDescription: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.sm,
-}
-
-const $featuresList: ViewStyle = {
-  gap: spacing.xs,
-}
-
-const $featureItem: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $featureText: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.neutral600,
-  marginLeft: spacing.xs,
-}
-
-const $fitOptions: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.sm,
-}
-
+// Button overrides (Button owns its className; these stay inline).
 const $fitButton: ViewStyle = {
   flex: 1,
   backgroundColor: colors.palette.neutral200,
@@ -707,93 +609,6 @@ const $selectedFitButtonText: TextStyle = {
   color: colors.palette.warmIvory,
 }
 
-const $summarySection: ViewStyle = {
-  marginTop: spacing.lg,
-}
-
-const $summaryTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.md,
-}
-
-const $summaryCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-}
-
-const $summaryLabel: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $summaryValue: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.palette.tailorGold,
-  marginBottom: spacing.xs,
-}
-
-const $summaryDescription: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.md,
-}
-
-const $summaryPricing: ViewStyle = {
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral300,
-  paddingTop: spacing.sm,
-}
-
-const $priceRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-}
-
-const $totalRow: ViewStyle = {
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral300,
-  paddingTop: spacing.xs,
-  marginTop: spacing.xs,
-}
-
-const $priceLabel: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-}
-
-const $priceValue: TextStyle = {
-  fontSize: 12,
-  fontWeight: "500",
-  color: colors.palette.deepCharcoal,
-}
-
-const $totalLabel: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $totalValue: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.palette.tailorGold,
-}
-
-const $errorText: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.alertRed,
-  marginBottom: spacing.sm,
-}
-
 const $saveButton: ViewStyle = {
   backgroundColor: colors.palette.sageGreen,
   borderRadius: 12,
@@ -806,8 +621,4 @@ const $saveButtonText: TextStyle = {
   fontWeight: "600",
   color: colors.palette.warmIvory,
   textAlign: "center",
-}
-
-const $spacer: ViewStyle = {
-  height: spacing.xl,
 }

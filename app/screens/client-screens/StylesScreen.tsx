@@ -6,14 +6,13 @@
  */
 import { FC, useMemo, useState } from "react"
 import { observer } from "mobx-react-lite"
-import { RefreshControl, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
+import { RefreshControl, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { CatalogGrid, Icon, Screen, Text } from "@/components"
 import { useStyles } from "@/api/catalog"
 import { errorMessage } from "@/api/common"
 import { PBCatalogStyle } from "@/services/api/catalog-api"
 import { fileUrl } from "@/services/api/pocketbase-api-adapter"
-import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
 interface StylesScreenProps extends AppStackScreenProps<"Styles"> {}
@@ -68,9 +67,9 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
         ),
       }}
     >
-      <View style={$headerRow}>
+      <View className="flex-row items-center px-4 pt-4">
         <TouchableOpacity
-          style={$backButton}
+          className="mr-2 h-10 w-10 items-center justify-center"
           onPress={() => navigation.goBack()}
           accessible
           accessibilityLabel="Go back"
@@ -78,30 +77,23 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
         >
           <Icon icon="back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text preset="heading" text="Styles" style={$headingText} />
+        <Text preset="heading" text="Styles" className="flex-1" />
       </View>
 
       {/* gender filter chips */}
-      <View style={$chips}>
+      <View className="flex-row gap-2 px-4 py-3">
         {GENDERS.map((option) => {
           const active = gender === option.value
           return (
             <TouchableOpacity
               key={option.label}
-              style={[
-                $chip,
-                {
-                  backgroundColor: active ? theme.colors.accent : theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
+              className="rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
+              style={{ backgroundColor: active ? theme.colors.accent : theme.colors.surface }}
               onPress={() => setGender(option.value)}
             >
               <Text
-                style={[
-                  $chipText,
-                  { color: active ? theme.colors.palette.neutral100 : theme.colors.text },
-                ]}
+                className="text-[13px] font-semibold"
+                style={{ color: active ? theme.colors.palette.neutral100 : theme.colors.text }}
                 text={option.label}
               />
             </TouchableOpacity>
@@ -109,11 +101,13 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
         })}
       </View>
 
-      {error && <Text style={[$error, { color: theme.colors.error }]} text={error} />}
+      {error && (
+        <Text className="p-4 text-center text-error dark:text-error-dark" text={error} />
+      )}
 
       {grouped.map(([categoryKey, categoryStyles]) => (
-        <View key={categoryKey} style={$section}>
-          <Text preset="subheading" text={labelize(categoryKey)} style={$sectionTitle} />
+        <View key={categoryKey} className="mb-4">
+          <Text preset="subheading" text={labelize(categoryKey)} className="mb-2 px-4" />
           <CatalogGrid
             items={categoryStyles.map((style) => ({
               id: style.id,
@@ -131,7 +125,10 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
       ))}
 
       {!isLoading && grouped.length === 0 && !error && (
-        <Text style={[$error, { color: theme.colors.textDim }]} text="No styles available" />
+        <Text
+          className="p-4 text-center text-textDim dark:text-textDim-dark"
+          text="No styles available"
+        />
       )}
     </Screen>
   )
@@ -139,56 +136,4 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
 
 const $root: ViewStyle = {
   flex: 1,
-}
-
-const $headerRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.md,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: spacing.xs,
-}
-
-const $headingText: TextStyle = {
-  flex: 1,
-}
-
-const $chips: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.xs,
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-}
-
-const $chip: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-  borderRadius: 16,
-  borderWidth: 1,
-}
-
-const $chipText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-}
-
-const $section: ViewStyle = {
-  marginBottom: spacing.md,
-}
-
-const $sectionTitle: TextStyle = {
-  paddingHorizontal: spacing.md,
-  marginBottom: spacing.xs,
-}
-
-const $error: TextStyle = {
-  padding: spacing.md,
-  textAlign: "center",
 }
