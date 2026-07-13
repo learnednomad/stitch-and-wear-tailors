@@ -6,7 +6,6 @@
  * once (AppNavigator checks the flag when picking the initial route).
  */
 import { FC, useRef, useState } from "react"
-import { observer } from "mobx-react-lite"
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -44,7 +43,7 @@ const SLIDES = [
   },
 ]
 
-export const OnboardingScreen: FC<OnboardingScreenProps> = observer(function OnboardingScreen({
+export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingScreen({
   navigation,
 }) {
   const { theme } = useAppTheme()
@@ -122,7 +121,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = observer(function Onb
       <Button text={isLast ? "Get Started" : "Next"} onPress={handleNext} style={$nextButton} />
     </Screen>
   )
-})
+}
 
 // Screen style + contentContainerStyle props — stay inline style objects.
 const $root: ViewStyle = {

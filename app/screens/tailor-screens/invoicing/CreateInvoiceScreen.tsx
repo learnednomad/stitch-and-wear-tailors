@@ -10,7 +10,6 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native"
-import { observer } from "mobx-react-lite"
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -51,7 +50,7 @@ const DUE_DATE_OPTIONS = [7, 14, 30]
  * Create an invoice for one of the tailor's orders that doesn't already
  * carry a non-void invoice.
  */
-export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
+export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = 
   function CreateInvoiceScreen() {
     const navigation = useNavigation<any>()
 
@@ -481,8 +480,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = observer(
         )}
       </Screen>
     )
-  },
-)
+  }
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay

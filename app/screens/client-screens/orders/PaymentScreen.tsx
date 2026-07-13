@@ -9,7 +9,6 @@
  *  - Receipt: a simple per-payment detail modal.
  */
 import { FC, useCallback, useEffect, useState } from "react"
-import { observer } from "mobx-react-lite"
 import {
   Alert,
   Modal,
@@ -63,7 +62,7 @@ const STATUS_LABELS: Record<string, string> = {
   rejected: "Rejected",
 }
 
-export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentScreen() {
+export const PaymentScreen: FC<PaymentScreenProps> = function PaymentScreen() {
   const { theme } = useAppTheme()
   const [outstanding, setOutstanding] = useState<OutstandingOrder[]>([])
   const [payments, setPayments] = useState<PBPayment[]>([])
@@ -389,7 +388,7 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
       </Modal>
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = {
   flex: 1,

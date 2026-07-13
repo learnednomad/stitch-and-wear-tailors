@@ -6,7 +6,6 @@
  * current item count and opens the cart.
  */
 import { FC, useMemo, useState } from "react"
-import { observer } from "mobx-react-lite"
 import { RefreshControl, ScrollView, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { CatalogGrid, CatalogGridItem, Icon, Screen, Text, TextField } from "@/components"
@@ -27,7 +26,7 @@ function labelize(value: string): string {
     .join(" ")
 }
 
-export const MarketplaceScreen: FC<MarketplaceScreenProps> = observer(function MarketplaceScreen({
+export const MarketplaceScreen: FC<MarketplaceScreenProps> = function MarketplaceScreen({
   navigation,
 }) {
   const { theme } = useAppTheme()
@@ -151,7 +150,7 @@ export const MarketplaceScreen: FC<MarketplaceScreenProps> = observer(function M
       )}
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = { flex: 1 }
 

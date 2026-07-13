@@ -5,14 +5,13 @@
  * ClientNotificationsScreen).
  */
 import { FC } from "react"
-import { observer } from "mobx-react-lite"
 import { TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Icon, NotificationList, Screen, Text } from "@/components"
 
 interface NotificationsScreenProps extends AppStackScreenProps<"TailorNotifications"> {}
 
-export const TailorNotificationsScreen: FC<NotificationsScreenProps> = observer(
+export const TailorNotificationsScreen: FC<NotificationsScreenProps> = 
   function NotificationsScreen({ navigation }) {
     return (
       <Screen style={$root} preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$content}>
@@ -33,8 +32,7 @@ export const TailorNotificationsScreen: FC<NotificationsScreenProps> = observer(
         <NotificationList />
       </Screen>
     )
-  },
-)
+  }
 
 // Screen style + contentContainerStyle props — stay inline style objects.
 const $root: ViewStyle = {

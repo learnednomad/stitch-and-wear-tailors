@@ -8,7 +8,6 @@
  * confirm. On success the cart is cleared and the buyer lands on My Purchases.
  */
 import { FC, useMemo, useState } from "react"
-import { observer } from "mobx-react-lite"
 import { Alert, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, Icon, Screen, Text, TextField } from "@/components"
@@ -29,7 +28,7 @@ const PAYMENT_METHODS: Array<{ value: MarketplacePaymentMethod; label: string }>
   { value: "other", label: "Other" },
 ]
 
-export const CheckoutScreen: FC<CheckoutScreenProps> = observer(function CheckoutScreen({
+export const CheckoutScreen: FC<CheckoutScreenProps> = function CheckoutScreen({
   navigation,
 }) {
   const { theme } = useAppTheme()
@@ -182,7 +181,7 @@ export const CheckoutScreen: FC<CheckoutScreenProps> = observer(function Checkou
       </View>
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = { flex: 1 }
 

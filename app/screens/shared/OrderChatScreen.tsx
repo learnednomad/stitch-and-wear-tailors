@@ -10,7 +10,6 @@
 
 import { FC, useCallback, useEffect, useState } from "react"
 import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle, Alert } from "react-native"
-import { observer } from "mobx-react-lite"
 import { useQueryClient } from "@tanstack/react-query"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, Screen, Icon, Text, TextField, ChatBubble } from "@/components"
@@ -40,7 +39,7 @@ function userName(user?: Record<string, any> | null): string {
 
 interface OrderChatScreenProps extends AppStackScreenProps<"OrderChat"> {}
 
-export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) => {
+export const OrderChatScreen: FC<OrderChatScreenProps> = ({ route }) => {
   const navigation = useNavigation()
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
   const { orderId } = route?.params || { orderId: "" }
@@ -247,7 +246,7 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
       </View>
     </Screen>
   )
-})
+}
 
 // Styles
 // Component style-prop overrides (Screen contentContainerStyle, FlatList

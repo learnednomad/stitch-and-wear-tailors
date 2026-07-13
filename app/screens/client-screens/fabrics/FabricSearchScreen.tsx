@@ -6,7 +6,6 @@
  * its model shape doesn't match the PB schema.
  */
 import { FC, useMemo, useState } from "react"
-import { observer } from "mobx-react-lite"
 import { RefreshControl, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { CatalogGrid, Icon, Screen, Text, TextField } from "@/components"
@@ -26,7 +25,7 @@ function labelize(value: string): string {
     .join(" ")
 }
 
-export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
+export const FabricSearchScreen: FC<FabricSearchScreenProps> = 
   function FabricSearchScreen({ navigation }) {
     const { theme } = useAppTheme()
     const [search, setSearch] = useState("")
@@ -133,8 +132,7 @@ export const FabricSearchScreen: FC<FabricSearchScreenProps> = observer(
         />
       </Screen>
     )
-  },
-)
+  }
 
 const $root: ViewStyle = {
   flex: 1,

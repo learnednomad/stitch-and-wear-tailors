@@ -11,7 +11,6 @@
  * endpoints that don't exist.
  */
 import { FC, useEffect, useMemo, useState } from "react"
-import { observer } from "mobx-react-lite"
 import {
   Alert,
   RefreshControl,
@@ -77,7 +76,7 @@ const STATUS_COLORS: Record<string, string> = {
 const CHIP_CLASS = "rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
 const CHIP_TEXT_CLASS = "text-center text-[13px] font-semibold"
 
-export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function BookFittingScreen({
+export const BookFittingScreen: FC<BookFittingScreenProps> = function BookFittingScreen({
   navigation,
 }) {
   const { theme } = useAppTheme()
@@ -361,7 +360,7 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = observer(function B
         ))}
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = {
   flex: 1,

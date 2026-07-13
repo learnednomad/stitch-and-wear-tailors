@@ -4,14 +4,13 @@
  * Thin wrapper around the shared NotificationList component.
  */
 import { FC } from "react"
-import { observer } from "mobx-react-lite"
 import { TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Icon, NotificationList, Screen, Text } from "@/components"
 
 interface NotificationsScreenProps extends AppStackScreenProps<"ClientNotifications"> {}
 
-export const ClientNotificationsScreen: FC<NotificationsScreenProps> = observer(
+export const ClientNotificationsScreen: FC<NotificationsScreenProps> = 
   function NotificationsScreen({ navigation }) {
     return (
       <Screen style={$root} preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$content}>
@@ -32,8 +31,7 @@ export const ClientNotificationsScreen: FC<NotificationsScreenProps> = observer(
         <NotificationList />
       </Screen>
     )
-  },
-)
+  }
 
 // Screen style + contentContainerStyle props — stay inline style objects.
 const $root: ViewStyle = {

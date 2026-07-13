@@ -5,7 +5,6 @@
  * tap a style for details and start an order from it.
  */
 import { FC, useMemo, useState } from "react"
-import { observer } from "mobx-react-lite"
 import { Modal, RefreshControl, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, CatalogGrid, CatalogGridItem, Icon, Screen, Text, TextField } from "@/components"
@@ -27,7 +26,7 @@ function labelize(value: string): string {
     .join(" ")
 }
 
-export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogScreen({
+export const CatalogScreen: FC<CatalogScreenProps> = function CatalogScreen({
   navigation,
 }) {
   const { theme } = useAppTheme()
@@ -197,7 +196,7 @@ export const CatalogScreen: FC<CatalogScreenProps> = observer(function CatalogSc
       </Modal>
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = {
   flex: 1,

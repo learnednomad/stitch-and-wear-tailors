@@ -7,7 +7,6 @@
  * are added from the PocketBase admin.
  */
 import { FC, useState } from "react"
-import { observer } from "mobx-react-lite"
 import {
   Alert,
   Image,
@@ -76,7 +75,7 @@ const EMPTY_FORM: FormState = {
   imageUris: [],
 }
 
-export const ManageProductsScreen: FC<ManageProductsScreenProps> = observer(
+export const ManageProductsScreen: FC<ManageProductsScreenProps> = 
   function ManageProductsScreen({ navigation }) {
     const { theme } = useAppTheme()
     const productsQuery = useMyProducts()
@@ -380,8 +379,7 @@ export const ManageProductsScreen: FC<ManageProductsScreenProps> = observer(
         </Modal>
       </Screen>
     )
-  },
-)
+  }
 
 const $root: ViewStyle = { flex: 1 }
 

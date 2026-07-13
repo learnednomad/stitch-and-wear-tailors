@@ -6,7 +6,6 @@
  * PocketBase OTP auth is not configured server-side yet.
  */
 import { FC, useState } from "react"
-import { observer } from "mobx-react-lite"
 import { Alert, View, ViewStyle } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
@@ -16,7 +15,7 @@ import { spacing } from "@/theme"
 
 interface VerifyOtpScreenProps extends AppStackScreenProps<"VerifyOtp"> {}
 
-export const VerifyOtpScreen: FC<VerifyOtpScreenProps> = observer(function VerifyOtpScreen() {
+export const VerifyOtpScreen: FC<VerifyOtpScreenProps> = function VerifyOtpScreen() {
   const navigation = useNavigation<any>()
   const [code, setCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -69,7 +68,7 @@ export const VerifyOtpScreen: FC<VerifyOtpScreenProps> = observer(function Verif
       </View>
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = {
   flex: 1,

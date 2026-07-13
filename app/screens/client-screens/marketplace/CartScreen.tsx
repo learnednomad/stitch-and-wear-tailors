@@ -5,7 +5,6 @@
  * The cart is client-side (CartContext); checkout turns it into an order.
  */
 import { FC } from "react"
-import { observer } from "mobx-react-lite"
 import { Image, ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, Icon, Screen, Text } from "@/components"
@@ -16,7 +15,7 @@ import { useAppTheme } from "@/utils/useAppTheme"
 
 interface CartScreenProps extends AppStackScreenProps<"Cart"> {}
 
-export const CartScreen: FC<CartScreenProps> = observer(function CartScreen({ navigation }) {
+export const CartScreen: FC<CartScreenProps> = function CartScreen({ navigation }) {
   const { theme } = useAppTheme()
   const { lines, subtotal, setQuantity, removeProduct } = useCart()
 
@@ -104,7 +103,7 @@ export const CartScreen: FC<CartScreenProps> = observer(function CartScreen({ na
       )}
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = { flex: 1 }
 

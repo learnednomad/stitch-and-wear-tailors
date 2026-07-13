@@ -5,7 +5,6 @@
  * then browse styles grouped by category section.
  */
 import { FC, useMemo, useState } from "react"
-import { observer } from "mobx-react-lite"
 import { RefreshControl, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { CatalogGrid, Icon, Screen, Text } from "@/components"
@@ -32,7 +31,7 @@ function labelize(value: string): string {
     .join(" ")
 }
 
-export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScreen({ navigation }) {
+export const StylesScreen: FC<StylesScreenProps> = function StylesScreen({ navigation }) {
   const { theme } = useAppTheme()
   const [gender, setGender] = useState<string | null>(null)
 
@@ -132,7 +131,7 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
       )}
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = {
   flex: 1,

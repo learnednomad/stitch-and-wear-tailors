@@ -19,7 +19,6 @@ import {
   Pressable,
 } from "react-native"
 import { LinearGradient } from "react-native-linear-gradient"
-import { observer } from "mobx-react-lite"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -44,7 +43,7 @@ interface PremiumSignInFormProps {
   isLoading?: boolean
 }
 
-export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
+export const PremiumSignInForm: FC<PremiumSignInFormProps> = 
   ({ onSignIn, onForgotPassword, onSignUp, onBiometricAuth, isLoading = false }) => {
     // Form state — react-hook-form + zod own field values and validation
     const {
@@ -405,8 +404,7 @@ export const PremiumSignInForm: FC<PremiumSignInFormProps> = observer(
         </View>
       </Animated.View>
     )
-  },
-)
+  }
 
 // Only styles that must stay inline remain here: the LinearGradient targets
 // (className is not wired through that third-party component), RN shadows /

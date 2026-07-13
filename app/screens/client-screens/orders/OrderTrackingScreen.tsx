@@ -9,7 +9,6 @@
 
 import { FC, useCallback, useEffect, useState } from "react"
 import { View, Image, RefreshControl, TouchableOpacity, ViewStyle, TextStyle } from "react-native"
-import { observer } from "mobx-react-lite"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon } from "@/components"
@@ -41,7 +40,7 @@ const TERMINAL_STATUSES: Record<string, string> = {
 
 interface OrderTrackingScreenProps extends AppStackScreenProps<"OrderTracking"> {}
 
-export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
+export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = 
   function OrderTrackingScreen({ route }) {
     const navigation = useNavigation()
     const { orderId } = route.params
@@ -289,8 +288,7 @@ export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
         )}
       </Screen>
     )
-  },
-)
+  }
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors and

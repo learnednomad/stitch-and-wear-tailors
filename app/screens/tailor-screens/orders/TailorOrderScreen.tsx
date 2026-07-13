@@ -19,7 +19,6 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native"
-import { observer } from "mobx-react-lite"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import { Screen, Text, Icon } from "@/components"
 import {
@@ -62,7 +61,7 @@ function columnForOrder(order: Record<string, any>): ColumnKey | null {
   }
 }
 
-export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
+export const TailorOrderScreen: FC = function TailorOrderScreen() {
   const navigation = useNavigation()
   const authStore = useAuthStore()
   const { width } = useWindowDimensions()
@@ -302,7 +301,7 @@ export const TailorOrderScreen: FC = observer(function TailorOrderScreen() {
       )}
     </Screen>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay

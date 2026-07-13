@@ -5,7 +5,6 @@
  * Buyers pick a quantity and add it to the cart, then jump to the cart.
  */
 import { FC, useState } from "react"
-import { observer } from "mobx-react-lite"
 import { Image, ImageStyle, ScrollView, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, Chip, Icon, Screen, Text } from "@/components"
@@ -26,7 +25,7 @@ function labelize(value: string): string {
     .join(" ")
 }
 
-export const ProductDetailScreen: FC<ProductDetailScreenProps> = observer(
+export const ProductDetailScreen: FC<ProductDetailScreenProps> = 
   function ProductDetailScreen({ route, navigation }) {
     const { productId } = route.params
     const { theme } = useAppTheme()
@@ -143,8 +142,7 @@ export const ProductDetailScreen: FC<ProductDetailScreenProps> = observer(
         )}
       </Screen>
     )
-  },
-)
+  }
 
 const $root: ViewStyle = { flex: 1 }
 

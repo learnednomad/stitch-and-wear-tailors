@@ -14,7 +14,6 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native"
-import { observer } from "mobx-react-lite"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon } from "@/components"
@@ -27,7 +26,7 @@ type HistoryFilter = "all" | "delivered" | "cancelled"
 
 interface OrderHistoryScreenProps extends AppStackScreenProps<"OrderHistory"> {}
 
-export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = observer(
+export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = 
   function OrderHistoryScreen() {
     const navigation = useNavigation()
     const authStore = useAuthStore()
@@ -217,8 +216,7 @@ export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = observer(
         )}
       </Screen>
     )
-  },
-)
+  }
 
 // Styles
 // Static (light-only) `colors` screen: layout/spacing/container colors live in

@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native"
-import { observer } from "mobx-react-lite"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button } from "@/components"
@@ -39,7 +38,7 @@ interface InvoicesScreenProps extends AppStackScreenProps<"Invoices"> {}
  * Tailor invoice list: pending customer payment claims up top, status
  * filter chips, and the invoice list (newest first).
  */
-export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function InvoicesScreen() {
+export const InvoicesScreen: FC<InvoicesScreenProps> = function InvoicesScreen() {
   const navigation = useNavigation<any>()
 
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all")
@@ -308,7 +307,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = observer(function Invoice
       )}
     </Screen>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay

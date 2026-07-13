@@ -7,7 +7,6 @@
  * to storage) and About, plus Sign Out.
  */
 import { FC, useState } from "react"
-import { observer } from "mobx-react-lite"
 import { Alert, Image, Platform, TouchableOpacity, View, ViewStyle } from "react-native"
 import i18next from "i18next"
 import Constants from "expo-constants"
@@ -54,7 +53,7 @@ const DEFAULT_PREFS: LocalNotificationPrefs = {
 const $sectionClass = "mx-4 mb-4 rounded-xl bg-neutral100 p-4 dark:bg-neutral100-dark"
 const $sectionTitleClass = "mb-2 mt-3 px-4"
 
-export const SettingsScreen: FC<SettingsScreenProps> = observer(function SettingsScreen({
+export const SettingsScreen: FC<SettingsScreenProps> = function SettingsScreen({
   navigation,
 }) {
   const { theme } = useAppTheme()
@@ -266,7 +265,7 @@ export const SettingsScreen: FC<SettingsScreenProps> = observer(function Setting
       <Button text="Sign Out" preset="reversed" onPress={handleSignOut} style={$signOutButton} />
     </Screen>
   )
-})
+}
 
 // Screen `style` prop stays an inline style object (Screen owns its own layout).
 const $root: ViewStyle = {

@@ -5,7 +5,6 @@
  * Orders still awaiting payment confirmation can be cancelled.
  */
 import { FC } from "react"
-import { observer } from "mobx-react-lite"
 import { Alert, RefreshControl, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Button, Chip, ChipTone, Icon, Screen, Text } from "@/components"
@@ -36,7 +35,7 @@ const STATUS_LABELS: Record<MarketplaceOrderStatus, string> = {
   cancelled: "Cancelled",
 }
 
-export const MyPurchasesScreen: FC<MyPurchasesScreenProps> = observer(function MyPurchasesScreen({
+export const MyPurchasesScreen: FC<MyPurchasesScreenProps> = function MyPurchasesScreen({
   navigation,
 }) {
   const { theme } = useAppTheme()
@@ -149,7 +148,7 @@ export const MyPurchasesScreen: FC<MyPurchasesScreenProps> = observer(function M
       })}
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = { flex: 1 }
 

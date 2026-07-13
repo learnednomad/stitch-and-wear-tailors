@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native"
-import { observer } from "mobx-react-lite"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button, RecordPaymentModal } from "@/components"
@@ -42,7 +41,7 @@ interface InvoiceDetailScreenProps extends AppStackScreenProps<"InvoiceDetail"> 
  * payment, mark a draft as sent, void). Money-state transitions
  * (partially_paid/paid) happen server-side from payments.
  */
-export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
+export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = 
   function InvoiceDetailScreen({ route }) {
     const navigation = useNavigation<any>()
     const { invoiceId } = route.params
@@ -379,8 +378,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = observer(
         />
       </Screen>
     )
-  },
-)
+  }
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay

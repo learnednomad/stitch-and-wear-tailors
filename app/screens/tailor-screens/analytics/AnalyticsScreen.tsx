@@ -25,7 +25,6 @@ import {
   View,
   ViewStyle,
 } from "react-native"
-import { observer } from "mobx-react-lite"
 import Svg, { G, Rect, Text as SvgText } from "react-native-svg"
 import { Screen, Text } from "@/components"
 import { colors, spacing } from "@/theme"
@@ -356,7 +355,7 @@ const RevenueBarChart: FC<{ buckets: RevenueBucket[]; width: number }> = ({ buck
 // Screen
 // ---------------------------------------------------------------------------
 
-export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
+export const AnalyticsScreen: FC = function AnalyticsScreen() {
   const authStore = useAuthStore()
   const { width } = useWindowDimensions()
 
@@ -548,7 +547,7 @@ export const AnalyticsScreen: FC = observer(function AnalyticsScreen() {
       </ScrollView>
     </Screen>
   )
-})
+}
 
 // ---------------------------------------------------------------------------
 // Styles

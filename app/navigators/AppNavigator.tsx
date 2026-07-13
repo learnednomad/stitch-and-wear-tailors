@@ -10,7 +10,6 @@ import {
   LinkingOptions,
 } from "@react-navigation/native"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
-import { observer } from "mobx-react-lite"
 import * as Screens from "@/screens"
 import Config from "../config"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
@@ -108,7 +107,7 @@ export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStack
 // Documentation: https://reactnavigation.org/docs/stack-navigator/
 const Stack = createNativeStackNavigator<AppStackParamList>()
 
-const AppStack = observer(function AppStack() {
+const AppStack = function AppStack() {
   const {
     theme: { colors },
   } = useAppTheme()
@@ -222,7 +221,7 @@ const AppStack = observer(function AppStack() {
         {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
       </Stack.Navigator>
   )
-})
+}
 
 export interface NavigationProps
   extends Partial<ComponentProps<typeof NavigationContainer<AppStackParamList>>> {}
@@ -244,7 +243,7 @@ const linking: LinkingOptions<AppStackParamList> = {
   },
 }
 
-export const AppNavigator = observer(function AppNavigator(props: NavigationProps) {
+export const AppNavigator = function AppNavigator(props: NavigationProps) {
   const { themeScheme, navigationTheme, setThemeContextOverride, ThemeProvider } =
     useThemeProvider()
 
@@ -265,4 +264,4 @@ export const AppNavigator = observer(function AppNavigator(props: NavigationProp
       </NavigationContainer>
     </ThemeProvider>
   )
-})
+}

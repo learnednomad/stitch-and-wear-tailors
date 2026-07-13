@@ -8,7 +8,6 @@
 
 import { FC, useCallback, useState } from "react"
 import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle } from "react-native"
-import { observer } from "mobx-react-lite"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import {
   Screen,
@@ -29,7 +28,7 @@ import { useTailorBoardOrders } from "@/api/orders"
 /** Mapped domain order snapshot (loosely typed — mapper guarantees shape) */
 type DomainOrder = Record<string, any>
 
-export const TailorScreen: FC = observer(function TailorScreen() {
+export const TailorScreen: FC = function TailorScreen() {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
   const authStore = useAuthStore()
@@ -358,7 +357,7 @@ export const TailorScreen: FC = observer(function TailorScreen() {
       <View style={$bottomContainerInsets} />
     </Screen>
   )
-})
+}
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay

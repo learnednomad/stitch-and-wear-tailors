@@ -1,5 +1,4 @@
 import { FC, useState, useEffect } from "react"
-import { observer } from "mobx-react-lite"
 import { ViewStyle, View, Alert, TouchableOpacity } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Button } from "@/components"
@@ -11,7 +10,7 @@ import { spacing } from "@/theme"
 
 interface VerifyEmailScreenProps extends AppStackScreenProps<"VerifyEmail"> {}
 
-export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function VerifyEmailScreen() {
+export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = function VerifyEmailScreen() {
   const authStore = useAuthStore()
   const navigation = useNavigation()
   const { theme } = useAppTheme()
@@ -179,7 +178,7 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
       </View>
     </Screen>
   )
-})
+}
 
 // Only Button style overrides remain inline (Button owns its own className).
 const $root: ViewStyle = {

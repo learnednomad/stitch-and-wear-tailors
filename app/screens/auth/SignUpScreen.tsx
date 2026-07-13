@@ -1,5 +1,4 @@
 import { FC, useState, useMemo } from "react"
-import { observer } from "mobx-react-lite"
 import { ViewStyle, View, Alert, TouchableOpacity, TextStyle, ImageStyle } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, TextField, Button, PasswordStrengthIndicator, Icon } from "@/components"
@@ -12,7 +11,7 @@ import { spacing, colors } from "@/theme"
 
 interface SignUpScreenProps extends AppStackScreenProps<"SignUp"> {}
 
-export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScreen() {
+export const SignUpScreen: FC<SignUpScreenProps> = function SignUpScreen() {
   const authStore = useAuthStore()
   const navigation = useNavigation()
   const [firstName, setFirstName] = useState("")
@@ -349,7 +348,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
       />
     </Screen>
   )
-})
+}
 
 // Screen contentContainerStyle, Button style/textStyle overrides, TextField
 // input style, the shadowed active-tab pill, the LeftAccessory icon offset, and

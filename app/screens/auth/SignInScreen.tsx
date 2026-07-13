@@ -1,5 +1,4 @@
 import { FC, useState, useEffect } from "react"
-import { observer } from "mobx-react-lite"
 import { ViewStyle, View, Alert } from "react-native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen } from "@/components"
@@ -16,7 +15,7 @@ import { BiometricService } from "@/services/biometric/BiometricService"
 
 interface SignInScreenProps extends AppStackScreenProps<"SignIn"> {}
 
-export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScreen() {
+export const SignInScreen: FC<SignInScreenProps> = function SignInScreen() {
   const authStore = useAuthStore()
   const navigation = useNavigation()
   const [isLoading, setIsLoading] = useState(false)
@@ -235,4 +234,4 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
       />
     </Screen>
   )
-})
+}

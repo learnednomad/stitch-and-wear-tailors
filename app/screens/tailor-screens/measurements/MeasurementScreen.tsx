@@ -8,7 +8,6 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from "react-native"
-import { observer } from "mobx-react-lite"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button } from "@/components"
@@ -23,7 +22,7 @@ interface MeasurementScreenProps extends AppStackScreenProps<"TailorMeasurement"
  * Tailor measurements hub: read-only customer profiles (customers with
  * orders for this tailor) and the tailor's own editable house templates.
  */
-export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
+export const TailorMeasurementScreen: FC<MeasurementScreenProps> = 
   function TailorMeasurementScreen() {
     const navigation = useNavigation<any>()
 
@@ -212,8 +211,7 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> = observer(
         )}
       </Screen>
     )
-  },
-)
+  }
 
 // Styles
 // This screen reads the STATIC (light-only) `colors` import, so text colors stay
