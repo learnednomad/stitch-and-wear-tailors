@@ -94,16 +94,18 @@ export const TailorScreen: FC = observer(function TailorScreen() {
   }) => (
     <TouchableOpacity
       key={item.title}
-      style={$quickActionCard}
+      className="basis-[31%] grow rounded-2xl border border-border bg-surface p-3"
       onPress={item.onPress}
       accessible
       accessibilityLabel={item.title}
       activeOpacity={0.7}
     >
-      <View style={$quickActionIconContainer}>
+      <View className="mb-2 h-[34px] w-[34px] items-center justify-center rounded-[17px] bg-accentSoft">
         <Icon icon={item.icon} size={18} color={colors.accent} />
       </View>
-      <Text style={$quickActionText}>{item.title}</Text>
+      <Text className="text-[13px]" weight="semiBold" style={$quickActionTextColor}>
+        {item.title}
+      </Text>
     </TouchableOpacity>
   )
 
@@ -115,16 +117,16 @@ export const TailorScreen: FC = observer(function TailorScreen() {
     const progressPercentage = item.progress?.percentage ?? 0
     return (
       <TouchableOpacity
-        style={$orderCard}
+        className="w-[260px] rounded-2xl border border-border bg-surface p-4 mr-3"
         onPress={() => (navigation as any).navigate("OrderDetail", { orderId: item.id })}
         accessible
         accessibilityLabel={`Order: ${item.orderNumber}`}
       >
-        <View style={$orderHeader}>
-          <Text style={$orderTitle} numberOfLines={1}>
+        <View className="flex-row items-center justify-between gap-2 mb-2">
+          <Text className="shrink text-[15px]" weight="semiBold" style={$orderTitleColor} numberOfLines={1}>
             #{item.orderNumber}
           </Text>
-          <View style={$orderChips}>
+          <View className="flex-row gap-1">
             {["high", "urgent"].includes(item.priority) && (
               <Chip
                 text={item.priority === "urgent" ? "Urgent" : "Express"}
@@ -135,22 +137,26 @@ export const TailorScreen: FC = observer(function TailorScreen() {
           </View>
         </View>
 
-        <Text style={$orderMeasurement} numberOfLines={1}>
+        <Text className="text-[13px] mb-3" style={$orderMeasurementColor} numberOfLines={1}>
           {customerName} · {titleCase(item.garmentType ?? "custom")}
         </Text>
 
         {item.status !== "cancelled" && (
-          <View style={$progressContainer}>
-            <View style={$progressBar}>
-              <View style={[$progressFill, { width: `${progressPercentage}%` }]} />
+          <View className="flex-row items-center mb-3">
+            <View className="flex-1 h-1 rounded-[2px] bg-neutral300 mr-3">
+              <View className="h-full rounded-[2px] bg-accent" style={{ width: `${progressPercentage}%` }} />
             </View>
-            <Text style={$progressText}>{progressPercentage}%</Text>
+            <Text className="text-[11px] min-w-[35px]" weight="semiBold" style={$progressTextColor}>
+              {progressPercentage}%
+            </Text>
           </View>
         )}
 
-        <View style={$orderFooter}>
-          <Text style={$orderAmount}>₦{(item.pricing?.totalPrice ?? 0).toLocaleString()}</Text>
-          <Text style={$orderDueDate}>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-[15px]" weight="bold" style={$orderAmountColor}>
+            ₦{(item.pricing?.totalPrice ?? 0).toLocaleString()}
+          </Text>
+          <Text className="text-[12px]" style={$orderDueDateColor}>
             Due{" "}
             {new Date(item.estimatedDeliveryDate).toLocaleDateString("en-NG", {
               day: "numeric",
@@ -237,18 +243,20 @@ export const TailorScreen: FC = observer(function TailorScreen() {
       statusBarStyle="dark"
     >
       {/* Header */}
-      <View style={$header}>
-        <View style={$greetingContainer}>
-          <Text style={$greetingText} accessibilityLabel={greeting}>
+      <View className="flex-row items-center justify-between py-4">
+        <View className="flex-1 mr-3">
+          <Text className="text-[14px] leading-5" style={$greetingColor} accessibilityLabel={greeting}>
             {greeting},
           </Text>
-          <Text style={$nameText} numberOfLines={1}>
+          <Text className="text-[24px] leading-8" weight="bold" style={$nameColor} numberOfLines={1}>
             {tailorName}
           </Text>
-          <Text style={$welcomeText}>Welcome back to your atelier</Text>
+          <Text className="text-[13px] leading-[18px] mt-0.5" style={$welcomeColor}>
+            Welcome back to your atelier
+          </Text>
         </View>
         <TouchableOpacity
-          style={$notificationIcon}
+          className="h-[42px] w-[42px] rounded-full border border-border bg-surface items-center justify-center"
           onPress={() => (navigation as any).navigate("TailorNotifications")}
           accessible
           accessibilityLabel="Notifications"
@@ -258,11 +266,11 @@ export const TailorScreen: FC = observer(function TailorScreen() {
       </View>
 
       {/* Dashboard Stats */}
-      <View style={$statsContainer}>
+      <View className="mb-6">
         <SectionHeader title="Overview" style={$sectionHeaderSpacing} />
-        <View style={$statsGrid}>
+        <View className="flex-row flex-wrap justify-between">
           {statsData.map((stat, index) => (
-            <View key={index} style={$statsCardWrapper}>
+            <View key={index} className="w-[48.5%] mb-2">
               <StatTile
                 value={stat.value}
                 label={stat.title}
@@ -276,36 +284,54 @@ export const TailorScreen: FC = observer(function TailorScreen() {
       </View>
 
       {/* Quick Actions */}
-      <View style={$quickActionsContainer}>
+      <View className="mb-6">
         <SectionHeader title="Quick Actions" style={$sectionHeaderSpacing} />
-        <View style={$quickActionGrid} accessibilityLabel="Quick Actions List">
+        <View className="flex-row flex-wrap gap-2" accessibilityLabel="Quick Actions List">
           {quickActions.map((item) => renderQuickAction({ item }))}
         </View>
       </View>
 
       {/* Recent Orders with Tabs */}
-      <View style={$ordersContainer}>
-        <View style={$ordersHeader}>
-          <Text style={$sectionTitle}>Recent Orders</Text>
-          <View style={$tabContainer}>
+      <View className="mb-8">
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-[18px]" weight="semiBold" style={$sectionTitleColor}>
+            Recent Orders
+          </Text>
+          <View className="flex-row rounded-lg bg-neutral200 p-0.5">
             <TouchableOpacity
-              style={[$tab, activeTab === "all" && $activeTab]}
+              className="px-4 py-2 rounded-md"
+              style={activeTab === "all" ? $activeTab : undefined}
               onPress={() => setActiveTab("all")}
             >
-              <Text style={[$tabText, activeTab === "all" && $activeTabText]}>All</Text>
+              <Text
+                className="text-[14px]"
+                weight={activeTab === "all" ? "semiBold" : "medium"}
+                style={activeTab === "all" ? $activeTabTextColor : $tabTextColor}
+              >
+                All
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[$tab, activeTab === "urgent" && $activeTab]}
+              className="px-4 py-2 rounded-md"
+              style={activeTab === "urgent" ? $activeTab : undefined}
               onPress={() => setActiveTab("urgent")}
             >
-              <Text style={[$tabText, activeTab === "urgent" && $activeTabText]}>Urgent</Text>
+              <Text
+                className="text-[14px]"
+                weight={activeTab === "urgent" ? "semiBold" : "medium"}
+                style={activeTab === "urgent" ? $activeTabTextColor : $tabTextColor}
+              >
+                Urgent
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
         {recentOrders.length === 0 ? (
-          <View style={$emptyOrders}>
+          <View className="items-center p-6 gap-3">
             <Icon icon="sew" size={32} color={colors.palette.neutral400} />
-            <Text style={$emptyOrdersText}>No orders yet</Text>
+            <Text className="text-[13px]" style={$emptyOrdersColor}>
+              No orders yet
+            </Text>
           </View>
         ) : (
           <FlatList
@@ -319,10 +345,12 @@ export const TailorScreen: FC = observer(function TailorScreen() {
           />
         )}
         <TouchableOpacity
-          style={$viewAllOrders}
+          className="flex-row items-center justify-center gap-1 py-3"
           onPress={() => (navigation as any).navigate("TailorOrders", {})}
         >
-          <Text style={$viewAllText}>View All Orders</Text>
+          <Text className="text-[14px]" weight="semiBold" style={$viewAllColor}>
+            View All Orders
+          </Text>
           <Icon icon="caretRight" size={16} color={colors.accent} />
         </TouchableOpacity>
       </View>
@@ -332,7 +360,11 @@ export const TailorScreen: FC = observer(function TailorScreen() {
   )
 })
 
-// Enhanced Styles
+// Styles
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (light in both schemes) — no `dark:` variants. Layout, spacing,
+// and container backgrounds/borders are className token utilities.
+//
 // Screen preset="scroll" owns the scrolling: this is its contentContainerStyle,
 // so no flex (a nested ScrollView here previously ate the scroll gesture and
 // let the greeting slide under the status bar).
@@ -340,257 +372,33 @@ const $root: ViewStyle = {
   paddingHorizontal: spacing.md,
 }
 
-const $header: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  paddingVertical: spacing.md,
-}
-
-const $greetingContainer: ViewStyle = {
-  flex: 1,
-  marginRight: spacing.sm,
-}
-
-const $greetingText: TextStyle = {
-  fontSize: 14,
-  lineHeight: 20,
-  color: colors.textDim,
-}
-
-const $nameText: TextStyle = {
-  fontSize: 24,
-  lineHeight: 32,
-  fontWeight: "700",
-  color: colors.text,
-}
-
-const $welcomeText: TextStyle = {
-  fontSize: 13,
-  lineHeight: 18,
-  color: colors.palette.gray500,
-  marginTop: 2,
-}
-
-const $notificationIcon: ViewStyle = {
-  width: 42,
-  height: 42,
-  borderRadius: 21,
-  backgroundColor: colors.surface,
-  borderWidth: 1,
-  borderColor: colors.border,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-// Stats styles
-const $statsContainer: ViewStyle = {
-  marginBottom: spacing.lg,
-}
-
-const $statsGrid: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  justifyContent: "space-between",
-}
-
-const $statsCardWrapper: ViewStyle = {
-  width: "48.5%",
-  marginBottom: spacing.xs,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.text,
-}
-
+// SectionHeader.style takes a style object, so this stays inline.
 const $sectionHeaderSpacing: ViewStyle = {
   marginBottom: spacing.sm,
 }
 
-// Quick actions styles
-const $quickActionsContainer: ViewStyle = {
-  marginBottom: spacing.lg,
-}
-
-const $quickActionGrid: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.xs,
-}
-
-const $quickActionCard: ViewStyle = {
-  flexBasis: "31%",
-  flexGrow: 1,
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.border,
-  padding: spacing.sm,
-}
-
-const $quickActionIconContainer: ViewStyle = {
-  width: 34,
-  height: 34,
-  borderRadius: 17,
-  backgroundColor: colors.accentSoft,
-  justifyContent: "center",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-}
-
-const $quickActionText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-  color: colors.text,
-}
-
-// Orders styles
-const $ordersContainer: ViewStyle = {
-  marginBottom: spacing.xl,
-}
-
-const $ordersHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.md,
-}
-
-const $tabContainer: ViewStyle = {
-  flexDirection: "row",
-  backgroundColor: colors.palette.neutral200,
-  borderRadius: 8,
-  padding: 2,
-}
-
-const $tab: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.xs,
-  borderRadius: 6,
-}
-
-const $activeTab: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-}
-
-const $tabText: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral600,
-  fontWeight: "500",
-}
-
-const $activeTabText: TextStyle = {
-  color: colors.palette.neutral900,
-  fontWeight: "600",
-}
-
+// FlatList.contentContainerStyle takes a style object, so this stays inline.
 const $orderListContent: ViewStyle = {
   paddingRight: spacing.lg,
 }
 
-const $orderCard: ViewStyle = {
-  width: 260,
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.border,
-  padding: spacing.md,
-  marginRight: spacing.sm,
+// Selection-state background stays inline (conditional style).
+const $activeTab: ViewStyle = {
+  backgroundColor: colors.palette.neutral100,
 }
 
-const $orderHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: spacing.xs,
-  marginBottom: spacing.xs,
-}
-
-const $orderChips: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.xxs,
-}
-
-const $orderTitle: TextStyle = {
-  flexShrink: 1,
-  fontSize: 15,
-  fontWeight: "600",
-  color: colors.text,
-}
-
-const $orderMeasurement: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-  marginBottom: spacing.sm,
-}
-
-const $progressContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
-
-const $progressBar: ViewStyle = {
-  flex: 1,
-  height: 4,
-  backgroundColor: colors.palette.neutral300,
-  borderRadius: 2,
-  marginRight: spacing.sm,
-}
-
-const $progressFill: ViewStyle = {
-  height: "100%",
-  backgroundColor: colors.accent,
-  borderRadius: 2,
-}
-
-const $progressText: TextStyle = {
-  fontSize: 11,
-  fontWeight: "600",
-  color: colors.palette.neutral600,
-  minWidth: 35,
-}
-
-const $orderFooter: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $orderDueDate: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.gray500,
-}
-
-const $orderAmount: TextStyle = {
-  fontSize: 15,
-  fontWeight: "700",
-  color: colors.accent,
-}
-
-const $emptyOrders: ViewStyle = {
-  alignItems: "center",
-  padding: spacing.lg,
-  gap: spacing.sm,
-}
-
-const $emptyOrdersText: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral500,
-}
-
-const $viewAllOrders: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: spacing.xxs,
-  paddingVertical: spacing.sm,
-}
-
-const $viewAllText: TextStyle = {
-  fontSize: 14,
-  color: colors.accent,
-  fontWeight: "600",
-}
+// Text color overrides (static, light-only).
+const $greetingColor: TextStyle = { color: colors.textDim }
+const $nameColor: TextStyle = { color: colors.text }
+const $welcomeColor: TextStyle = { color: colors.palette.gray500 }
+const $quickActionTextColor: TextStyle = { color: colors.text }
+const $sectionTitleColor: TextStyle = { color: colors.text }
+const $tabTextColor: TextStyle = { color: colors.palette.neutral600 }
+const $activeTabTextColor: TextStyle = { color: colors.palette.neutral900 }
+const $emptyOrdersColor: TextStyle = { color: colors.palette.neutral500 }
+const $orderTitleColor: TextStyle = { color: colors.text }
+const $orderMeasurementColor: TextStyle = { color: colors.textDim }
+const $progressTextColor: TextStyle = { color: colors.palette.neutral600 }
+const $orderAmountColor: TextStyle = { color: colors.accent }
+const $orderDueDateColor: TextStyle = { color: colors.palette.gray500 }
+const $viewAllColor: TextStyle = { color: colors.accent }
