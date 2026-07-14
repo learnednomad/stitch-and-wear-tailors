@@ -8,7 +8,6 @@ import {
   ViewStyle,
 } from "react-native"
 import { isRTL, translate } from "@/i18n"
-import { $styles } from "../theme"
 import { ExtendedEdge, useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { Icon, IconTypes } from "./Icon"
 import { Text, TextProps } from "./Text"
@@ -182,8 +181,11 @@ export function Header(props: HeaderProps) {
   const titleContent = titleTx ? translate(titleTx, titleTxOptions) : title
 
   return (
-    <View style={[$container, $containerInsets, { backgroundColor }, $containerStyleOverride]}>
-      <View style={[$styles.row, $wrapper, $styleOverride]}>
+    <View
+      className="w-full"
+      style={[$containerInsets, { backgroundColor }, $containerStyleOverride]}
+    >
+      <View className="h-14 flex-row items-center justify-between" style={$styleOverride}>
         <HeaderAction
           tx={leftTx}
           text={leftText}
@@ -197,18 +199,19 @@ export function Header(props: HeaderProps) {
 
         {!!titleContent && (
           <View
-            style={[
-              $titleWrapperPointerEvents,
-              titleMode === "center" && themed($titleWrapperCenter),
-              titleMode === "flex" && $titleWrapperFlex,
-              $titleContainerStyleOverride,
-            ]}
+            className={`pointer-events-none ${
+              titleMode === "center"
+                ? "absolute h-full w-full items-center justify-center px-12 z-[1]"
+                : ""
+            } ${titleMode === "flex" ? "grow justify-center" : ""}`}
+            style={$titleContainerStyleOverride}
           >
             <Text
               weight="medium"
               size="md"
               text={titleContent}
-              style={[$title, $titleStyleOverride]}
+              className="text-center"
+              style={$titleStyleOverride}
             />
           </View>
         )}
@@ -243,12 +246,18 @@ function HeaderAction(props: HeaderActionProps) {
   if (content) {
     return (
       <TouchableOpacity
-        style={themed([$actionTextContainer, { backgroundColor }])}
+        className="h-full grow-0 items-center justify-center px-4 z-[2]"
+        style={{ backgroundColor }}
         onPress={onPress}
         disabled={!onPress}
         activeOpacity={0.8}
       >
-        <Text weight="medium" size="md" text={content} style={themed($actionText)} />
+        <Text
+          weight="medium"
+          size="md"
+          text={content}
+          className="text-tint dark:text-tint-dark"
+        />
       </TouchableOpacity>
     )
   }
@@ -266,36 +275,11 @@ function HeaderAction(props: HeaderActionProps) {
     )
   }
 
-  return <View style={[$actionFillerContainer, { backgroundColor }]} />
+  return <View className="w-4" style={{ backgroundColor }} />
 }
 
-const $wrapper: ViewStyle = {
-  height: 56,
-  alignItems: "center",
-  justifyContent: "space-between",
-}
-
-const $container: ViewStyle = {
-  width: "100%",
-}
-
-const $title: TextStyle = {
-  textAlign: "center",
-}
-
-const $actionTextContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexGrow: 0,
-  alignItems: "center",
-  justifyContent: "center",
-  height: "100%",
-  paddingHorizontal: spacing.md,
-  zIndex: 2,
-})
-
-const $actionText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  color: colors.tint,
-})
-
+// Icon `containerStyle` is a component style prop that also receives a dynamic
+// backgroundColor, so it stays a themed inline style.
 const $actionIconContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexGrow: 0,
   alignItems: "center",
@@ -304,26 +288,3 @@ const $actionIconContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   paddingHorizontal: spacing.md,
   zIndex: 2,
 })
-
-const $actionFillerContainer: ViewStyle = {
-  width: 16,
-}
-
-const $titleWrapperPointerEvents: ViewStyle = {
-  pointerEvents: "none",
-}
-
-const $titleWrapperCenter: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  alignItems: "center",
-  justifyContent: "center",
-  height: "100%",
-  width: "100%",
-  position: "absolute",
-  paddingHorizontal: spacing.xxl,
-  zIndex: 1,
-})
-
-const $titleWrapperFlex: ViewStyle = {
-  justifyContent: "center",
-  flexGrow: 1,
-}

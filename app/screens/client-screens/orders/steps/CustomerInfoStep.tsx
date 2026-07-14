@@ -4,15 +4,16 @@
  */
 
 import React, { FC, useState, useEffect } from "react"
-import { View, ScrollView, ViewStyle, TextStyle, Alert } from "react-native"
-import { observer } from "mobx-react-lite"
-import { Text, TextField, Button } from "app/components"
-import { colors, spacing } from "app/theme"
-import { useStores } from "@/models"
+import { ScrollView, View, ViewStyle, TextStyle, Alert } from "react-native"
+import { Text, TextField, Button } from "@/components"
+import { colors, spacing } from "@/theme"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
+import { useAuthStore } from "@/state/authStore"
 import { CustomerInfo, NigerianCity, SupportedLanguage } from "@/types/orders"
 
-export const CustomerInfoStep: FC = observer(() => {
-  const { orderStore, authStore } = useStores()
+export const CustomerInfoStep: FC = () => {
+  const orderStore = useOrderDraftStore()
+  const authStore = useAuthStore()
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -107,14 +108,18 @@ export const CustomerInfoStep: FC = observer(() => {
   ]
 
   return (
-    <ScrollView style={$container} showsVerticalScrollIndicator={false}>
-      <View style={$content}>
-        <Text style={$title}>{orderStore.getTranslation("customerInfo", "en")}</Text>
-        <Text style={$subtitle}>Please provide your contact information for this order</Text>
+    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <View className="p-lg">
+        <Text className="mb-xs text-[24px] font-bold" style={$titleColor}>
+          {orderStore.getTranslation("customerInfo", "en")}
+        </Text>
+        <Text className="mb-lg text-[14px] leading-[20px]" style={$subtitleColor}>
+          Please provide your contact information for this order
+        </Text>
 
         {/* Name Fields */}
-        <View style={$row}>
-          <View style={$halfField}>
+        <View className="flex-row gap-md">
+          <View className="flex-1">
             <TextField
               label="First Name"
               placeholder="Enter first name"
@@ -124,7 +129,7 @@ export const CustomerInfoStep: FC = observer(() => {
               helper={errors.firstName}
             />
           </View>
-          <View style={$halfField}>
+          <View className="flex-1">
             <TextField
               label="Last Name"
               placeholder="Enter last name"
@@ -170,9 +175,11 @@ export const CustomerInfoStep: FC = observer(() => {
         />
 
         {/* City Selection */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>City</Text>
-          <View style={$optionGrid}>
+        <View className="mt-lg">
+          <Text className="mb-md text-[16px] font-semibold" style={$sectionTitleColor}>
+            City
+          </Text>
+          <View className="flex-row flex-wrap gap-sm">
             {cities.map((city) => (
               <Button
                 key={city.value}
@@ -186,9 +193,11 @@ export const CustomerInfoStep: FC = observer(() => {
         </View>
 
         {/* Language Selection */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Preferred Language</Text>
-          <View style={$optionGrid}>
+        <View className="mt-lg">
+          <Text className="mb-md text-[16px] font-semibold" style={$sectionTitleColor}>
+            Preferred Language
+          </Text>
+          <View className="flex-row flex-wrap gap-sm">
             {languages.map((lang) => (
               <Button
                 key={lang.value}
@@ -218,60 +227,20 @@ export const CustomerInfoStep: FC = observer(() => {
           onPress={handleSave}
         />
 
-        <View style={$spacer} />
+        <View className="h-xl" />
       </View>
     </ScrollView>
   )
-})
+}
 
 // Styles
-const $container: ViewStyle = {
-  flex: 1,
-}
-
-const $content: ViewStyle = {
-  padding: spacing.lg,
-}
-
-const $title: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xs,
-}
-
-const $subtitle: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.lg,
-  lineHeight: 20,
-}
-
-const $row: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.md,
-}
-
-const $halfField: ViewStyle = {
-  flex: 1,
-}
-
-const $section: ViewStyle = {
-  marginTop: spacing.lg,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.md,
-}
-
-const $optionGrid: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.sm,
-}
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (no `dark:` variants). Layout, spacing, and container
+// backgrounds/borders are className token utilities. Button style/textStyle
+// overrides stay inline (Button owns its className; callers never pass one in).
+const $titleColor: TextStyle = { color: colors.palette.deepCharcoal }
+const $subtitleColor: TextStyle = { color: colors.palette.threadBlue }
+const $sectionTitleColor: TextStyle = { color: colors.palette.deepCharcoal }
 
 const $optionButton: ViewStyle = {
   backgroundColor: colors.palette.neutral200,
@@ -310,8 +279,4 @@ const $saveButtonText: TextStyle = {
   fontWeight: "600",
   color: colors.palette.warmIvory,
   textAlign: "center",
-}
-
-const $spacer: ViewStyle = {
-  height: spacing.xl,
 }

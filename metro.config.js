@@ -3,6 +3,7 @@
 // getSentryExpoConfig wraps expo's default config with Sentry's serializer
 // (debug-id injection for source maps) — Obytes Sentry recipe, step 6.
 const { getSentryExpoConfig } = require("@sentry/react-native/metro")
+const { withNativeWind } = require("nativewind/metro")
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getSentryExpoConfig(__dirname)
@@ -38,4 +39,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     : context.resolveRequest(context, moduleName, platform)
 }
 
-module.exports = config
+// Layer NativeWind on top of the fully-configured Sentry/Expo config above
+// (inlineRequires, cjs sourceExt, and the web-shim resolveRequest are all
+// preserved). `input` must match the global.css imported at the app entry.
+module.exports = withNativeWind(config, { input: "./global.css" })

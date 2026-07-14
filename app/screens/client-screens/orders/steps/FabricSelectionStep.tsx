@@ -4,20 +4,10 @@
  */
 
 import React, { FC, useState, useEffect } from "react"
-import {
-  View,
-  ScrollView,
-  ViewStyle,
-  TextStyle,
-  ImageStyle,
-  TouchableOpacity,
-  FlatList,
-  Alert,
-} from "react-native"
-import { observer } from "mobx-react-lite"
-import { Text, TextField, Button, Icon, AutoImage } from "app/components"
-import { colors, spacing } from "app/theme"
-import { useStores } from "@/models"
+import { View, ScrollView, ViewStyle, TextStyle, TouchableOpacity, FlatList, Alert } from "react-native"
+import { Text, TextField, Button, Icon, AutoImage } from "@/components"
+import { colors, spacing } from "@/theme"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { FabricType, NigerianCity } from "@/types/orders"
 
 interface FabricOption {
@@ -34,8 +24,8 @@ interface FabricOption {
   culturalSignificance?: string
 }
 
-export const FabricSelectionStep: FC = observer(() => {
-  const { orderStore } = useStores()
+export const FabricSelectionStep: FC = () => {
+  const orderStore = useOrderDraftStore()
 
   const [selectedFabricId, setSelectedFabricId] = useState<string>("")
   const [quantity, setQuantity] = useState<string>("3")
@@ -220,11 +210,10 @@ export const FabricSelectionStep: FC = observer(() => {
 
   const renderFabricCard = ({ item }: { item: FabricOption }) => (
     <TouchableOpacity
-      style={[
-        $fabricCard,
-        selectedFabricId === item.id && $selectedFabricCard,
-        !item.inStock && $outOfStockCard,
-      ]}
+      className={`flex-1 bg-neutral100 rounded-[12px] p-md mb-md border-2 ${
+        selectedFabricId === item.id ? "border-tailorGold" : "border-neutral200"
+      } ${!item.inStock ? "opacity-60" : ""}`}
+      style={selectedFabricId === item.id ? $selectedCardBg : undefined}
       onPress={() => {
         if (item.inStock) {
           setSelectedFabricId(item.id)
@@ -234,43 +223,71 @@ export const FabricSelectionStep: FC = observer(() => {
       disabled={!item.inStock}
     >
       {/* Fabric Image Placeholder */}
-      <View style={$fabricImageContainer}>
+      <View className="relative mb-sm">
         {item.image ? (
-          <AutoImage source={{ uri: item.image }} style={$fabricImage} />
+          <AutoImage source={{ uri: item.image }} style={{ width: "100%", height: 80, borderRadius: 8 }} />
         ) : (
-          <View style={[$fabricImagePlaceholder, { backgroundColor: getFabricColor(item.type) }]}>
-            <Text style={$fabricImageText}>{item.type.toUpperCase()}</Text>
+          <View
+            className="w-full h-[80px] rounded-[8px] justify-center items-center"
+            style={{ backgroundColor: getFabricColor(item.type) }}
+          >
+            <Text className="text-[10px] font-semibold" style={$textWarmIvory}>
+              {item.type.toUpperCase()}
+            </Text>
           </View>
         )}
         {!item.inStock && (
-          <View style={$outOfStockBadge}>
-            <Text style={$outOfStockText}>Out of Stock</Text>
+          <View className="absolute top-xs right-xs bg-alertRed rounded-[4px] px-xs py-xxxs">
+            <Text className="text-[9px] font-semibold uppercase" style={$textWarmIvory}>
+              Out of Stock
+            </Text>
           </View>
         )}
       </View>
 
-      <View style={$fabricInfo}>
-        <Text style={$fabricName}>{item.name}</Text>
-        <Text style={$fabricDescription} numberOfLines={2}>
+      <View className="flex-1">
+        <Text className="text-[14px] font-semibold mb-xxs" style={$textDeepCharcoal}>
+          {item.name}
+        </Text>
+        <Text className="text-[11px] leading-4 mb-sm" style={$textThreadBlue} numberOfLines={2}>
           {item.description}
         </Text>
 
-        <View style={$fabricDetails}>
-          <Text style={$fabricColor}>{item.color}</Text>
-          {item.pattern && <Text style={$fabricPattern}>{item.pattern}</Text>}
+        <View className="mb-sm">
+          <Text className="text-[12px] font-medium" style={$textNeutral600}>
+            {item.color}
+          </Text>
+          {item.pattern && (
+            <Text className="text-[11px] italic" style={$textNeutral500}>
+              {item.pattern}
+            </Text>
+          )}
         </View>
 
         {item.culturalSignificance && (
-          <View style={$culturalBadge}>
+          <View
+            className="flex-row items-center rounded-[4px] px-xs py-xxxs mb-sm self-start"
+            style={$culturalBadgeBg}
+          >
             <Icon icon="check" size={12} color={colors.palette.tailorGold} />
-            <Text style={$culturalText}>Traditional</Text>
+            <Text className="text-[9px] font-semibold uppercase ml-xxs" style={$textTailorGold}>
+              Traditional
+            </Text>
           </View>
         )}
 
-        <View style={$fabricPricing}>
-          <Text style={$fabricPrice}>₦{item.unitPrice.toLocaleString()}/m</Text>
-          <View style={[$radioButton, selectedFabricId === item.id && $radioButtonSelected]}>
-            {selectedFabricId === item.id && <View style={$radioButtonInner} />}
+        <View className="flex-row justify-between items-center">
+          <Text className="text-[13px] font-bold" style={$textTailorGold}>
+            ₦{item.unitPrice.toLocaleString()}/m
+          </Text>
+          <View
+            className={`w-[20px] h-[20px] rounded-[10px] border-2 justify-center items-center ${
+              selectedFabricId === item.id ? "border-tailorGold" : "border-neutral300"
+            }`}
+          >
+            {selectedFabricId === item.id && (
+              <View className="w-[10px] h-[10px] rounded-[5px] bg-tailorGold" />
+            )}
           </View>
         </View>
       </View>
@@ -294,13 +311,17 @@ export const FabricSelectionStep: FC = observer(() => {
   }
 
   return (
-    <ScrollView style={$container} showsVerticalScrollIndicator={false}>
-      <View style={$content}>
-        <Text style={$title}>{orderStore.getTranslation("fabricSelection", "en")}</Text>
-        <Text style={$subtitle}>Choose the perfect fabric for your garment</Text>
+    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <View className="p-lg">
+        <Text className="text-[24px] font-bold mb-xs" style={$textDeepCharcoal}>
+          {orderStore.getTranslation("fabricSelection", "en")}
+        </Text>
+        <Text className="text-[14px] leading-5 mb-lg" style={$textThreadBlue}>
+          Choose the perfect fabric for your garment
+        </Text>
 
         {/* Search and Filter */}
-        <View style={$searchContainer}>
+        <View className="mb-md">
           <TextField
             placeholder="Search fabrics..."
             value={searchQuery}
@@ -310,9 +331,9 @@ export const FabricSelectionStep: FC = observer(() => {
         </View>
 
         {/* Category Filter */}
-        <View style={$categoryContainer}>
+        <View className="mb-lg">
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={$categoryList}>
+            <View className="flex-row gap-sm">
               {categories.map((category) => (
                 <Button
                   key={category.value}
@@ -333,7 +354,11 @@ export const FabricSelectionStep: FC = observer(() => {
         </View>
 
         {/* Fabric Grid */}
-        {errors.fabric && <Text style={$errorText}>{errors.fabric}</Text>}
+        {errors.fabric && (
+          <Text className="text-[12px] mb-sm" style={$textAlertRed}>
+            {errors.fabric}
+          </Text>
+        )}
 
         <FlatList
           data={filteredFabrics}
@@ -347,9 +372,11 @@ export const FabricSelectionStep: FC = observer(() => {
 
         {/* Quantity Selection */}
         {selectedFabricId && (
-          <View style={$quantitySection}>
-            <Text style={$sectionTitle}>Quantity (meters)</Text>
-            <View style={$quantityContainer}>
+          <View className="mt-lg">
+            <Text className="text-[16px] font-semibold mb-md" style={$textDeepCharcoal}>
+              Quantity (meters)
+            </Text>
+            <View className="flex-row items-center gap-md">
               <Button
                 text="-"
                 style={$quantityButton}
@@ -387,18 +414,30 @@ export const FabricSelectionStep: FC = observer(() => {
 
         {/* Price Summary */}
         {selectedFabric && (
-          <View style={$priceSection}>
-            <View style={$priceRow}>
-              <Text style={$priceLabel}>{selectedFabric.name}</Text>
-              <Text style={$priceValue}>₦{selectedFabric.unitPrice.toLocaleString()}/m</Text>
+          <View className="bg-neutral100 rounded-[12px] p-lg mt-lg border border-neutral200">
+            <View className="flex-row justify-between items-center mb-sm">
+              <Text className="text-[14px]" style={$textThreadBlue}>
+                {selectedFabric.name}
+              </Text>
+              <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
+                ₦{selectedFabric.unitPrice.toLocaleString()}/m
+              </Text>
             </View>
-            <View style={$priceRow}>
-              <Text style={$priceLabel}>Quantity</Text>
-              <Text style={$priceValue}>{quantity} meters</Text>
+            <View className="flex-row justify-between items-center mb-sm">
+              <Text className="text-[14px]" style={$textThreadBlue}>
+                Quantity
+              </Text>
+              <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
+                {quantity} meters
+              </Text>
             </View>
-            <View style={[$priceRow, $totalRow]}>
-              <Text style={$totalLabel}>Total</Text>
-              <Text style={$totalValue}>₦{totalPrice.toLocaleString()}</Text>
+            <View className="flex-row justify-between items-center border-t border-neutral300 pt-sm">
+              <Text className="text-[16px] font-semibold" style={$textDeepCharcoal}>
+                Total
+              </Text>
+              <Text className="text-[18px] font-bold" style={$textTailorGold}>
+                ₦{totalPrice.toLocaleString()}
+              </Text>
             </View>
           </View>
         )}
@@ -412,48 +451,37 @@ export const FabricSelectionStep: FC = observer(() => {
           disabled={!selectedFabricId}
         />
 
-        <View style={$spacer} />
+        <View className="h-xl" />
       </View>
     </ScrollView>
   )
-})
+}
 
 // Styles
-const $container: ViewStyle = {
-  flex: 1,
+// This screen reads the STATIC (light-only) `colors` import, so text colors and
+// opacity-tinted backgrounds stay inline; layout/spacing/solid container colors
+// are className token utilities. No `dark:` variants.
+
+// Text color overrides (static, light-only).
+const $textDeepCharcoal: TextStyle = { color: colors.palette.deepCharcoal }
+const $textThreadBlue: TextStyle = { color: colors.palette.threadBlue }
+const $textNeutral600: TextStyle = { color: colors.palette.neutral600 }
+const $textNeutral500: TextStyle = { color: colors.palette.neutral500 }
+const $textTailorGold: TextStyle = { color: colors.palette.tailorGold }
+const $textWarmIvory: TextStyle = { color: colors.palette.warmIvory }
+const $textAlertRed: TextStyle = { color: colors.palette.alertRed }
+
+// Opacity-tinted backgrounds (kept inline — no matching token utility).
+const $selectedCardBg: ViewStyle = { backgroundColor: colors.palette.tailorGold + "10" }
+const $culturalBadgeBg: ViewStyle = { backgroundColor: colors.palette.tailorGold + "20" }
+
+// FlatList columnWrapperStyle takes a plain style object.
+const $fabricRow: ViewStyle = {
+  justifyContent: "space-between",
+  gap: spacing.md,
 }
 
-const $content: ViewStyle = {
-  padding: spacing.lg,
-}
-
-const $title: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xs,
-}
-
-const $subtitle: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.lg,
-  lineHeight: 20,
-}
-
-const $searchContainer: ViewStyle = {
-  marginBottom: spacing.md,
-}
-
-const $categoryContainer: ViewStyle = {
-  marginBottom: spacing.lg,
-}
-
-const $categoryList: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.sm,
-}
-
+// Button style overrides stay inline (Button owns its className).
 const $categoryButton: ViewStyle = {
   backgroundColor: colors.palette.neutral200,
   borderRadius: 20,
@@ -478,175 +506,6 @@ const $selectedCategoryButtonText: TextStyle = {
   color: colors.palette.warmIvory,
 }
 
-const $fabricRow: ViewStyle = {
-  justifyContent: "space-between",
-  gap: spacing.md,
-}
-
-const $fabricCard: ViewStyle = {
-  flex: 1,
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.md,
-  marginBottom: spacing.md,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral200,
-}
-
-const $selectedFabricCard: ViewStyle = {
-  borderColor: colors.palette.tailorGold,
-  backgroundColor: colors.palette.tailorGold + "10",
-}
-
-const $outOfStockCard: ViewStyle = {
-  opacity: 0.6,
-}
-
-const $fabricImageContainer: ViewStyle = {
-  position: "relative",
-  marginBottom: spacing.sm,
-}
-
-const $fabricImage: ImageStyle = {
-  width: "100%",
-  height: 80,
-  borderRadius: 8,
-}
-
-const $fabricImagePlaceholder: ViewStyle = {
-  width: "100%",
-  height: 80,
-  borderRadius: 8,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $fabricImageText: TextStyle = {
-  fontSize: 10,
-  fontWeight: "600",
-  color: colors.palette.warmIvory,
-}
-
-const $outOfStockBadge: ViewStyle = {
-  position: "absolute",
-  top: spacing.xs,
-  right: spacing.xs,
-  backgroundColor: colors.palette.alertRed,
-  borderRadius: 4,
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-}
-
-const $outOfStockText: TextStyle = {
-  fontSize: 9,
-  fontWeight: "600",
-  color: colors.palette.warmIvory,
-  textTransform: "uppercase",
-}
-
-const $fabricInfo: ViewStyle = {
-  flex: 1,
-}
-
-const $fabricName: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xxs,
-}
-
-const $fabricDescription: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.sm,
-  lineHeight: 16,
-}
-
-const $fabricDetails: ViewStyle = {
-  marginBottom: spacing.sm,
-}
-
-const $fabricColor: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral600,
-  fontWeight: "500",
-}
-
-const $fabricPattern: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.neutral500,
-  fontStyle: "italic",
-}
-
-const $culturalBadge: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: colors.palette.tailorGold + "20",
-  borderRadius: 4,
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-  marginBottom: spacing.sm,
-  alignSelf: "flex-start",
-}
-
-const $culturalText: TextStyle = {
-  fontSize: 9,
-  fontWeight: "600",
-  color: colors.palette.tailorGold,
-  textTransform: "uppercase",
-  marginLeft: spacing.xxs,
-}
-
-const $fabricPricing: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $fabricPrice: TextStyle = {
-  fontSize: 13,
-  fontWeight: "700",
-  color: colors.palette.tailorGold,
-}
-
-const $radioButton: ViewStyle = {
-  width: 20,
-  height: 20,
-  borderRadius: 10,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral300,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $radioButtonSelected: ViewStyle = {
-  borderColor: colors.palette.tailorGold,
-}
-
-const $radioButtonInner: ViewStyle = {
-  width: 10,
-  height: 10,
-  borderRadius: 5,
-  backgroundColor: colors.palette.tailorGold,
-}
-
-const $quantitySection: ViewStyle = {
-  marginTop: spacing.lg,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.md,
-}
-
-const $quantityContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.md,
-}
-
 const $quantityButton: ViewStyle = {
   width: 44,
   height: 44,
@@ -667,58 +526,6 @@ const $quantityInput: TextStyle = {
   textAlign: "center",
 }
 
-const $priceSection: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  marginTop: spacing.lg,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-}
-
-const $priceRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
-
-const $totalRow: ViewStyle = {
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral300,
-  paddingTop: spacing.sm,
-  marginBottom: 0,
-}
-
-const $priceLabel: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-}
-
-const $priceValue: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.deepCharcoal,
-}
-
-const $totalLabel: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $totalValue: TextStyle = {
-  fontSize: 18,
-  fontWeight: "700",
-  color: colors.palette.tailorGold,
-}
-
-const $errorText: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.alertRed,
-  marginBottom: spacing.sm,
-}
-
 const $saveButton: ViewStyle = {
   backgroundColor: colors.palette.sageGreen,
   borderRadius: 12,
@@ -731,8 +538,4 @@ const $saveButtonText: TextStyle = {
   fontWeight: "600",
   color: colors.palette.warmIvory,
   textAlign: "center",
-}
-
-const $spacer: ViewStyle = {
-  height: spacing.xl,
 }

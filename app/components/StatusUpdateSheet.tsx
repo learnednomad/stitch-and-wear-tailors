@@ -82,11 +82,13 @@ export function StatusUpdateSheet(props: StatusUpdateSheetProps) {
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <View style={$overlay}>
+      <View className="flex-1 justify-end">
         <TouchableOpacity style={$backdrop} activeOpacity={1} onPress={handleClose} />
-        <View style={$sheet}>
-          <View style={$sheetHeader}>
-            <Text style={$sheetTitle}>Update Status</Text>
+        <View className="rounded-t-[20px] bg-neutral100 p-6 pb-8">
+          <View className="mb-4 flex-row items-center justify-between">
+            <Text className="text-[18px]" weight="bold" style={{ color: colors.palette.neutral900 }}>
+              Update Status
+            </Text>
             <TouchableOpacity
               onPress={handleClose}
               accessible
@@ -98,20 +100,34 @@ export function StatusUpdateSheet(props: StatusUpdateSheetProps) {
           </View>
 
           {options.length === 0 ? (
-            <Text style={$noOptionsText}>This order has no further stages.</Text>
+            <Text className="py-4 text-[14px]" style={{ color: colors.palette.neutral600 }}>
+              This order has no further stages.
+            </Text>
           ) : (
             <>
               {options.map((status) => (
                 <TouchableOpacity
                   key={status}
-                  style={[$option, selectedStatus === status && $optionSelected]}
+                  className="mb-2 flex-row items-center justify-between rounded-[10px] border border-neutral300 px-4 py-3"
+                  style={
+                    selectedStatus === status
+                      ? { borderColor: colors.palette.primary500, backgroundColor: colors.palette.primary100 }
+                      : undefined
+                  }
                   onPress={() => setSelectedStatus(status)}
                   accessible
                   accessibilityLabel={STATUS_LABELS[status] ?? status}
                   accessibilityRole="button"
                 >
                   <Text
-                    style={[$optionText, selectedStatus === status && $optionTextSelected]}
+                    className="text-[15px]"
+                    weight={selectedStatus === status ? "semiBold" : undefined}
+                    style={{
+                      color:
+                        selectedStatus === status
+                          ? colors.palette.primary700
+                          : colors.palette.neutral800,
+                    }}
                   >
                     {STATUS_LABELS[status] ?? status}
                   </Text>
@@ -145,68 +161,11 @@ export function StatusUpdateSheet(props: StatusUpdateSheetProps) {
 }
 
 // Styles
-const $overlay: ViewStyle = {
-  flex: 1,
-  justifyContent: "flex-end",
-}
-
+// Modal backdrop (opacity-tinted overlay) + TextField containerStyle + Button
+// style/textStyle overrides stay inline per the recipe.
 const $backdrop: ViewStyle = {
   ...({ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 } as ViewStyle),
   backgroundColor: colors.palette.overlay50,
-}
-
-const $sheet: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  padding: spacing.lg,
-  paddingBottom: spacing.xl,
-}
-
-const $sheetHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.md,
-}
-
-const $sheetTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-}
-
-const $noOptionsText: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral600,
-  paddingVertical: spacing.md,
-}
-
-const $option: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  paddingVertical: spacing.sm,
-  paddingHorizontal: spacing.md,
-  borderRadius: 10,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-  marginBottom: spacing.xs,
-}
-
-const $optionSelected: ViewStyle = {
-  borderColor: colors.palette.primary500,
-  backgroundColor: colors.palette.primary100,
-}
-
-const $optionText: TextStyle = {
-  fontSize: 15,
-  color: colors.palette.neutral800,
-}
-
-const $optionTextSelected: TextStyle = {
-  fontWeight: "600",
-  color: colors.palette.primary700,
 }
 
 const $noteField: ViewStyle = {

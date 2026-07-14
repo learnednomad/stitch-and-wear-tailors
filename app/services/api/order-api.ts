@@ -97,9 +97,10 @@ export interface FetchOrdersParams {
 }
 
 // ---------------------------------------------------------------------------
-// Enum vocabularies (must stay in sync with NigerianOrderModel in
-// app/models/stores/OrderStore.ts — every mapped value is validated against
-// these lists so NigerianOrderModel.create never throws on server data).
+// Enum vocabularies. Every mapped value must fall within these lists so the
+// domain snapshot stays valid; the mapper's output is verified against
+// `domainOrderSnapshotSchema` in __tests__/order-mapper.test.ts (the oracle
+// that replaced the former NigerianOrderModel MST model).
 // ---------------------------------------------------------------------------
 
 const DOMAIN_GARMENT_TYPES = [
@@ -780,6 +781,14 @@ export const orderApi = {
       filter: filters.eq("order", orderId),
       sort: "created",
     })
+  },
+
+  /**
+   * Hard-delete an order record (server cascades its items/stages).
+   */
+  async deleteOrder(orderId: string): Promise<ServiceResult<unknown>> {
+    const adapter = getPocketBaseAdapter()
+    return adapter.remove(COLLECTIONS.ORDERS, orderId)
   },
 }
 

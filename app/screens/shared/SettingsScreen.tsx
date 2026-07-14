@@ -6,14 +6,13 @@
  * reset email, biometric setup), Notifications (local switches persisted
  * to storage) and About, plus Sign Out.
  */
+import { useRouter } from "expo-router"
 import { FC, useState } from "react"
-import { observer } from "mobx-react-lite"
-import { Alert, Image, ImageStyle, Platform, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
+import { Alert, Image, Platform, TouchableOpacity, View, ViewStyle } from "react-native"
 import i18next from "i18next"
 import Constants from "expo-constants"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Screen, Switch, Text, TextField } from "@/components"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { useAuth } from "@/contexts/AuthContext"
 import AuthService from "@/services/auth/AuthService"
 import { getPocketBaseAuthAdapter } from "@/services/pocketbase/pocketbase-auth-adapter"
@@ -22,7 +21,6 @@ import * as storage from "@/utils/storage"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface SettingsScreenProps extends AppStackScreenProps<"Settings"> {}
 
 const LANGUAGES: Array<{ tag: string; label: string }> = [
   { tag: "en", label: "English" },
@@ -49,11 +47,15 @@ const DEFAULT_PREFS: LocalNotificationPrefs = {
   payments: true,
 }
 
-export const SettingsScreen: FC<SettingsScreenProps> = observer(function SettingsScreen({
-  navigation,
-}) {
+// Card section: solid neutral100 surface with a dark twin (mirrors the previous
+// theme.colors.palette.neutral100 lookup). Used by every section on the screen.
+const $sectionClass = "mx-4 mb-4 rounded-xl bg-neutral100 p-4 dark:bg-neutral100-dark"
+const $sectionTitleClass = "mb-2 mt-3 px-4"
+
+export const SettingsScreen: FC = function SettingsScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
-  const { authStore } = useStores()
+  const authStore = useAuthStore()
   const { signOut } = useAuth()
 
   const user = authStore.user
@@ -131,33 +133,30 @@ export const SettingsScreen: FC<SettingsScreenProps> = observer(function Setting
 
   const appVersion = Constants.expoConfig?.version ?? "1.0.0"
 
-  const $section: ViewStyle = {
-    backgroundColor: theme.colors.palette.neutral100,
-    borderRadius: 12,
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.md,
-    padding: spacing.md,
-  }
-
   return (
     <Screen style={$root} preset="scroll" safeAreaEdges={["top"]}>
-      <Text preset="heading" text="Settings" style={$heading} />
+      <Text preset="heading" text="Settings" className="px-4 pt-4" />
 
       {/* Profile */}
-      <Text preset="subheading" text="Profile" style={$sectionTitle} />
-      <View style={$section}>
-        <View style={$profileRow}>
+      <Text preset="subheading" text="Profile" className={$sectionTitleClass} />
+      <View className={$sectionClass}>
+        <View className="mb-3 flex-row items-center">
           {avatarUrl ? (
-            <Image source={{ uri: avatarUrl }} style={$avatar} />
+            <Image source={{ uri: avatarUrl }} className="h-14 w-14 rounded-full" />
           ) : (
-            <View style={[$avatar, $avatarPlaceholder, { backgroundColor: theme.colors.tint }]}>
-              <Text style={$avatarInitial} text={(firstName || "U").charAt(0).toUpperCase()} />
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-tint dark:bg-tint-dark">
+              <Text
+                className="text-[24px]"
+                weight="bold"
+                style={{ color: "#FFFFFF" }}
+                text={(firstName || "U").charAt(0).toUpperCase()}
+              />
             </View>
           )}
-          <View style={$profileMeta}>
-            <Text style={{ color: theme.colors.text }} text={user?.email ?? ""} />
+          <View className="ml-3 flex-1">
+            <Text className="text-text dark:text-text-dark" text={user?.email ?? ""} />
             <Text
-              style={[$roleText, { color: theme.colors.textDim }]}
+              className="mt-0.5 text-[12px] text-textDim dark:text-textDim-dark"
               text={user?.role === "tailor" ? "Tailor account" : "Client account"}
             />
           </View>
@@ -179,29 +178,23 @@ export const SettingsScreen: FC<SettingsScreenProps> = observer(function Setting
       </View>
 
       {/* Preferences */}
-      <Text preset="subheading" text="Preferences" style={$sectionTitle} />
-      <View style={$section}>
-        <Text preset="formLabel" text="Language" style={$fieldLabel} />
-        <View style={$languageChips}>
+      <Text preset="subheading" text="Preferences" className={$sectionTitleClass} />
+      <View className={$sectionClass}>
+        <Text preset="formLabel" text="Language" className="mb-2" />
+        <View className="flex-row flex-wrap gap-2">
           {LANGUAGES.map((option) => {
             const active = language === option.tag
             return (
               <TouchableOpacity
                 key={option.tag}
-                style={[
-                  $chip,
-                  {
-                    backgroundColor: active ? theme.colors.tint : theme.colors.background,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
+                className="rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
+                style={{ backgroundColor: active ? theme.colors.tint : theme.colors.background }}
                 onPress={() => handleLanguage(option.tag)}
               >
                 <Text
-                  style={[
-                    $chipText,
-                    { color: active ? theme.colors.palette.neutral100 : theme.colors.text },
-                  ]}
+                  className="text-[13px]"
+                  weight="semiBold"
+                  style={{ color: active ? theme.colors.palette.neutral100 : theme.colors.text }}
                   text={option.label}
                 />
               </TouchableOpacity>
@@ -209,32 +202,32 @@ export const SettingsScreen: FC<SettingsScreenProps> = observer(function Setting
           })}
         </View>
         <Text
-          style={[$hint, { color: theme.colors.textDim }]}
+          className="mt-3 text-[12px] text-textDim dark:text-textDim-dark"
           text={`Theme follows your system setting (${theme.isDark ? "dark" : "light"} right now).`}
         />
       </View>
 
       {/* Security */}
-      <Text preset="subheading" text="Security" style={$sectionTitle} />
-      <View style={$section}>
-        <TouchableOpacity style={$row} onPress={handleChangePassword}>
-          <Text style={{ color: theme.colors.text }} text="Change password" />
-          <Text style={{ color: theme.colors.textDim }} text="Email link" />
+      <Text preset="subheading" text="Security" className={$sectionTitleClass} />
+      <View className={$sectionClass}>
+        <TouchableOpacity className="flex-row items-center justify-between py-3" onPress={handleChangePassword}>
+          <Text className="text-text dark:text-text-dark" text="Change password" />
+          <Text className="text-textDim dark:text-textDim-dark" text="Email link" />
         </TouchableOpacity>
         {Platform.OS !== "web" && (
           <TouchableOpacity
-            style={$row}
-            onPress={() => navigation.navigate("BiometricSetup")}
+            className="flex-row items-center justify-between py-3"
+            onPress={() =>router.push("/biometric-setup")}
           >
-            <Text style={{ color: theme.colors.text }} text="Biometric login" />
-            <Text style={{ color: theme.colors.textDim }} text="Set up" />
+            <Text className="text-text dark:text-text-dark" text="Biometric login" />
+            <Text className="text-textDim dark:text-textDim-dark" text="Set up" />
           </TouchableOpacity>
         )}
       </View>
 
       {/* Notifications (local, v1) */}
-      <Text preset="subheading" text="Notifications" style={$sectionTitle} />
-      <View style={$section}>
+      <Text preset="subheading" text="Notifications" className={$sectionTitleClass} />
+      <View className={$sectionClass}>
         <Switch
           label="Order updates"
           value={notifPrefs.orderUpdates}
@@ -256,106 +249,31 @@ export const SettingsScreen: FC<SettingsScreenProps> = observer(function Setting
       </View>
 
       {/* About */}
-      <Text preset="subheading" text="About" style={$sectionTitle} />
-      <View style={$section}>
-        <View style={$row}>
-          <Text style={{ color: theme.colors.text }} text="Version" />
-          <Text style={{ color: theme.colors.textDim }} text={appVersion} />
+      <Text preset="subheading" text="About" className={$sectionTitleClass} />
+      <View className={$sectionClass}>
+        <View className="flex-row items-center justify-between py-3">
+          <Text className="text-text dark:text-text-dark" text="Version" />
+          <Text className="text-textDim dark:text-textDim-dark" text={appVersion} />
         </View>
-        <View style={$row}>
-          <Text style={{ color: theme.colors.text }} text="Stitch & Wear Tailors" />
+        <View className="flex-row items-center justify-between py-3">
+          <Text className="text-text dark:text-text-dark" text="Stitch & Wear Tailors" />
         </View>
       </View>
 
       <Button text="Sign Out" preset="reversed" onPress={handleSignOut} style={$signOutButton} />
     </Screen>
   )
-})
+}
 
+// Screen `style` prop stays an inline style object (Screen owns its own layout).
 const $root: ViewStyle = {
   flex: 1,
 }
 
-const $heading: TextStyle = {
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.md,
-}
-
-const $sectionTitle: TextStyle = {
-  paddingHorizontal: spacing.md,
-  marginTop: spacing.sm,
-  marginBottom: spacing.xs,
-}
-
-const $profileRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
-
-const $avatar: ImageStyle = {
-  width: 56,
-  height: 56,
-  borderRadius: 28,
-}
-
-const $avatarPlaceholder: ViewStyle = {
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $avatarInitial: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: "#FFFFFF",
-}
-
-const $profileMeta: ViewStyle = {
-  marginLeft: spacing.sm,
-  flex: 1,
-}
-
-const $roleText: TextStyle = {
-  fontSize: 12,
-  marginTop: 2,
-}
-
+// Component style-prop overrides (TextField/Switch containerStyle, Button style)
+// stay inline per the recipe.
 const $field: ViewStyle = {
   marginBottom: spacing.sm,
-}
-
-const $fieldLabel: TextStyle = {
-  marginBottom: spacing.xs,
-}
-
-const $languageChips: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.xs,
-}
-
-const $chip: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-  borderRadius: 16,
-  borderWidth: 1,
-}
-
-const $chipText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-}
-
-const $hint: TextStyle = {
-  fontSize: 12,
-  marginTop: spacing.sm,
-}
-
-const $row: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  paddingVertical: spacing.sm,
 }
 
 const $switchRow: ViewStyle = {

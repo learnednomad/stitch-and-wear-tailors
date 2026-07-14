@@ -1,3 +1,5 @@
+import { ClientEnv } from "../../env"
+
 export interface ConfigBaseProps {
   persistNavigation: "always" | "dev" | "prod" | "never"
   catchErrors: "always" | "dev" | "prod" | "never"
@@ -30,7 +32,7 @@ const BaseConfig: ConfigBaseProps = {
    * Sentry crash reporting (https://starter.obytes.com/recipes/sentry-setup/).
    * Only used in production builds; an empty DSN disables Sentry entirely.
    */
-  SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN || "",
+  SENTRY_DSN: ClientEnv.EXPO_PUBLIC_SENTRY_DSN || "",
 }
 
 export default BaseConfig

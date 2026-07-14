@@ -1,10 +1,9 @@
+import { useRouter } from "expo-router"
 import { FC, useState, useEffect } from "react"
-import { observer } from "mobx-react-lite"
 import { ViewStyle, View, Alert } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen } from "@/components"
-import { useNavigation } from "@react-navigation/native"
-import { useStores, UserStatus } from "@/models"
+import { UserStatus } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import AuthService from "@/services/auth/AuthService"
 import { spacing, colors } from "@/theme"
 import { ValidationUtils } from "@/utils/validation"
@@ -13,11 +12,10 @@ import { RateLimiter } from "@/utils/rate-limiter"
 import { PremiumSignInForm } from "@/components/PremiumSignInForm"
 import { BiometricService } from "@/services/biometric/BiometricService"
 
-interface SignInScreenProps extends AppStackScreenProps<"SignIn"> {}
 
-export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScreen() {
-  const { authStore } = useStores()
-  const navigation = useNavigation()
+export const SignInScreen: FC = function SignInScreen() {
+  const authStore = useAuthStore()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSignIn = async (email: string, password: string, biometric = false) => {
@@ -78,14 +76,13 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
                   )
                   if (verifyResult.success) {
                     Alert.alert("Verification Sent", "Please check your email.")
-                  }
-                  navigation.navigate("VerifyEmail" as never)
+                  }router.push("/verify-email")
                 },
               },
               {
                 text: "OK",
                 style: "cancel",
-                onPress: () => navigation.navigate("VerifyEmail" as never),
+                onPress: () =>router.push("/verify-email"),
               },
             ],
           )
@@ -178,8 +175,7 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
     }
   }
 
-  const handleSignUp = () => {
-    navigation.navigate("SignUp" as never)
+  const handleSignUp = () => {router.push("/sign-up")
   }
 
   const handleBiometricAuth = async () => {
@@ -214,8 +210,7 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
     }
   }
 
-  const handleForgotPassword = () => {
-    navigation.navigate("ForgotPassword" as never)
+  const handleForgotPassword = () => {router.push("/forgot-password")
   }
 
   return (
@@ -234,4 +229,4 @@ export const SignInScreen: FC<SignInScreenProps> = observer(function SignInScree
       />
     </Screen>
   )
-})
+}

@@ -9,7 +9,6 @@
  *  - Receipt: a simple per-payment detail modal.
  */
 import { FC, useCallback, useEffect, useState } from "react"
-import { observer } from "mobx-react-lite"
 import {
   Alert,
   Modal,
@@ -19,7 +18,6 @@ import {
   View,
   ViewStyle,
 } from "react-native"
-import { TabScreenProps } from "@/navigators/ClientTabsNavigator"
 import { Button, Screen, Text, TextField, Chip, ChipTone } from "@/components"
 import { orderApi } from "@/services/api/order-api"
 import {
@@ -32,7 +30,6 @@ import { formatNaira } from "@/utils/formatCurrency"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface PaymentScreenProps extends TabScreenProps<"Pay"> {}
 
 interface OutstandingOrder {
   id: string
@@ -63,7 +60,7 @@ const STATUS_LABELS: Record<string, string> = {
   rejected: "Rejected",
 }
 
-export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentScreen() {
+export const PaymentScreen: FC = function PaymentScreen() {
   const { theme } = useAppTheme()
   const [outstanding, setOutstanding] = useState<OutstandingOrder[]>([])
   const [payments, setPayments] = useState<PBPayment[]>([])
@@ -178,39 +175,44 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
         refreshControl: <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />,
       }}
     >
-      <Text preset="heading" text="Payments" style={$heading} />
-      {error && <Text style={[$error, { color: theme.colors.error }]} text={error} />}
+      <Text preset="heading" text="Payments" className="px-4 pt-4" />
+      {error && (
+        <Text className="p-4 text-center text-error dark:text-error-dark" text={error} />
+      )}
 
       {/* outstanding balances */}
-      <Text preset="subheading" text="Outstanding" style={$sectionTitle} />
+      <Text preset="subheading" text="Outstanding" className="mb-2 mt-4 px-4" />
       {outstanding.length === 0 && (
-        <Text style={[$emptyText, { color: theme.colors.textDim }]} text="Nothing to pay — you're all settled!" />
+        <Text
+          className="px-4 pb-3 text-textDim dark:text-textDim-dark"
+          text="Nothing to pay — you're all settled!"
+        />
       )}
       {outstanding.map((order) => (
         <View
           key={order.id}
-          style={[
-            $card,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-          ]}
+          className="mx-4 mb-3 rounded-2xl border border-border bg-surface p-4 dark:border-border-dark dark:bg-surface-dark"
         >
-          <View style={$cardHeader}>
-            <Text style={[$cardTitle, { color: theme.colors.text }]} text={`#${order.orderNumber}`} />
+          <View className="flex-row items-center justify-between">
+            <Text
+              className="text-[15px] font-bold text-text dark:text-text-dark"
+              text={`#${order.orderNumber}`}
+            />
             {order.invoice && (
               <Text
-                style={[$invoiceNumber, { color: theme.colors.palette.gray500 }]}
+                className="text-[12px] text-gray500 dark:text-gray500-dark"
                 text={order.invoice.invoiceNumber}
               />
             )}
           </View>
-          <View style={$balanceRow}>
+          <View className="mt-3 flex-row items-center justify-between">
             <View>
               <Text
-                style={[$amountLabel, { color: theme.colors.textDim }]}
+                className="text-[12px] text-textDim dark:text-textDim-dark"
                 text="Balance due"
               />
               <Text
-                style={[$balanceValue, { color: theme.colors.error }]}
+                className="mt-0.5 text-[22px] font-bold text-error dark:text-error-dark"
                 text={formatNaira(order.balance)}
               />
             </View>
@@ -223,7 +225,7 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
             />
           </View>
           <Text
-            style={[$paidMeta, { color: theme.colors.textDim }]}
+            className="mt-3 text-[12px] text-textDim dark:text-textDim-dark"
             text={`Total ${formatNaira(order.total)}  ·  Paid ${formatNaira(order.depositPaid)}${
               order.invoice?.dueAt
                 ? `  ·  Due ${new Date(order.invoice.dueAt).toLocaleDateString("en-NG", {
@@ -237,27 +239,24 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
       ))}
 
       {/* payment history */}
-      <Text preset="subheading" text="History" style={$sectionTitle} />
+      <Text preset="subheading" text="History" className="mb-2 mt-4 px-4" />
       {payments.length === 0 && (
-        <Text style={[$emptyText, { color: theme.colors.textDim }]} text="No payments yet" />
+        <Text className="px-4 pb-3 text-textDim dark:text-textDim-dark" text="No payments yet" />
       )}
       {payments.map((payment) => (
         <TouchableOpacity
           key={payment.id}
-          style={[
-            $historyRow,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-          ]}
+          className="mx-4 mb-2 flex-row items-center justify-between rounded-2xl border border-border bg-surface p-4 dark:border-border-dark dark:bg-surface-dark"
           activeOpacity={0.7}
           onPress={() => setReceipt(payment)}
         >
-          <View style={$historyLeft}>
+          <View className="flex-1">
             <Text
-              style={[$historyAmount, { color: theme.colors.text }]}
+              className="text-[15px] font-bold text-text dark:text-text-dark"
               text={formatNaira(payment.amount)}
             />
             <Text
-              style={[$historyMeta, { color: theme.colors.textDim }]}
+              className="mt-0.5 text-[12px] text-textDim dark:text-textDim-dark"
               text={`${PAYMENT_METHODS.find((m) => m.value === payment.method)?.label ?? payment.method} · ${new Date(
                 payment.created,
               ).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}`}
@@ -277,11 +276,11 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
         transparent
         onRequestClose={() => setPayingOrder(null)}
       >
-        <View style={$modalOverlay}>
-          <View style={[$modalCard, { backgroundColor: theme.colors.background }]}>
+        <View className="flex-1 justify-end" style={$modalOverlay}>
+          <View className="rounded-t-[20px] bg-background p-6 pb-8 dark:bg-background-dark">
             <Text preset="subheading" text={`Pay #${payingOrder?.orderNumber ?? ""}`} />
             <Text
-              style={[$modalMeta, { color: theme.colors.textDim }]}
+              className="mb-3 mt-1 text-textDim dark:text-textDim-dark"
               text={`Outstanding balance: ${formatNaira(payingOrder?.balance)}`}
             />
             <TextField
@@ -291,27 +290,20 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
               keyboardType="numeric"
               containerStyle={$field}
             />
-            <Text preset="formLabel" text="Method" style={$methodLabel} />
-            <View style={$methodChips}>
+            <Text preset="formLabel" text="Method" className="mb-2" />
+            <View className="mb-3 flex-row flex-wrap gap-2">
               {PAYMENT_METHODS.map((option) => {
                 const active = method === option.value
                 return (
                   <TouchableOpacity
                     key={option.value}
-                    style={[
-                      $chip,
-                      {
-                        backgroundColor: active ? theme.colors.accent : theme.colors.surface,
-                        borderColor: theme.colors.border,
-                      },
-                    ]}
+                    className="rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
+                    style={{ backgroundColor: active ? theme.colors.accent : theme.colors.surface }}
                     onPress={() => setMethod(option.value)}
                   >
                     <Text
-                      style={[
-                        $chipText,
-                        { color: active ? theme.colors.palette.neutral100 : theme.colors.text },
-                      ]}
+                      className="text-[13px] font-semibold"
+                      style={{ color: active ? theme.colors.palette.neutral100 : theme.colors.text }}
                       text={option.label}
                     />
                   </TouchableOpacity>
@@ -343,8 +335,8 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
         transparent
         onRequestClose={() => setReceipt(null)}
       >
-        <View style={$modalOverlay}>
-          <View style={[$modalCard, { backgroundColor: theme.colors.background }]}>
+        <View className="flex-1 justify-end" style={$modalOverlay}>
+          <View className="rounded-t-[20px] bg-background p-6 pb-8 dark:bg-background-dark">
             {receipt && (
               <>
                 <Text preset="subheading" text="Payment Receipt" />
@@ -375,9 +367,15 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
                       : "Awaiting confirmation",
                   ],
                 ].map(([label, value]) => (
-                  <View key={label} style={$receiptRow}>
-                    <Text style={[$receiptLabel, { color: theme.colors.textDim }]} text={label} />
-                    <Text style={[$receiptValue, { color: theme.colors.text }]} text={value} />
+                  <View key={label} className="flex-row justify-between py-2">
+                    <Text
+                      className="text-[13px] text-textDim dark:text-textDim-dark"
+                      text={label}
+                    />
+                    <Text
+                      className="ml-3 shrink text-right text-[13px] font-semibold text-text dark:text-text-dark"
+                      text={value}
+                    />
                   </View>
                 ))}
                 <Button text="Close" onPress={() => setReceipt(null)} style={$modalButton} />
@@ -388,78 +386,13 @@ export const PaymentScreen: FC<PaymentScreenProps> = observer(function PaymentSc
       </Modal>
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = {
   flex: 1,
 }
 
-const $heading: TextStyle = {
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.md,
-}
-
-const $sectionTitle: TextStyle = {
-  paddingHorizontal: spacing.md,
-  marginTop: spacing.md,
-  marginBottom: spacing.xs,
-}
-
-const $error: TextStyle = {
-  padding: spacing.md,
-  textAlign: "center",
-}
-
-const $emptyText: TextStyle = {
-  paddingHorizontal: spacing.md,
-  paddingBottom: spacing.sm,
-}
-
-const $card: ViewStyle = {
-  marginHorizontal: spacing.md,
-  marginBottom: spacing.sm,
-  borderRadius: 16,
-  borderWidth: 1,
-  padding: spacing.md,
-}
-
-const $cardHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $cardTitle: TextStyle = {
-  fontSize: 15,
-  fontWeight: "700",
-}
-
-const $invoiceNumber: TextStyle = {
-  fontSize: 12,
-}
-
-const $balanceRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginTop: spacing.sm,
-}
-
-const $amountLabel: TextStyle = {
-  fontSize: 12,
-}
-
-const $balanceValue: TextStyle = {
-  fontSize: 22,
-  fontWeight: "700",
-  marginTop: 2,
-}
-
-const $paidMeta: TextStyle = {
-  fontSize: 12,
-  marginTop: spacing.sm,
-}
-
+// Button style/textStyle overrides — combine with the live-theme accent bg inline.
 const $payButton: ViewStyle = {
   borderWidth: 0,
   borderRadius: 12,
@@ -473,106 +406,18 @@ const $payButtonText: TextStyle = {
   fontWeight: "600",
 }
 
-const $historyRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginHorizontal: spacing.md,
-  marginBottom: spacing.xs,
-  borderRadius: 16,
-  borderWidth: 1,
-  padding: spacing.md,
-}
-
-const $historyLeft: ViewStyle = {
-  flex: 1,
-}
-
-const $historyAmount: TextStyle = {
-  fontSize: 15,
-  fontWeight: "700",
-}
-
-const $historyMeta: TextStyle = {
-  fontSize: 12,
-  marginTop: 2,
-}
-
-const $statusChip: ViewStyle = {
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 3,
-  borderRadius: 10,
-}
-
-const $statusChipText: TextStyle = {
-  fontSize: 11,
-  fontWeight: "700",
-}
-
+// Fixed overlay tint (raw rgba, not a token) — stays inline.
 const $modalOverlay: ViewStyle = {
-  flex: 1,
-  justifyContent: "flex-end",
   backgroundColor: "rgba(0, 0, 0, 0.4)",
 }
 
-const $modalCard: ViewStyle = {
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  padding: spacing.lg,
-  paddingBottom: spacing.xl,
-}
-
-const $modalMeta: TextStyle = {
-  marginTop: spacing.xxs,
-  marginBottom: spacing.sm,
-}
-
+// TextField containerStyle prop — stays an inline style object.
 const $field: ViewStyle = {
   marginBottom: spacing.sm,
 }
 
-const $methodLabel: TextStyle = {
-  marginBottom: spacing.xs,
-}
-
-const $methodChips: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.xs,
-  marginBottom: spacing.sm,
-}
-
-const $chip: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-  borderRadius: 16,
-  borderWidth: 1,
-}
-
-const $chipText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-}
-
+// Button style override — stays inline.
 const $modalButton: ViewStyle = {
   marginTop: spacing.sm,
   marginBottom: spacing.xs,
-}
-
-const $receiptRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  paddingVertical: spacing.xs,
-}
-
-const $receiptLabel: TextStyle = {
-  fontSize: 13,
-}
-
-const $receiptValue: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-  flexShrink: 1,
-  textAlign: "right",
-  marginLeft: spacing.sm,
 }

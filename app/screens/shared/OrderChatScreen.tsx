@@ -8,18 +8,26 @@
  * no tailor yet the input is disabled with an explanatory empty state.
  */
 
-import React, { FC, useCallback, useEffect, useState } from "react"
+import { useRouter, useLocalSearchParams } from "expo-router"
+import { FC, useCallback, useEffect, useState } from "react"
 import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle, Alert } from "react-native"
-import { observer } from "mobx-react-lite"
-import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon, Text, TextField, ChatBubble } from "app/components"
-import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
-import { colors, spacing } from "app/theme"
-import { useNavigation } from "@react-navigation/native"
-import { messageApi, PBMessageRecord } from "@/services/api/message-api"
+import { useQueryClient } from "@tanstack/react-query"
+import { Button, Screen, Icon, Text, TextField, ChatBubble } from "@/components"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { colors, spacing } from "@/theme"
+import { errorMessage } from "@/api/common"
+import {
+  markMessageRead,
+  mergeMessageUpdate,
+  upsertMessage,
+  useChatCustomerFallbackName,
+  useChatOrder,
+  useOrderMessages,
+  useSendMessage,
+} from "@/api/messages"
+import { PBMessageRecord } from "@/services/api/message-api"
 import { getPocketBaseAdapter, filters, COLLECTIONS } from "@/services/api/pocketbase-api-adapter"
 import { realtimeManager } from "@/services/realtime/RealtimeManager"
-import { PBOrderRecord, PBOrderItemRecord } from "@/services/api/order-api"
 
 /** Display name for an expanded users record */
 function userName(user?: Record<string, any> | null): string {
@@ -28,27 +36,37 @@ function userName(user?: Record<string, any> | null): string {
   return full || user.name || user.email || ""
 }
 
-interface OrderChatScreenProps extends AppStackScreenProps<"OrderChat"> {}
 
-export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) => {
-  const navigation = useNavigation()
+export const OrderChatScreen: FC = () => {
+  const router = useRouter()
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
-  const { orderId } = route?.params || { orderId: "" }
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const orderId = id ?? ""
 
   const adapter = getPocketBaseAdapter()
   const currentUserId = adapter.currentUserId
+  const queryClient = useQueryClient()
 
-  const [pbOrder, setPbOrder] = useState<PBOrderRecord | null>(null)
-  const [customerFallbackName, setCustomerFallbackName] = useState("")
-  const [messages, setMessages] = useState<PBMessageRecord[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSending, setIsSending] = useState(false)
   const [draft, setDraft] = useState("")
 
-  // The other party on the order (empty while unassigned). Note: the users
-  // view rule only exposes tailor records to other users, so when a tailor is
-  // viewing, expand.customer is empty and the name falls back to the
-  // customerInfo stored on the order_item specifications.
+  // Order (with parties expanded) + messages via React Query
+  const orderQuery = useChatOrder(orderId)
+  const pbOrder = orderQuery.data ?? null
+  const messagesQuery = useOrderMessages(orderId)
+  const messages = messagesQuery.data ?? []
+  const sendMessage = useSendMessage(orderId)
+  const isLoading = orderQuery.isLoading || messagesQuery.isLoading
+  const isSending = sendMessage.isPending
+
+  // Tailor viewers cannot expand the customer user record (users view rule)
+  // — recover the display name from the order_item specifications.
+  const fallbackNameQuery = useChatCustomerFallbackName(
+    orderId,
+    !!pbOrder && pbOrder.customer !== currentUserId && !pbOrder.expand?.customer,
+  )
+  const customerFallbackName = fallbackNameQuery.data ?? ""
+
+  // The other party on the order (empty while unassigned).
   const counterpartId =
     pbOrder?.customer === currentUserId ? (pbOrder?.tailor ?? "") : (pbOrder?.customer ?? "")
   const counterpartName =
@@ -58,79 +76,24 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
   const hasTailor = !!pbOrder?.tailor
   const canChat = hasTailor && !!counterpartId
 
-  /** Mark an incoming message read (server + local state) */
+  /** Mark an incoming message read (server + query cache) */
   const markIncomingRead = useCallback(
     (message: PBMessageRecord) => {
       if (message.recipient !== currentUserId || message.isRead) return
-      messageApi.markRead(message.id)
-      setMessages((prev) =>
-        prev.map((m) => (m.id === message.id ? { ...m, isRead: true } : m)),
-      )
+      markMessageRead(queryClient, orderId, message.id)
     },
-    [currentUserId],
+    [currentUserId, orderId, queryClient],
   )
 
-  // Initial load: order (with parties expanded) + messages, then mark unread
-  // incoming messages as read
+  // Mark unread incoming messages read once a loaded batch contains any
   useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      if (!orderId) {
-        setIsLoading(false)
-        return
-      }
-      const [orderResult, messagesResult] = await Promise.all([
-        adapter.getOne<PBOrderRecord>(COLLECTIONS.ORDERS, orderId, "customer,tailor"),
-        messageApi.listByOrder(orderId),
-      ])
-      if (cancelled) return
-      if (orderResult.success) {
-        setPbOrder(orderResult.data)
-        // Tailor viewers cannot expand the customer user record (users view
-        // rule) — recover the display name from the order_item specifications
-        if (
-          orderResult.data.customer !== currentUserId &&
-          !orderResult.data.expand?.customer
-        ) {
-          adapter
-            .getFirst<PBOrderItemRecord>(
-              COLLECTIONS.ORDER_ITEMS,
-              filters.eq("order", orderId),
-            )
-            .then((itemResult) => {
-              if (cancelled || !itemResult.success || !itemResult.data) return
-              const specs = itemResult.data.specifications
-              const info =
-                specs && typeof specs === "object" ? (specs as any).customerInfo : undefined
-              const name = `${info?.firstName ?? ""} ${info?.lastName ?? ""}`.trim()
-              if (name) setCustomerFallbackName(name)
-            })
-        }
-      }
-      if (messagesResult.success) {
-        setMessages(messagesResult.data.items)
-        for (const message of messagesResult.data.items) {
-          if (message.recipient === currentUserId && !message.isRead) {
-            messageApi.markRead(message.id)
-          }
-        }
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.recipient === currentUserId && !m.isRead ? { ...m, isRead: true } : m,
-          ),
-        )
-      }
-      setIsLoading(false)
+    for (const message of messages) {
+      markIncomingRead(message)
     }
-    load()
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId])
+  }, [messages, markIncomingRead])
 
-  // Realtime: append incoming creates (marking them read) and fold in updates
-  // (e.g. read receipts on own messages)
+  // Realtime (kept): append incoming creates (marking them read) and fold in
+  // updates (e.g. read receipts on own messages) via queryClient.setQueryData
   useEffect(() => {
     if (!orderId) return undefined
     const unsubscribe = realtimeManager.subscribe(
@@ -139,31 +102,27 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
       (event) => {
         const record = event.record as PBMessageRecord
         if (event.action === "create") {
-          setMessages((prev) => (prev.some((m) => m.id === record.id) ? prev : [...prev, record]))
+          upsertMessage(queryClient, orderId, record)
           markIncomingRead(record)
         } else if (event.action === "update") {
-          setMessages((prev) => prev.map((m) => (m.id === record.id ? { ...m, ...record } : m)))
+          mergeMessageUpdate(queryClient, orderId, record)
         }
       },
       { filter: filters.eq("order", orderId) },
     )
     return unsubscribe
-  }, [orderId, markIncomingRead])
+  }, [orderId, markIncomingRead, queryClient])
 
-  const handleSend = async () => {
+  const handleSend = () => {
     const content = draft.trim()
     if (!content || !canChat || isSending) return
-    setIsSending(true)
-    const result = await messageApi.send(orderId, counterpartId, content)
-    setIsSending(false)
-    if (result.success) {
-      setDraft("")
-      setMessages((prev) =>
-        prev.some((m) => m.id === result.data.id) ? prev : [...prev, result.data],
-      )
-    } else {
-      Alert.alert("Error", result.message || "Failed to send message")
-    }
+    sendMessage.mutate(
+      { recipientId: counterpartId, content },
+      {
+        onSuccess: () => setDraft(""),
+        onError: (error) => Alert.alert("Error", errorMessage(error) || "Failed to send message"),
+      },
+    )
   }
 
   // Inverted list wants newest first
@@ -182,35 +141,57 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
       contentContainerStyle={$screenContent}
     >
       {/* Header */}
-      <View style={$header}>
+      <View className="flex-row items-center border-b border-neutral200 px-6 py-4">
         <TouchableOpacity
-          style={$backButton}
-          onPress={() => navigation.goBack()}
+          className="h-10 w-10 items-center justify-center"
+          onPress={() =>router.back()}
           accessible
           accessibilityLabel="Go back"
           accessibilityRole="button"
         >
           <Icon icon="back" size={24} color={colors.palette.neutral900} />
         </TouchableOpacity>
-        <View style={$headerCenter}>
-          <Text style={$headerTitle}>
+        <View className="flex-1 items-center">
+          <Text
+            className="text-[16px]"
+            weight="semiBold"
+            style={{ color: colors.palette.neutral900 }}
+          >
             {pbOrder?.orderNumber ? `#${pbOrder.orderNumber}` : "Order Chat"}
           </Text>
-          {!!counterpartName && <Text style={$headerSubtitle}>{counterpartName}</Text>}
+          {!!counterpartName && (
+            <Text className="text-[12px]" style={{ color: colors.palette.neutral600 }}>
+              {counterpartName}
+            </Text>
+          )}
         </View>
-        <View style={$headerSpacer} />
+        <View className="w-10" />
       </View>
 
       {/* Messages */}
       {isLoading ? (
-        <View style={$emptyContainer}>
-          <Text style={$emptyText}>Loading messages...</Text>
+        <View className="flex-1 items-center justify-center gap-3 p-8">
+          <Text
+            className="text-center text-[15px]"
+            weight="semiBold"
+            style={{ color: colors.palette.neutral700 }}
+          >
+            Loading messages...
+          </Text>
         </View>
       ) : !hasTailor ? (
-        <View style={$emptyContainer}>
+        <View className="flex-1 items-center justify-center gap-3 p-8">
           <Icon icon="sew" size={40} color={colors.palette.neutral400} />
-          <Text style={$emptyText}>A tailor hasn&apos;t accepted this order yet</Text>
-          <Text style={$emptyHint}>You can message your tailor once the order is accepted.</Text>
+          <Text
+            className="text-center text-[15px]"
+            weight="semiBold"
+            style={{ color: colors.palette.neutral700 }}
+          >
+            A tailor hasn&apos;t accepted this order yet
+          </Text>
+          <Text className="text-center text-[13px]" style={{ color: colors.palette.neutral500 }}>
+            You can message your tailor once the order is accepted.
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -222,16 +203,30 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
           contentContainerStyle={$listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={$invertedEmpty}>
-              <Text style={$emptyText}>No messages yet</Text>
-              <Text style={$emptyHint}>Say hello to get the conversation started.</Text>
+            <View
+              className="flex-1 items-center justify-center gap-3 p-8"
+              style={{ transform: [{ scaleY: -1 }] }}
+            >
+              <Text
+                className="text-center text-[15px]"
+                weight="semiBold"
+                style={{ color: colors.palette.neutral700 }}
+              >
+                No messages yet
+              </Text>
+              <Text className="text-center text-[13px]" style={{ color: colors.palette.neutral500 }}>
+                Say hello to get the conversation started.
+              </Text>
             </View>
           }
         />
       )}
 
       {/* Input row */}
-      <View style={[$inputRow, $bottomInsets]}>
+      <View
+        className="flex-row items-end gap-3 border-t border-neutral200 bg-neutral100 px-4 py-3"
+        style={$bottomInsets}
+      >
         <TextField
           value={draft}
           onChangeText={setDraft}
@@ -250,44 +245,12 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = observer(({ route }) =>
       </View>
     </Screen>
   )
-})
+}
 
 // Styles
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $headerCenter: ViewStyle = {
-  flex: 1,
-  alignItems: "center",
-}
-
-const $headerTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-}
-
-const $headerSubtitle: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral600,
-}
-
-const $headerSpacer: ViewStyle = {
-  width: 40,
-}
+// Component style-prop overrides (Screen contentContainerStyle, FlatList
+// style/contentContainerStyle, TextField containerStyle, Button style/textStyle)
+// stay inline per the recipe.
 
 // Screen's fixed preset gives its inner container no height; without flex the
 // message list collapses and the composer renders directly under the header.
@@ -302,48 +265,6 @@ const $list: ViewStyle = {
 const $listContent: ViewStyle = {
   paddingVertical: spacing.md,
   flexGrow: 1,
-}
-
-const $emptyContainer: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  padding: spacing.xl,
-  gap: spacing.sm,
-}
-
-const $invertedEmpty: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  padding: spacing.xl,
-  gap: spacing.sm,
-  transform: [{ scaleY: -1 }],
-}
-
-const $emptyText: TextStyle = {
-  fontSize: 15,
-  fontWeight: "600",
-  color: colors.palette.neutral700,
-  textAlign: "center",
-}
-
-const $emptyHint: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral500,
-  textAlign: "center",
-}
-
-const $inputRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "flex-end",
-  gap: spacing.sm,
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-  paddingBottom: spacing.sm,
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral200,
-  backgroundColor: colors.palette.neutral100,
 }
 
 const $inputField: ViewStyle = {

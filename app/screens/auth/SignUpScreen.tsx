@@ -1,20 +1,17 @@
+import { useRouter } from "expo-router"
 import { FC, useState, useMemo } from "react"
-import { observer } from "mobx-react-lite"
 import { ViewStyle, View, Alert, TouchableOpacity, TextStyle, ImageStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, TextField, Button, PasswordStrengthIndicator, Icon } from "@/components"
-import { useNavigation } from "@react-navigation/native"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import AuthService from "@/services/auth/AuthService"
 import { validateEmail } from "@/utils/emailValidation"
 import { validatePassword, validatePasswordConfirmation } from "@/utils/passwordValidation"
 import { spacing, colors } from "@/theme"
 
-interface SignUpScreenProps extends AppStackScreenProps<"SignUp"> {}
 
-export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScreen() {
-  const { authStore } = useStores()
-  const navigation = useNavigation()
+export const SignUpScreen: FC = function SignUpScreen() {
+  const authStore = useAuthStore()
+  const router = useRouter()
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
@@ -72,7 +69,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
           [
             {
               text: "OK",
-              onPress: () => navigation.navigate("VerifyEmail" as never),
+              onPress: () =>router.push("/verify-email"),
             },
           ],
         )
@@ -102,8 +99,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
     }
   }
 
-  const handleSignIn = () => {
-    navigation.navigate("SignIn" as never)
+  const handleSignIn = () => {router.push("/sign-in")
   }
 
   const handleFacebookSignup = () => {
@@ -122,30 +118,53 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
       safeAreaEdges={["top", "bottom"]}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={$tabContainer}>
+      <View className="mb-xl flex-row rounded-xl bg-[#e2e8f0] p-[6px]">
         <TouchableOpacity
-          style={[$tab, currentTab === "login" && $activeTab]}
+          className="flex-1 items-center rounded-md px-lg py-md"
+          style={currentTab === "login" && $activeTab}
           onPress={() => {
             setCurrentTab("login")
             handleSignIn()
           }}
         >
-          <Text text="Login" style={[$tabText, currentTab === "login" && $activeTabText]} />
+          <Text
+            text="Login"
+            className={`text-[14px] ${currentTab === "login" ? "font-semibold" : "font-medium"}`}
+            style={{ color: currentTab === "login" ? "#333333" : "#666666" }}
+          />
         </TouchableOpacity>
         <TouchableOpacity
-          style={[$tab, currentTab === "register" && $activeTab]}
+          className="flex-1 items-center rounded-md px-lg py-md"
+          style={currentTab === "register" && $activeTab}
           onPress={() => setCurrentTab("register")}
         >
-          <Text text="Register" style={[$tabText, currentTab === "register" && $activeTabText]} />
+          <Text
+            text="Register"
+            className={`text-[14px] ${currentTab === "register" ? "font-semibold" : "font-medium"}`}
+            style={{ color: currentTab === "register" ? "#333333" : "#666666" }}
+          />
         </TouchableOpacity>
       </View>
 
-      <Text preset="heading" text="Join Stitch & Wear" style={$title} />
-      <Text text="Experience the finest Nigerian craftsmanship" style={$subtitle} />
+      <Text
+        preset="heading"
+        text="Join Stitch & Wear"
+        className="mb-sm text-center text-[28px] font-bold tracking-[0.5px]"
+        style={{ color: "#1a202c" }}
+      />
+      <Text
+        text="Experience the finest Nigerian craftsmanship"
+        className="mb-xl text-center text-[16px] font-normal leading-[22px]"
+        style={{ color: "#4a5568" }}
+      />
 
       {authStore.error && (
-        <View style={$errorContainer}>
-          <Text text={authStore.error} style={$errorText} />
+        <View className="mb-lg rounded-lg border-l-4 border-l-[#dc2626] bg-[#fee2e2] p-md">
+          <Text
+            text={authStore.error}
+            className="text-[14px] font-medium leading-5"
+            style={{ color: "#dc2626" }}
+          />
         </View>
       )}
 
@@ -198,9 +217,14 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
       />
 
       {showEmailValidation && emailValidation.warnings.length > 0 && (
-        <View style={$validationWarning}>
+        <View className="mb-md px-sm">
           {emailValidation.warnings.map((warning, index) => (
-            <Text key={index} text={`⚠️ ${warning}`} style={$warningText} />
+            <Text
+              key={index}
+              text={`⚠️ ${warning}`}
+              className="mb-xs text-[13px]"
+              style={{ color: "#f59e0b" }}
+            />
           ))}
         </View>
       )}
@@ -257,9 +281,13 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
         style={$textField}
       />
 
-      <View style={$userTypeContainer}>
-        <Text text="I am a:" style={$userTypeLabel} />
-        <View style={$userTypeButtons}>
+      <View className="mb-lg">
+        <Text
+          text="I am a:"
+          className="mb-sm text-[16px] font-semibold"
+          style={{ color: "#333333" }}
+        />
+        <View className="flex-row gap-sm">
           <Button
             text="Client"
             preset={userType === "client" ? "default" : "reversed"}
@@ -284,10 +312,10 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
         style={$signUpButton}
       />
 
-      <View style={$orContainer}>
-        <View style={$orLine} />
-        <Text text="OR" style={$orText} />
-        <View style={$orLine} />
+      <View className="my-lg flex-row items-center">
+        <View className="h-px flex-1 bg-[#e0e0e0]" />
+        <Text text="OR" className="mx-md text-[12px] font-light" style={{ color: "#666666" }} />
+        <View className="h-px flex-1 bg-[#e0e0e0]" />
       </View>
 
       <Button
@@ -317,28 +345,16 @@ export const SignUpScreen: FC<SignUpScreenProps> = observer(function SignUpScree
       />
     </Screen>
   )
-})
+}
 
+// Screen contentContainerStyle, Button style/textStyle overrides, TextField
+// input style, the shadowed active-tab pill, the LeftAccessory icon offset, and
+// the PasswordStrengthIndicator container style stay inline per the recipe
+// (component style props take ViewStyle/TextStyle, not className).
 const $contentContainer: ViewStyle = {
   flexGrow: 1,
   paddingHorizontal: spacing.lg,
   paddingVertical: spacing.lg,
-}
-
-const $tabContainer: ViewStyle = {
-  flexDirection: "row",
-  marginBottom: spacing.xl,
-  backgroundColor: "#e2e8f0",
-  borderRadius: 12,
-  padding: 6,
-}
-
-const $tab: ViewStyle = {
-  flex: 1,
-  paddingVertical: spacing.md,
-  paddingHorizontal: spacing.lg,
-  borderRadius: 6,
-  alignItems: "center",
 }
 
 const $activeTab: ViewStyle = {
@@ -350,69 +366,8 @@ const $activeTab: ViewStyle = {
   shadowRadius: 4,
 }
 
-const $tabText: TextStyle = {
-  fontSize: 14,
-  color: "#666666",
-  fontWeight: "500",
-}
-
-const $activeTabText: TextStyle = {
-  color: "#333333",
-  fontWeight: "600",
-}
-
-const $title: TextStyle = {
-  marginBottom: spacing.sm,
-  textAlign: "center",
-  fontSize: 28,
-  fontWeight: "700",
-  color: "#1a202c",
-  letterSpacing: 0.5,
-}
-
-const $subtitle: TextStyle = {
-  marginBottom: spacing.xl,
-  textAlign: "center",
-  fontSize: 16,
-  color: "#4a5568",
-  lineHeight: 22,
-  fontWeight: "400",
-}
-
-const $errorContainer: ViewStyle = {
-  backgroundColor: "#fee2e2",
-  borderRadius: 8,
-  padding: spacing.md,
-  marginBottom: spacing.lg,
-  borderLeftWidth: 4,
-  borderLeftColor: "#dc2626",
-}
-
-const $errorText: TextStyle = {
-  color: "#dc2626",
-  fontSize: 14,
-  lineHeight: 20,
-  fontWeight: "500",
-}
-
 const $textField: ViewStyle = {
   marginBottom: spacing.lg,
-}
-
-const $userTypeContainer: ViewStyle = {
-  marginBottom: spacing.lg,
-}
-
-const $userTypeLabel: TextStyle = {
-  marginBottom: spacing.sm,
-  fontWeight: "600",
-  fontSize: 16,
-  color: "#333333",
-}
-
-const $userTypeButtons: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.sm,
 }
 
 const $userTypeButton: ViewStyle = {
@@ -429,25 +384,6 @@ const $signUpButton: ViewStyle = {
   shadowOpacity: 0.3,
   shadowRadius: 8,
   elevation: 6,
-}
-
-const $orContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginVertical: spacing.lg,
-}
-
-const $orLine: ViewStyle = {
-  flex: 1,
-  height: 1,
-  backgroundColor: "#e0e0e0",
-}
-
-const $orText: TextStyle = {
-  marginHorizontal: spacing.md,
-  fontSize: 12,
-  color: "#666666",
-  fontWeight: "300",
 }
 
 const $socialButton: ViewStyle = {

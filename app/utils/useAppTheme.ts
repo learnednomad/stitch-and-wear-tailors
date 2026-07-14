@@ -11,6 +11,7 @@ import {
 } from "@/theme"
 import * as SystemUI from "expo-system-ui"
 import { MMKV } from "react-native-mmkv"
+import { colorScheme as nwColorScheme } from "nativewind"
 
 // Initialize MMKV storage for theme persistence
 const storage = new MMKV()
@@ -65,6 +66,9 @@ export const useThemeProvider = (initialTheme: ThemeContexts = undefined) => {
 
   useEffect(() => {
     setImperativeTheming(themeContextToTheme(themeScheme))
+    // Keep NativeWind's `dark:` variants in sync with the same override-capable
+    // source that drives the Ignite theme (MMKV persisted preference).
+    nwColorScheme.set(themeScheme)
   }, [themeScheme])
 
   return {

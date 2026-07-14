@@ -1,19 +1,16 @@
+import { useRouter } from "expo-router"
 import { FC, useState, useEffect } from "react"
-import { observer } from "mobx-react-lite"
-import { ViewStyle, TextStyle, View, Alert, TouchableOpacity } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
+import { ViewStyle, View, Alert, TouchableOpacity } from "react-native"
 import { Screen, Text, Button } from "@/components"
-import { useNavigation } from "@react-navigation/native"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 import { getPocketBaseAuthAdapter } from "@/services/pocketbase/pocketbase-auth-adapter"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
 
-interface VerifyEmailScreenProps extends AppStackScreenProps<"VerifyEmail"> {}
 
-export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function VerifyEmailScreen() {
-  const { authStore } = useStores()
-  const navigation = useNavigation()
+export const VerifyEmailScreen: FC = function VerifyEmailScreen() {
+  const authStore = useAuthStore()
+  const router = useRouter()
   const { theme } = useAppTheme()
   const [isLoading, setIsLoading] = useState(false)
   const [canResend, setCanResend] = useState(false)
@@ -74,7 +71,7 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
               onPress: () => {
                 // Clear any existing auth state and navigate to sign in
                 authStore.clearAuth()
-                navigation.navigate("SignIn" as never)
+                router.push("/sign-in")
               },
             },
           ],
@@ -98,7 +95,7 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
         {
           text: "Go Back",
           style: "destructive",
-          onPress: () => navigation.navigate("SignIn" as never),
+          onPress: () =>router.push("/sign-in"),
         },
       ],
     )
@@ -106,26 +103,29 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
 
   return (
     <Screen style={$root} preset="scroll">
-      <View style={$container}>
+      <View className="flex-1 justify-center px-lg py-xl">
         {/* Header */}
-        <View style={$header}>
-          <Text preset="heading" text="Verify Your Email" style={$title} />
-          <Text text={`We've sent a verification link to ${userEmail}`} style={$subtitle} />
+        <View className="mb-xl items-center">
+          <Text preset="heading" text="Verify Your Email" className="mb-sm text-center" />
+          <Text
+            text={`We've sent a verification link to ${userEmail}`}
+            className="text-center leading-6"
+          />
         </View>
 
         {/* Email Icon */}
-        <View style={$iconContainer}>
-          <View style={[$emailIcon, { backgroundColor: theme.colors.palette.primary100 }]}>
-            <Text text="📧" style={$emailIconText} />
+        <View className="mb-xl items-center">
+          <View className="h-20 w-20 items-center justify-center rounded-full bg-primary100 dark:bg-primary100-dark">
+            <Text text="📧" className="text-[40px]" />
           </View>
         </View>
 
         {/* Instructions */}
-        <View style={$instructionsContainer}>
-          <Text preset="subheading" text="What to do next:" style={$instructionsTitle} />
-          <Text text="1. Check your email inbox" style={$instructionItem} />
-          <Text text="2. Click the verification link" style={$instructionItem} />
-          <Text text="3. Return here and click 'I've Verified'" style={$instructionItem} />
+        <View className="mb-xl">
+          <Text preset="subheading" text="What to do next:" className="mb-md" />
+          <Text text="1. Check your email inbox" className="mb-sm pl-md leading-5" />
+          <Text text="2. Click the verification link" className="mb-sm pl-md leading-5" />
+          <Text text="3. Return here and click 'I've Verified'" className="mb-sm pl-md leading-5" />
         </View>
 
         {/* Action Buttons */}
@@ -140,26 +140,30 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
         <TouchableOpacity
           onPress={handleResendVerification}
           disabled={!canResend || isLoading}
-          style={$resendButton}
+          className="mb-xl items-center py-sm"
         >
           <Text
             text={canResend ? "Resend verification email" : `Resend in ${countdown} seconds`}
-            style={[
-              $resendText,
-              {
-                color:
-                  canResend && !isLoading ? theme.colors.palette.primary600 : theme.colors.textDim,
-              },
-            ]}
+            className="text-[16px] font-medium underline"
+            style={{
+              color:
+                canResend && !isLoading ? theme.colors.palette.primary600 : theme.colors.textDim,
+            }}
           />
         </TouchableOpacity>
 
         {/* Help Section */}
-        <View style={$helpContainer}>
-          <Text preset="formLabel" text="Need help?" style={$helpTitle} />
-          <Text text="• Check your spam/junk folder" style={$helpItem} />
-          <Text text="• Make sure you entered the correct email" style={$helpItem} />
-          <Text text="• The verification link expires in 24 hours" style={$helpItem} />
+        <View className="mb-xl px-sm">
+          <Text preset="formLabel" text="Need help?" className="mb-sm" />
+          <Text text="• Check your spam/junk folder" className="mb-xs pl-md text-[14px] leading-[18px]" />
+          <Text
+            text="• Make sure you entered the correct email"
+            className="mb-xs pl-md text-[14px] leading-[18px]"
+          />
+          <Text
+            text="• The verification link expires in 24 hours"
+            className="mb-xs pl-md text-[14px] leading-[18px]"
+          />
         </View>
 
         {/* Back Button */}
@@ -172,96 +176,15 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = observer(function V
       </View>
     </Screen>
   )
-})
+}
 
-// Styles
+// Only Button style overrides remain inline (Button owns its own className).
 const $root: ViewStyle = {
   flex: 1,
 }
 
-const $container: ViewStyle = {
-  flex: 1,
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.xl,
-  justifyContent: "center",
-}
-
-const $header: ViewStyle = {
-  alignItems: "center",
-  marginBottom: spacing.xl,
-}
-
-const $title: TextStyle = {
-  marginBottom: spacing.sm,
-  textAlign: "center",
-}
-
-const $subtitle: TextStyle = {
-  textAlign: "center",
-  lineHeight: 24,
-}
-
-const $iconContainer: ViewStyle = {
-  alignItems: "center",
-  marginBottom: spacing.xl,
-}
-
-const $emailIcon: ViewStyle = {
-  width: 80,
-  height: 80,
-  borderRadius: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $emailIconText: TextStyle = {
-  fontSize: 40,
-}
-
-const $instructionsContainer: ViewStyle = {
-  marginBottom: spacing.xl,
-}
-
-const $instructionsTitle: ViewStyle = {
-  marginBottom: spacing.md,
-}
-
-const $instructionItem: TextStyle = {
-  marginBottom: spacing.sm,
-  paddingLeft: spacing.md,
-  lineHeight: 20,
-}
-
 const $primaryButton: ViewStyle = {
   marginBottom: spacing.lg,
-}
-
-const $resendButton: ViewStyle = {
-  alignItems: "center",
-  paddingVertical: spacing.sm,
-  marginBottom: spacing.xl,
-}
-
-const $resendText: TextStyle = {
-  fontSize: 16,
-  fontWeight: "500",
-  textDecorationLine: "underline",
-}
-
-const $helpContainer: ViewStyle = {
-  marginBottom: spacing.xl,
-  paddingHorizontal: spacing.sm,
-}
-
-const $helpTitle: ViewStyle = {
-  marginBottom: spacing.sm,
-}
-
-const $helpItem: TextStyle = {
-  marginBottom: spacing.xs,
-  paddingLeft: spacing.md,
-  fontSize: 14,
-  lineHeight: 18,
 }
 
 const $backButton: ViewStyle = {

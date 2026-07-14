@@ -2,10 +2,11 @@
  * Tailor measurement data layer
  *
  * Direct PocketBase access for the tailor-side measurement screens. The
- * legacy MeasurementStore (app/models/stores/MeasurementStore.ts) is mock
- * machinery hitting a nonexistent /api/measurements REST backend, so these
- * screens bypass it and talk to the `measurements` collection through the
- * PocketBase adapter.
+ * former MST MeasurementStore was mock machinery hitting a nonexistent
+ * /api/measurements REST backend (removed in Phase 4b), so these screens talk
+ * to the `measurements` collection directly through the PocketBase adapter.
+ * The client side reads the same collection via `useClientMeasurements`
+ * (app/api/measurements.ts).
  *
  * Access rules: tailors can VIEW every measurement but can only create/edit
  * their OWN records (user = self) — customer profiles are read-only, the

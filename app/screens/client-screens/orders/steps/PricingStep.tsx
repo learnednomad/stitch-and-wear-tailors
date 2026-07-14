@@ -5,10 +5,9 @@
 
 import React, { FC, useState, useEffect } from "react"
 import { View, ScrollView, ViewStyle, TextStyle, TouchableOpacity, Alert } from "react-native"
-import { observer } from "mobx-react-lite"
-import { Text, Button, Icon } from "app/components"
-import { colors, spacing } from "app/theme"
-import { useStores } from "@/models"
+import { Text, Button, Icon } from "@/components"
+import { colors, spacing } from "@/theme"
+import { useOrderDraftStore, getCityConfig, getGarmentConfig } from "@/state/orderDraftStore"
 import { PaymentMethod, NigerianCity, NigerianGarmentType, OrderPriority } from "@/types/orders"
 
 interface PricingBreakdown {
@@ -22,8 +21,8 @@ interface PricingBreakdown {
   balanceAmount: number
 }
 
-export const PricingStep: FC = observer(() => {
-  const { orderStore } = useStores()
+export const PricingStep: FC = () => {
+  const orderStore = useOrderDraftStore()
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("bank_transfer")
   const [selectedPriority, setSelectedPriority] = useState<OrderPriority>("normal")
@@ -130,7 +129,7 @@ export const PricingStep: FC = observer(() => {
       const calculatedPricing = orderStore.calculateNigerianPricing(garmentType, city, isRush)
 
       // Add delivery fee based on city
-      const cityConfig = orderStore.getCityConfig(city)
+      const cityConfig = getCityConfig(city)
       const deliveryFee = cityConfig.deliveryFee
 
       // Add processing fee for payment method
@@ -167,7 +166,7 @@ export const PricingStep: FC = observer(() => {
   const handleConfirmPricing = () => {
     if (pricing && orderStore.orderCreationData) {
       // Update order priority
-      orderStore.orderCreationData.priority = selectedPriority
+      orderStore.setOrderPriority(selectedPriority)
 
       Alert.alert(
         "Pricing Confirmed",
@@ -187,7 +186,7 @@ export const PricingStep: FC = observer(() => {
   const getEstimatedDelivery = () => {
     if (!orderStore.orderCreationData?.styleConfig) return "N/A"
 
-    const garmentConfig = orderStore.getGarmentConfig(
+    const garmentConfig = getGarmentConfig(
       orderStore.orderCreationData.styleConfig.garmentType as NigerianGarmentType,
     )
     if (!garmentConfig) return "N/A"
@@ -208,116 +207,169 @@ export const PricingStep: FC = observer(() => {
   }
 
   return (
-    <ScrollView style={$container} showsVerticalScrollIndicator={false}>
-      <View style={$content}>
-        <Text style={$title}>{orderStore.getTranslation("pricing", "en")}</Text>
-        <Text style={$subtitle}>Review pricing and select payment preferences</Text>
+    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <View className="p-lg">
+        <Text className="text-[24px] font-bold mb-xs" style={$textDeepCharcoal}>
+          {orderStore.getTranslation("pricing", "en")}
+        </Text>
+        <Text className="text-[14px] leading-[20px] mb-lg" style={$textThreadBlue}>
+          Review pricing and select payment preferences
+        </Text>
 
         {/* Priority Selection */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Delivery Priority</Text>
-          <Text style={$sectionDescription}>Choose your preferred delivery timeline</Text>
+        <View className="mb-xl">
+          <Text className="text-[18px] font-semibold mb-xs" style={$textDeepCharcoal}>
+            Delivery Priority
+          </Text>
+          <Text className="text-[13px] leading-[18px] mb-md" style={$textThreadBlue}>
+            Choose your preferred delivery timeline
+          </Text>
 
-          {priorityOptions.map((option) => (
-            <TouchableOpacity
-              key={option.priority}
-              style={[$priorityCard, selectedPriority === option.priority && $selectedPriorityCard]}
-              onPress={() => setSelectedPriority(option.priority)}
-            >
-              <View style={$priorityContent}>
-                <View style={$priorityHeader}>
-                  <Icon icon={option.icon} size={24} color={colors.palette.tailorGold} />
-                  <View style={$priorityInfo}>
-                    <Text style={$priorityName}>{option.name}</Text>
-                    <Text style={$priorityDescription}>{option.description}</Text>
-                  </View>
-                  <View style={$priorityMultiplier}>
-                    <Text style={$multiplierText}>
-                      {option.multiplier === 1.0 ? "Standard" : `${option.multiplier}x`}
-                    </Text>
+          {priorityOptions.map((option) => {
+            const selected = selectedPriority === option.priority
+            return (
+              <TouchableOpacity
+                key={option.priority}
+                className={`bg-neutral100 rounded-[12px] p-md mb-sm border-2 ${
+                  selected ? "border-tailorGold" : "border-neutral200"
+                }`}
+                style={selected ? $tintTailorGold : undefined}
+                onPress={() => setSelectedPriority(option.priority)}
+              >
+                <View className="flex-1">
+                  <View className="flex-row items-center">
+                    <Icon icon={option.icon} size={24} color={colors.palette.tailorGold} />
+                    <View className="flex-1 ml-sm">
+                      <Text className="text-[14px] font-semibold" style={$textDeepCharcoal}>
+                        {option.name}
+                      </Text>
+                      <Text className="text-[12px]" style={$textThreadBlue}>
+                        {option.description}
+                      </Text>
+                    </View>
+                    <View className="bg-neutral200 rounded-[6px] px-xs py-xxxs">
+                      <Text className="text-[10px] font-semibold" style={$textDeepCharcoal}>
+                        {option.multiplier === 1.0 ? "Standard" : `${option.multiplier}x`}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            )
+          })}
         </View>
 
         {/* Payment Method Selection */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Payment Method</Text>
-          <Text style={$sectionDescription}>Choose your preferred payment option</Text>
+        <View className="mb-xl">
+          <Text className="text-[18px] font-semibold mb-xs" style={$textDeepCharcoal}>
+            Payment Method
+          </Text>
+          <Text className="text-[13px] leading-[18px] mb-md" style={$textThreadBlue}>
+            Choose your preferred payment option
+          </Text>
 
-          {paymentMethods.map((method) => (
-            <TouchableOpacity
-              key={method.method}
-              style={[
-                $paymentCard,
-                selectedPaymentMethod === method.method && $selectedPaymentCard,
-                !method.available && $disabledPaymentCard,
-              ]}
-              onPress={() => method.available && setSelectedPaymentMethod(method.method)}
-              disabled={!method.available}
-            >
-              <View style={$paymentContent}>
-                <Icon icon={method.icon} size={24} color={colors.palette.threadBlue} />
-                <View style={$paymentInfo}>
-                  <Text style={$paymentName}>{method.name}</Text>
-                  <Text style={$paymentDescription}>{method.description}</Text>
-                  {method.processingFee > 0 && (
-                    <Text style={$processingFee}>Processing fee: ₦{method.processingFee}</Text>
-                  )}
+          {paymentMethods.map((method) => {
+            const selected = selectedPaymentMethod === method.method
+            return (
+              <TouchableOpacity
+                key={method.method}
+                className={`bg-neutral100 rounded-[12px] p-md mb-sm border-2 ${
+                  selected ? "border-threadBlue" : "border-neutral200"
+                } ${!method.available ? "opacity-50" : ""}`}
+                style={selected ? $tintThreadBlue : undefined}
+                onPress={() => method.available && setSelectedPaymentMethod(method.method)}
+                disabled={!method.available}
+              >
+                <View className="flex-row items-center">
+                  <Icon icon={method.icon} size={24} color={colors.palette.threadBlue} />
+                  <View className="flex-1 ml-sm">
+                    <Text className="text-[14px] font-semibold" style={$textDeepCharcoal}>
+                      {method.name}
+                    </Text>
+                    <Text className="text-[12px]" style={$textThreadBlue}>
+                      {method.description}
+                    </Text>
+                    {method.processingFee > 0 && (
+                      <Text className="text-[11px] font-medium" style={$textTailorGold}>
+                        Processing fee: ₦{method.processingFee}
+                      </Text>
+                    )}
+                  </View>
+                  <View
+                    className={`w-[24px] h-[24px] rounded-[12px] border-2 justify-center items-center ${
+                      selected ? "border-threadBlue" : "border-neutral300"
+                    }`}
+                  >
+                    {selected && <View className="w-[12px] h-[12px] rounded-[6px] bg-threadBlue" />}
+                  </View>
                 </View>
-                <View
-                  style={[
-                    $radioButton,
-                    selectedPaymentMethod === method.method && $radioButtonSelected,
-                  ]}
-                >
-                  {selectedPaymentMethod === method.method && <View style={$radioButtonInner} />}
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            )
+          })}
         </View>
 
         {/* Pricing Breakdown */}
         {pricing && (
-          <View style={$section}>
-            <Text style={$sectionTitle}>Pricing Breakdown</Text>
+          <View className="mb-xl">
+            <Text className="text-[18px] font-semibold mb-xs" style={$textDeepCharcoal}>
+              Pricing Breakdown
+            </Text>
 
-            <View style={$pricingCard}>
-              <View style={$pricingRow}>
-                <Text style={$pricingLabel}>Base Garment Price</Text>
-                <Text style={$pricingValue}>₦{pricing.basePrice.toLocaleString()}</Text>
+            <View className="bg-neutral100 rounded-[12px] p-lg border border-neutral200 mb-md">
+              <View className="flex-row justify-between items-center mb-sm">
+                <Text className="text-[14px]" style={$textThreadBlue}>
+                  Base Garment Price
+                </Text>
+                <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
+                  ₦{pricing.basePrice.toLocaleString()}
+                </Text>
               </View>
 
-              <View style={$pricingRow}>
-                <Text style={$pricingLabel}>Fabric Cost</Text>
-                <Text style={$pricingValue}>₦{pricing.fabricCost.toLocaleString()}</Text>
+              <View className="flex-row justify-between items-center mb-sm">
+                <Text className="text-[14px]" style={$textThreadBlue}>
+                  Fabric Cost
+                </Text>
+                <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
+                  ₦{pricing.fabricCost.toLocaleString()}
+                </Text>
               </View>
 
-              <View style={$pricingRow}>
-                <Text style={$pricingLabel}>Complexity Adjustment</Text>
-                <Text style={$pricingValue}>×{pricing.complexityMultiplier.toFixed(1)}</Text>
+              <View className="flex-row justify-between items-center mb-sm">
+                <Text className="text-[14px]" style={$textThreadBlue}>
+                  Complexity Adjustment
+                </Text>
+                <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
+                  ×{pricing.complexityMultiplier.toFixed(1)}
+                </Text>
               </View>
 
               {pricing.urgencyFee > 0 && (
-                <View style={$pricingRow}>
-                  <Text style={$pricingLabel}>Rush Fee</Text>
-                  <Text style={$pricingValue}>₦{pricing.urgencyFee.toLocaleString()}</Text>
+                <View className="flex-row justify-between items-center mb-sm">
+                  <Text className="text-[14px]" style={$textThreadBlue}>
+                    Rush Fee
+                  </Text>
+                  <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
+                    ₦{pricing.urgencyFee.toLocaleString()}
+                  </Text>
                 </View>
               )}
 
-              <View style={$pricingRow}>
-                <Text style={$pricingLabel}>Delivery Fee</Text>
-                <Text style={$pricingValue}>₦{pricing.deliveryFee.toLocaleString()}</Text>
+              <View className="flex-row justify-between items-center mb-sm">
+                <Text className="text-[14px]" style={$textThreadBlue}>
+                  Delivery Fee
+                </Text>
+                <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
+                  ₦{pricing.deliveryFee.toLocaleString()}
+                </Text>
               </View>
 
               {paymentMethods.find((p) => p.method === selectedPaymentMethod)?.processingFee! >
                 0 && (
-                <View style={$pricingRow}>
-                  <Text style={$pricingLabel}>Processing Fee</Text>
-                  <Text style={$pricingValue}>
+                <View className="flex-row justify-between items-center mb-sm">
+                  <Text className="text-[14px]" style={$textThreadBlue}>
+                    Processing Fee
+                  </Text>
+                  <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
                     ₦
                     {paymentMethods
                       .find((p) => p.method === selectedPaymentMethod)
@@ -326,53 +378,82 @@ export const PricingStep: FC = observer(() => {
                 </View>
               )}
 
-              <View style={[$pricingRow, $totalRow]}>
-                <Text style={$totalLabel}>Total Amount</Text>
-                <Text style={$totalValue}>₦{pricing.totalPrice.toLocaleString()}</Text>
+              <View className="flex-row justify-between items-center border-t border-neutral300 pt-sm mb-0">
+                <Text className="text-[16px] font-semibold" style={$textDeepCharcoal}>
+                  Total Amount
+                </Text>
+                <Text className="text-[18px] font-bold" style={$textTailorGold}>
+                  ₦{pricing.totalPrice.toLocaleString()}
+                </Text>
               </View>
             </View>
 
             {/* Payment Schedule */}
-            <View style={$paymentSchedule}>
-              <Text style={$scheduleTitle}>Payment Schedule</Text>
+            <View
+              className="rounded-[12px] p-lg border-l-4 border-l-sageGreen"
+              style={$scheduleTint}
+            >
+              <Text className="text-[16px] font-semibold mb-md" style={$textDeepCharcoal}>
+                Payment Schedule
+              </Text>
 
-              <View style={$scheduleItem}>
-                <View style={$scheduleInfo}>
-                  <Text style={$scheduleLabel}>Deposit Required (50%)</Text>
-                  <Text style={$scheduleDescription}>Due upon order confirmation</Text>
+              <View className="flex-row justify-between items-center mb-sm">
+                <View className="flex-1">
+                  <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
+                    Deposit Required (50%)
+                  </Text>
+                  <Text className="text-[12px]" style={$textThreadBlue}>
+                    Due upon order confirmation
+                  </Text>
                 </View>
-                <Text style={$scheduleAmount}>₦{pricing.depositRequired.toLocaleString()}</Text>
+                <Text className="text-[16px] font-bold" style={$textSageGreen}>
+                  ₦{pricing.depositRequired.toLocaleString()}
+                </Text>
               </View>
 
-              <View style={$scheduleItem}>
-                <View style={$scheduleInfo}>
-                  <Text style={$scheduleLabel}>Balance Payment (50%)</Text>
-                  <Text style={$scheduleDescription}>Due upon completion</Text>
+              <View className="flex-row justify-between items-center mb-sm">
+                <View className="flex-1">
+                  <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
+                    Balance Payment (50%)
+                  </Text>
+                  <Text className="text-[12px]" style={$textThreadBlue}>
+                    Due upon completion
+                  </Text>
                 </View>
-                <Text style={$scheduleAmount}>₦{pricing.balanceAmount.toLocaleString()}</Text>
+                <Text className="text-[16px] font-bold" style={$textSageGreen}>
+                  ₦{pricing.balanceAmount.toLocaleString()}
+                </Text>
               </View>
             </View>
           </View>
         )}
 
         {/* Delivery Information */}
-        <View style={$section}>
-          <Text style={$sectionTitle}>Delivery Information</Text>
+        <View className="mb-xl">
+          <Text className="text-[18px] font-semibold mb-xs" style={$textDeepCharcoal}>
+            Delivery Information
+          </Text>
 
-          <View style={$deliveryInfo}>
-            <View style={$deliveryItem}>
+          <View className="bg-neutral100 rounded-[12px] p-lg border border-neutral200">
+            <View className="flex-row items-center mb-md">
               <Icon icon="appointment" size={20} color={colors.palette.threadBlue} />
-              <View style={$deliveryText}>
-                <Text style={$deliveryLabel}>Estimated Delivery</Text>
-                <Text style={$deliveryValue}>{getEstimatedDelivery()}</Text>
+              <View className="ml-sm">
+                <Text className="text-[12px]" style={$textThreadBlue}>
+                  Estimated Delivery
+                </Text>
+                <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
+                  {getEstimatedDelivery()}
+                </Text>
               </View>
             </View>
 
-            <View style={$deliveryItem}>
+            <View className="flex-row items-center mb-md">
               <Icon icon="home" size={20} color={colors.palette.threadBlue} />
-              <View style={$deliveryText}>
-                <Text style={$deliveryLabel}>Delivery Location</Text>
-                <Text style={$deliveryValue}>
+              <View className="ml-sm">
+                <Text className="text-[12px]" style={$textThreadBlue}>
+                  Delivery Location
+                </Text>
+                <Text className="text-[14px] font-medium" style={$textDeepCharcoal}>
                   {orderStore.orderCreationData?.customerInfo?.city &&
                     orderStore.getTranslation(
                       "cities",
@@ -385,11 +466,16 @@ export const PricingStep: FC = observer(() => {
         </View>
 
         {/* Terms Notice */}
-        <View style={$termsNotice}>
+        <View
+          className="flex-row rounded-[12px] p-lg border-l-4 border-l-threadBlue mb-lg"
+          style={$termsTint}
+        >
           <Icon icon="bell" size={20} color={colors.palette.threadBlue} />
-          <View style={$termsText}>
-            <Text style={$termsTitle}>Payment Terms</Text>
-            <Text style={$termsDescription}>
+          <View className="flex-1 ml-sm">
+            <Text className="text-[14px] font-semibold mb-xs" style={$textDeepCharcoal}>
+              Payment Terms
+            </Text>
+            <Text className="text-[12px] leading-[16px]" style={$textThreadBlue}>
               • 50% deposit required to begin work{"\n"}• Balance due upon completion{"\n"}• Prices
               valid for 30 days{"\n"}• Alterations included in first fitting
             </Text>
@@ -405,317 +491,31 @@ export const PricingStep: FC = observer(() => {
           disabled={isCalculating || !pricing}
         />
 
-        <View style={$spacer} />
+        <View className="h-xl" />
       </View>
     </ScrollView>
   )
-})
+}
 
 // Styles
-const $container: ViewStyle = {
-  flex: 1,
-}
+// This screen reads the STATIC (light-only) `colors` import, so text colors and
+// data-driven opacity tints stay as inline styles (no `dark:` variants). Layout,
+// spacing, and container backgrounds/borders are className token utilities.
 
-const $content: ViewStyle = {
-  padding: spacing.lg,
-}
+// Text color overrides (static, light-only).
+const $textDeepCharcoal: TextStyle = { color: colors.palette.deepCharcoal }
+const $textThreadBlue: TextStyle = { color: colors.palette.threadBlue }
+const $textTailorGold: TextStyle = { color: colors.palette.tailorGold }
+const $textSageGreen: TextStyle = { color: colors.palette.sageGreen }
 
-const $title: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xs,
-}
+// Selected-card background tints use an opacity-suffixed hex, so they stay inline.
+const $tintTailorGold: ViewStyle = { backgroundColor: colors.palette.tailorGold + "10" }
+const $tintThreadBlue: ViewStyle = { backgroundColor: colors.palette.threadBlue + "10" }
+const $scheduleTint: ViewStyle = { backgroundColor: colors.palette.sageGreen + "10" }
+const $termsTint: ViewStyle = { backgroundColor: colors.palette.threadBlue + "10" }
 
-const $subtitle: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.lg,
-  lineHeight: 20,
-}
-
-const $section: ViewStyle = {
-  marginBottom: spacing.xl,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xs,
-}
-
-const $sectionDescription: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.md,
-  lineHeight: 18,
-}
-
-const $priorityCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.md,
-  marginBottom: spacing.sm,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral200,
-}
-
-const $selectedPriorityCard: ViewStyle = {
-  borderColor: colors.palette.tailorGold,
-  backgroundColor: colors.palette.tailorGold + "10",
-}
-
-const $priorityContent: ViewStyle = {
-  flex: 1,
-}
-
-const $priorityHeader: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $priorityInfo: ViewStyle = {
-  flex: 1,
-  marginLeft: spacing.sm,
-}
-
-const $priorityName: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $priorityDescription: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-}
-
-const $priorityMultiplier: ViewStyle = {
-  backgroundColor: colors.palette.neutral200,
-  borderRadius: 6,
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-}
-
-const $multiplierText: TextStyle = {
-  fontSize: 10,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $paymentCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.md,
-  marginBottom: spacing.sm,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral200,
-}
-
-const $selectedPaymentCard: ViewStyle = {
-  borderColor: colors.palette.threadBlue,
-  backgroundColor: colors.palette.threadBlue + "10",
-}
-
-const $disabledPaymentCard: ViewStyle = {
-  opacity: 0.5,
-}
-
-const $paymentContent: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $paymentInfo: ViewStyle = {
-  flex: 1,
-  marginLeft: spacing.sm,
-}
-
-const $paymentName: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $paymentDescription: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-}
-
-const $processingFee: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.tailorGold,
-  fontWeight: "500",
-}
-
-const $radioButton: ViewStyle = {
-  width: 24,
-  height: 24,
-  borderRadius: 12,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral300,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $radioButtonSelected: ViewStyle = {
-  borderColor: colors.palette.threadBlue,
-}
-
-const $radioButtonInner: ViewStyle = {
-  width: 12,
-  height: 12,
-  borderRadius: 6,
-  backgroundColor: colors.palette.threadBlue,
-}
-
-const $pricingCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-  marginBottom: spacing.md,
-}
-
-const $pricingRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
-
-const $totalRow: ViewStyle = {
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral300,
-  paddingTop: spacing.sm,
-  marginBottom: 0,
-}
-
-const $pricingLabel: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-}
-
-const $pricingValue: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.deepCharcoal,
-}
-
-const $totalLabel: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $totalValue: TextStyle = {
-  fontSize: 18,
-  fontWeight: "700",
-  color: colors.palette.tailorGold,
-}
-
-const $paymentSchedule: ViewStyle = {
-  backgroundColor: colors.palette.sageGreen + "10",
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderLeftWidth: 4,
-  borderLeftColor: colors.palette.sageGreen,
-}
-
-const $scheduleTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.md,
-}
-
-const $scheduleItem: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
-
-const $scheduleInfo: ViewStyle = {
-  flex: 1,
-}
-
-const $scheduleLabel: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.deepCharcoal,
-}
-
-const $scheduleDescription: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-}
-
-const $scheduleAmount: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.palette.sageGreen,
-}
-
-const $deliveryInfo: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-}
-
-const $deliveryItem: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: spacing.md,
-}
-
-const $deliveryText: ViewStyle = {
-  marginLeft: spacing.sm,
-}
-
-const $deliveryLabel: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-}
-
-const $deliveryValue: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.deepCharcoal,
-}
-
-const $termsNotice: ViewStyle = {
-  flexDirection: "row",
-  backgroundColor: colors.palette.threadBlue + "10",
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderLeftWidth: 4,
-  borderLeftColor: colors.palette.threadBlue,
-  marginBottom: spacing.lg,
-}
-
-const $termsText: ViewStyle = {
-  flex: 1,
-  marginLeft: spacing.sm,
-}
-
-const $termsTitle: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xs,
-}
-
-const $termsDescription: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.threadBlue,
-  lineHeight: 16,
-}
-
+// Button style overrides stay inline (Button owns its className; callers never
+// pass one in).
 const $confirmButton: ViewStyle = {
   backgroundColor: colors.palette.sageGreen,
   borderRadius: 12,
@@ -727,8 +527,4 @@ const $confirmButtonText: TextStyle = {
   fontWeight: "600",
   color: colors.palette.warmIvory,
   textAlign: "center",
-}
-
-const $spacer: ViewStyle = {
-  height: spacing.xl,
 }

@@ -4,23 +4,16 @@
  * The same catalog data as CatalogScreen, presented grouped: pick a gender,
  * then browse styles grouped by category section.
  */
-import { FC, useCallback, useEffect, useMemo, useState } from "react"
-import { observer } from "mobx-react-lite"
-import {
-  RefreshControl,
-  TextStyle,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native"
-import { AppStackScreenProps } from "@/navigators"
+import { useRouter } from "expo-router"
+import { FC, useMemo, useState } from "react"
+import { RefreshControl, TouchableOpacity, View, ViewStyle } from "react-native"
 import { CatalogGrid, Icon, Screen, Text } from "@/components"
-import { catalogApi, PBCatalogStyle } from "@/services/api/catalog-api"
+import { useStyles } from "@/api/catalog"
+import { errorMessage } from "@/api/common"
+import { PBCatalogStyle } from "@/services/api/catalog-api"
 import { fileUrl } from "@/services/api/pocketbase-api-adapter"
-import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface StylesScreenProps extends AppStackScreenProps<"Styles"> {}
 
 const GENDERS = [
   { value: null, label: "All" },
@@ -37,28 +30,15 @@ function labelize(value: string): string {
     .join(" ")
 }
 
-export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScreen({ navigation }) {
+export const StylesScreen: FC = function StylesScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
-  const [styles, setStyles] = useState<PBCatalogStyle[]>([])
   const [gender, setGender] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    setIsLoading(true)
-    const result = await catalogApi.listStyles()
-    if (result.success) {
-      setStyles(result.data)
-      setError(null)
-    } else {
-      setError(result.message ?? "Failed to load styles")
-    }
-    setIsLoading(false)
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const stylesQuery = useStyles()
+  const styles = useMemo(() => stylesQuery.data ?? [], [stylesQuery.data])
+  const isLoading = stylesQuery.isLoading
+  const error = stylesQuery.error ? errorMessage(stylesQuery.error) : null
 
   // group the gender-filtered styles by category
   const grouped = useMemo(() => {
@@ -78,43 +58,41 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
       preset="scroll"
       safeAreaEdges={["top"]}
       ScrollViewProps={{
-        refreshControl: <RefreshControl refreshing={isLoading} onRefresh={load} />,
+        refreshControl: (
+          <RefreshControl
+            refreshing={stylesQuery.isRefetching}
+            onRefresh={() => stylesQuery.refetch()}
+          />
+        ),
       }}
     >
-      <View style={$headerRow}>
+      <View className="flex-row items-center px-4 pt-4">
         <TouchableOpacity
-          style={$backButton}
-          onPress={() => navigation.goBack()}
+          className="mr-2 h-10 w-10 items-center justify-center"
+          onPress={() =>router.back()}
           accessible
           accessibilityLabel="Go back"
           accessibilityRole="button"
         >
           <Icon icon="back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text preset="heading" text="Styles" style={$headingText} />
+        <Text preset="heading" text="Styles" className="flex-1" />
       </View>
 
       {/* gender filter chips */}
-      <View style={$chips}>
+      <View className="flex-row gap-2 px-4 py-3">
         {GENDERS.map((option) => {
           const active = gender === option.value
           return (
             <TouchableOpacity
               key={option.label}
-              style={[
-                $chip,
-                {
-                  backgroundColor: active ? theme.colors.accent : theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
+              className="rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
+              style={{ backgroundColor: active ? theme.colors.accent : theme.colors.surface }}
               onPress={() => setGender(option.value)}
             >
               <Text
-                style={[
-                  $chipText,
-                  { color: active ? theme.colors.palette.neutral100 : theme.colors.text },
-                ]}
+                className="text-[13px] font-semibold"
+                style={{ color: active ? theme.colors.palette.neutral100 : theme.colors.text }}
                 text={option.label}
               />
             </TouchableOpacity>
@@ -122,84 +100,39 @@ export const StylesScreen: FC<StylesScreenProps> = observer(function StylesScree
         })}
       </View>
 
-      {error && <Text style={[$error, { color: theme.colors.error }]} text={error} />}
+      {error && (
+        <Text className="p-4 text-center text-error dark:text-error-dark" text={error} />
+      )}
 
       {grouped.map(([categoryKey, categoryStyles]) => (
-        <View key={categoryKey} style={$section}>
-          <Text preset="subheading" text={labelize(categoryKey)} style={$sectionTitle} />
+        <View key={categoryKey} className="mb-4">
+          <Text preset="subheading" text={labelize(categoryKey)} className="mb-2 px-4" />
           <CatalogGrid
             items={categoryStyles.map((style) => ({
               id: style.id,
               title: style.name,
               subtitle: labelize(style.gender),
-              imageUrl: style.images?.length ? fileUrl(style, style.images[0], "300x300") : undefined,
+              imageUrl: style.images?.length
+                ? fileUrl(style, style.images[0], "300x300")
+                : undefined,
               price: style.basePrice,
               category: style.category,
             }))}
-            onPressItem={() => navigation.navigate("NewOrder")}
+            onPressItem={() =>router.push("/orders/new")}
           />
         </View>
       ))}
 
       {!isLoading && grouped.length === 0 && !error && (
-        <Text style={[$error, { color: theme.colors.textDim }]} text="No styles available" />
+        <Text
+          className="p-4 text-center text-textDim dark:text-textDim-dark"
+          text="No styles available"
+        />
       )}
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = {
   flex: 1,
-}
-
-const $headerRow: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.md,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: spacing.xs,
-}
-
-const $headingText: TextStyle = {
-  flex: 1,
-}
-
-const $chips: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.xs,
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-}
-
-const $chip: ViewStyle = {
-  paddingHorizontal: spacing.sm,
-  paddingVertical: spacing.xs,
-  borderRadius: 16,
-  borderWidth: 1,
-}
-
-const $chipText: TextStyle = {
-  fontSize: 13,
-  fontWeight: "600",
-}
-
-const $section: ViewStyle = {
-  marginBottom: spacing.md,
-}
-
-const $sectionTitle: TextStyle = {
-  paddingHorizontal: spacing.md,
-  marginBottom: spacing.xs,
-}
-
-const $error: TextStyle = {
-  padding: spacing.md,
-  textAlign: "center",
 }

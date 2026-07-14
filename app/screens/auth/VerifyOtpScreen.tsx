@@ -5,21 +5,16 @@
  * (pasted or typed) and confirms it through AuthService.verifyEmail.
  * PocketBase OTP auth is not configured server-side yet.
  */
+import { useRouter } from "expo-router"
 import { FC, useState } from "react"
-import { observer } from "mobx-react-lite"
-import { Alert, TextStyle, View, ViewStyle } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { AppStackScreenProps } from "@/navigators"
+import { Alert, View, ViewStyle } from "react-native"
 import { Button, Screen, Text, TextField } from "@/components"
 import AuthService from "@/services/auth/AuthService"
 import { spacing } from "@/theme"
-import { useAppTheme } from "@/utils/useAppTheme"
 
-interface VerifyOtpScreenProps extends AppStackScreenProps<"VerifyOtp"> {}
 
-export const VerifyOtpScreen: FC<VerifyOtpScreenProps> = observer(function VerifyOtpScreen() {
-  const navigation = useNavigation<any>()
-  const { theme } = useAppTheme()
+export const VerifyOtpScreen: FC = function VerifyOtpScreen() {
+  const router = useRouter()
   const [code, setCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
@@ -36,7 +31,7 @@ export const VerifyOtpScreen: FC<VerifyOtpScreenProps> = observer(function Verif
 
     if (result.success) {
       Alert.alert("Verified!", "Your email has been verified.", [
-        { text: "Continue", onPress: () => navigation.navigate("SignIn") },
+        { text: "Continue", onPress: () =>router.push("/sign-in") },
       ])
     } else {
       Alert.alert("Verification failed", result.error ?? "The code is invalid or has expired.")
@@ -45,10 +40,10 @@ export const VerifyOtpScreen: FC<VerifyOtpScreenProps> = observer(function Verif
 
   return (
     <Screen style={$root} preset="scroll" safeAreaEdges={["top"]}>
-      <View style={$container}>
-        <Text preset="heading" text="Enter verification code" style={$title} />
+      <View className="p-lg">
+        <Text preset="heading" text="Enter verification code" className="mb-xs" />
         <Text
-          style={[$subtitle, { color: theme.colors.textDim }]}
+          className="mb-lg leading-5 text-textDim dark:text-textDim-dark"
           text="Paste the verification code from the email we sent you."
         />
         <TextField
@@ -67,27 +62,14 @@ export const VerifyOtpScreen: FC<VerifyOtpScreenProps> = observer(function Verif
           disabled={isLoading}
           style={$button}
         />
-        <Button text="Back" preset="default" onPress={() => navigation.goBack()} />
+        <Button text="Back" preset="default" onPress={() =>router.back()} />
       </View>
     </Screen>
   )
-})
+}
 
 const $root: ViewStyle = {
   flex: 1,
-}
-
-const $container: ViewStyle = {
-  padding: spacing.lg,
-}
-
-const $title: TextStyle = {
-  marginBottom: spacing.xs,
-}
-
-const $subtitle: TextStyle = {
-  marginBottom: spacing.lg,
-  lineHeight: 20,
 }
 
 const $field: ViewStyle = {

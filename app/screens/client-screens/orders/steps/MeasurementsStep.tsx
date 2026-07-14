@@ -3,32 +3,23 @@
  * Second step in Nigerian order creation workflow
  */
 
-import React, { FC, useState, useEffect } from "react"
+import React, { FC, useState } from "react"
 import { View, ScrollView, ViewStyle, TextStyle, Alert, TouchableOpacity } from "react-native"
-import { observer } from "mobx-react-lite"
-import { Text, TextField, Button, Icon } from "app/components"
-import { colors, spacing } from "app/theme"
-import { useStores } from "@/models"
-import { NigerianGarmentType, MeasurementData } from "@/types/orders"
+import { Text, TextField, Button, Icon } from "@/components"
+import { colors, spacing } from "@/theme"
+import { useOrderDraftStore } from "@/state/orderDraftStore"
+import { useAuthStore } from "@/state/authStore"
+import { useClientMeasurements } from "@/api/measurements"
+import { PBMeasurementRecord } from "@/screens/tailor-screens/measurements/measurement-data"
 
-interface SavedMeasurement {
-  id: string
-  garmentType: NigerianGarmentType
-  chest: number
-  waist: number
-  length: number
-  shoulder?: number
-  armLength?: number
-  neck?: number
-  createdAt: string
-  isDefault: boolean
-}
-
-export const MeasurementsStep: FC = observer(() => {
-  const { orderStore, authStore } = useStores()
+export const MeasurementsStep: FC = () => {
+  const orderStore = useOrderDraftStore()
+  const authStore = useAuthStore()
 
   const [selectedOption, setSelectedOption] = useState<"new" | "existing" | "skip">("new")
-  const [savedMeasurements, setSavedMeasurements] = useState<SavedMeasurement[]>([])
+  // Saved measurements via React Query (folds the former direct PB read /
+  // OrderStore.loadUserMeasurements into the measurements hook).
+  const { data: savedMeasurements = [] } = useClientMeasurements(authStore.user?.id)
   const [selectedMeasurementId, setSelectedMeasurementId] = useState<string>("")
   const [showTutorial, setShowTutorial] = useState(false)
 
@@ -43,22 +34,6 @@ export const MeasurementsStep: FC = observer(() => {
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
-
-  useEffect(() => {
-    loadSavedMeasurements()
-  }, [])
-
-  const loadSavedMeasurements = async () => {
-    try {
-      if (authStore.user?.id) {
-        // TODO: Replace with actual API call
-        const measurements = await orderStore.loadUserMeasurements(authStore.user.id)
-        setSavedMeasurements(measurements || [])
-      }
-    } catch (error) {
-      console.warn("Failed to load measurements:", error)
-    }
-  }
 
   const validateMeasurements = () => {
     const newErrors: Record<string, string> = {}
@@ -144,91 +119,115 @@ export const MeasurementsStep: FC = observer(() => {
     { key: "neck", label: orderStore.getTranslation("measurementTypes", "neck"), required: false },
   ]
 
-  const renderSavedMeasurement = (measurement: SavedMeasurement) => (
+  const renderSavedMeasurement = (measurement: PBMeasurementRecord) => (
     <TouchableOpacity
       key={measurement.id}
-      style={[
-        $measurementCard,
-        selectedMeasurementId === measurement.id && $selectedMeasurementCard,
-      ]}
+      className={`rounded-[12px] border-2 bg-neutral100 p-lg mb-md ${
+        selectedMeasurementId === measurement.id ? "border-tailorGold" : "border-neutral200"
+      }`}
+      style={selectedMeasurementId === measurement.id ? $selectedCardBg : undefined}
       onPress={() => setSelectedMeasurementId(measurement.id)}
     >
-      <View style={$measurementHeader}>
-        <Text style={$measurementTitle}>
-          {orderStore.getTranslation("garments", measurement.garmentType)}
+      <View className="flex-row items-center justify-between mb-sm">
+        <Text className="text-[16px] font-semibold" style={$textDeepCharcoal}>
+          {measurement.name || measurement.measurementType}
         </Text>
         {measurement.isDefault && (
-          <View style={$defaultBadge}>
-            <Text style={$defaultBadgeText}>Default</Text>
+          <View className="rounded-[4px] bg-sageGreen px-xs py-[2px]">
+            <Text className="text-[10px] font-semibold uppercase" style={$textWarmIvory}>
+              Default
+            </Text>
           </View>
         )}
       </View>
 
-      <View style={$measurementDetails}>
-        <Text style={$measurementDetail}>
-          Chest: {measurement.chest}cm • Waist: {measurement.waist}cm • Length: {measurement.length}
-          cm
+      <View className="mb-sm">
+        <Text className="text-[13px] mb-xxs" style={$textThreadBlue}>
+          Chest: {measurement.chest}cm • Waist: {measurement.waist}cm • Hips: {measurement.hips}cm
         </Text>
-        <Text style={$measurementDate}>
-          Created: {new Date(measurement.createdAt).toLocaleDateString()}
+        <Text className="text-[11px]" style={$textNeutral500}>
+          Created: {new Date(measurement.created).toLocaleDateString()}
         </Text>
       </View>
 
-      <View style={$measurementRadio}>
+      <View className="items-end">
         <View
-          style={[$radioButton, selectedMeasurementId === measurement.id && $radioButtonSelected]}
+          className={`h-6 w-6 items-center justify-center rounded-[12px] border-2 ${
+            selectedMeasurementId === measurement.id ? "border-tailorGold" : "border-neutral300"
+          }`}
         >
-          {selectedMeasurementId === measurement.id && <View style={$radioButtonInner} />}
+          {selectedMeasurementId === measurement.id && (
+            <View className="h-3 w-3 rounded-[6px] bg-tailorGold" />
+          )}
         </View>
       </View>
     </TouchableOpacity>
   )
 
   return (
-    <ScrollView style={$container} showsVerticalScrollIndicator={false}>
-      <View style={$content}>
-        <Text style={$title}>{orderStore.getTranslation("measurements", "en")}</Text>
-        <Text style={$subtitle}>We need your measurements to create the perfect fit</Text>
+    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <View className="p-lg">
+        <Text className="text-[24px] font-bold mb-xs" style={$textDeepCharcoal}>
+          {orderStore.getTranslation("measurements", "en")}
+        </Text>
+        <Text className="text-[14px] leading-5 mb-lg" style={$textThreadBlue}>
+          We need your measurements to create the perfect fit
+        </Text>
 
         {/* Measurement Options */}
-        <View style={$optionsContainer}>
+        <View className="gap-md mb-lg">
           <TouchableOpacity
-            style={[$optionCard, selectedOption === "new" && $selectedOptionCard]}
+            className={`rounded-[12px] border-2 bg-neutral100 p-lg ${
+              selectedOption === "new" ? "border-tailorGold" : "border-neutral200"
+            }`}
+            style={selectedOption === "new" ? $selectedCardBg : undefined}
             onPress={() => setSelectedOption("new")}
           >
-            <View style={$optionHeader}>
+            <View className="flex-row items-center mb-sm">
               <Icon icon="more" size={24} color={colors.palette.tailorGold} />
-              <Text style={$optionTitle}>Take New Measurements</Text>
+              <Text className="text-[16px] font-semibold ml-sm" style={$textDeepCharcoal}>
+                Take New Measurements
+              </Text>
             </View>
-            <Text style={$optionDescription}>
+            <Text className="text-[13px] leading-[18px]" style={$textThreadBlue}>
               Enter your measurements manually or get help from our guide
             </Text>
           </TouchableOpacity>
 
           {savedMeasurements.length > 0 && (
             <TouchableOpacity
-              style={[$optionCard, selectedOption === "existing" && $selectedOptionCard]}
+              className={`rounded-[12px] border-2 bg-neutral100 p-lg ${
+                selectedOption === "existing" ? "border-tailorGold" : "border-neutral200"
+              }`}
+              style={selectedOption === "existing" ? $selectedCardBg : undefined}
               onPress={() => setSelectedOption("existing")}
             >
-              <View style={$optionHeader}>
+              <View className="flex-row items-center mb-sm">
                 <Icon icon="appointment" size={24} color={colors.palette.sageGreen} />
-                <Text style={$optionTitle}>Use Saved Measurements</Text>
+                <Text className="text-[16px] font-semibold ml-sm" style={$textDeepCharcoal}>
+                  Use Saved Measurements
+                </Text>
               </View>
-              <Text style={$optionDescription}>
+              <Text className="text-[13px] leading-[18px]" style={$textThreadBlue}>
                 Choose from {savedMeasurements.length} previously saved measurements
               </Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
-            style={[$optionCard, selectedOption === "skip" && $selectedOptionCard]}
+            className={`rounded-[12px] border-2 bg-neutral100 p-lg ${
+              selectedOption === "skip" ? "border-tailorGold" : "border-neutral200"
+            }`}
+            style={selectedOption === "skip" ? $selectedCardBg : undefined}
             onPress={() => setSelectedOption("skip")}
           >
-            <View style={$optionHeader}>
+            <View className="flex-row items-center mb-sm">
               <Icon icon="appointment" size={24} color={colors.palette.threadBlue} />
-              <Text style={$optionTitle}>Measure During Fitting</Text>
+              <Text className="text-[16px] font-semibold ml-sm" style={$textDeepCharcoal}>
+                Measure During Fitting
+              </Text>
             </View>
-            <Text style={$optionDescription}>
+            <Text className="text-[13px] leading-[18px]" style={$textThreadBlue}>
               Skip for now and take measurements during your fitting appointment
             </Text>
           </TouchableOpacity>
@@ -236,9 +235,11 @@ export const MeasurementsStep: FC = observer(() => {
 
         {/* New Measurements Form */}
         {selectedOption === "new" && (
-          <View style={$section}>
-            <View style={$sectionHeader}>
-              <Text style={$sectionTitle}>Enter Measurements (in cm)</Text>
+          <View className="mt-lg">
+            <View className="flex-row items-center justify-between mb-md">
+              <Text className="text-[16px] font-semibold" style={$textDeepCharcoal}>
+                Enter Measurements (in cm)
+              </Text>
               <Button
                 text="Help Guide"
                 style={$helpButton}
@@ -247,9 +248,9 @@ export const MeasurementsStep: FC = observer(() => {
               />
             </View>
 
-            <View style={$measurementGrid}>
+            <View className="flex-row flex-wrap gap-md mb-md">
               {measurementFields.map((field) => (
-                <View key={field.key} style={$measurementField}>
+                <View key={field.key} className="w-[48%]">
                   <TextField
                     label={`${field.label}${field.required ? " *" : ""}`}
                     placeholder="0"
@@ -260,7 +261,11 @@ export const MeasurementsStep: FC = observer(() => {
                     keyboardType="numeric"
                     status={errors[field.key] ? "error" : undefined}
                     helper={errors[field.key]}
-                    RightAccessory={() => <Text style={$unitText}>cm</Text>}
+                    RightAccessory={() => (
+                      <Text className="text-[14px] font-medium" style={$textThreadBlue}>
+                        cm
+                      </Text>
+                    )}
                   />
                 </View>
               ))}
@@ -279,21 +284,29 @@ export const MeasurementsStep: FC = observer(() => {
 
         {/* Saved Measurements List */}
         {selectedOption === "existing" && savedMeasurements.length > 0 && (
-          <View style={$section}>
-            <Text style={$sectionTitle}>Select Saved Measurements</Text>
-            {errors.selection && <Text style={$errorText}>{errors.selection}</Text>}
+          <View className="mt-lg">
+            <Text className="text-[16px] font-semibold mb-md" style={$textDeepCharcoal}>
+              Select Saved Measurements
+            </Text>
+            {errors.selection && (
+              <Text className="text-[12px] mb-sm" style={$textAlertRed}>
+                {errors.selection}
+              </Text>
+            )}
             {savedMeasurements.map(renderSavedMeasurement)}
           </View>
         )}
 
         {/* Skip Confirmation */}
         {selectedOption === "skip" && (
-          <View style={$section}>
-            <View style={$skipInfo}>
+          <View className="mt-lg">
+            <View className="flex-row rounded-[12px] p-lg border-l-4" style={$skipInfoStyle}>
               <Icon icon="bell" size={24} color={colors.palette.threadBlue} />
-              <View style={$skipTextContainer}>
-                <Text style={$skipTitle}>Fitting Appointment Required</Text>
-                <Text style={$skipDescription}>
+              <View className="flex-1 ml-md">
+                <Text className="text-[16px] font-semibold mb-xs" style={$textDeepCharcoal}>
+                  Fitting Appointment Required
+                </Text>
+                <Text className="text-[13px] leading-[18px]" style={$textThreadBlue}>
                   A fitting appointment will be scheduled where our tailor will take your
                   measurements professionally.
                 </Text>
@@ -310,89 +323,33 @@ export const MeasurementsStep: FC = observer(() => {
           onPress={handleSave}
         />
 
-        <View style={$spacer} />
+        <View className="h-[32px]" />
       </View>
     </ScrollView>
   )
-})
+}
 
 // Styles
-const $container: ViewStyle = {
-  flex: 1,
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// as inline styles (no `dark:` variants). Layout, spacing, and container
+// backgrounds/borders are className token utilities.
+
+// Text color overrides (static, light-only).
+const $textDeepCharcoal: TextStyle = { color: colors.palette.deepCharcoal }
+const $textThreadBlue: TextStyle = { color: colors.palette.threadBlue }
+const $textWarmIvory: TextStyle = { color: colors.palette.warmIvory }
+const $textNeutral500: TextStyle = { color: colors.palette.neutral500 }
+const $textAlertRed: TextStyle = { color: colors.palette.alertRed }
+
+// Dynamic-opacity fills kept inline (no matching token utility).
+const $selectedCardBg: ViewStyle = { backgroundColor: colors.palette.tailorGold + "10" }
+const $skipInfoStyle: ViewStyle = {
+  backgroundColor: colors.palette.threadBlue + "10",
+  borderLeftColor: colors.palette.threadBlue,
 }
 
-const $content: ViewStyle = {
-  padding: spacing.lg,
-}
-
-const $title: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xs,
-}
-
-const $subtitle: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.lg,
-  lineHeight: 20,
-}
-
-const $optionsContainer: ViewStyle = {
-  gap: spacing.md,
-  marginBottom: spacing.lg,
-}
-
-const $optionCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral200,
-}
-
-const $selectedOptionCard: ViewStyle = {
-  borderColor: colors.palette.tailorGold,
-  backgroundColor: colors.palette.tailorGold + "10",
-}
-
-const $optionHeader: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
-
-const $optionTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginLeft: spacing.sm,
-}
-
-const $optionDescription: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.threadBlue,
-  lineHeight: 18,
-}
-
-const $section: ViewStyle = {
-  marginTop: spacing.lg,
-}
-
-const $sectionHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.md,
-}
-
-const $sectionTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
+// Button style overrides stay inline (Button owns its className; callers never
+// pass one in).
 const $helpButton: ViewStyle = {
   backgroundColor: colors.palette.threadBlue,
   borderRadius: 8,
@@ -404,137 +361,6 @@ const $helpButtonText: TextStyle = {
   fontSize: 12,
   fontWeight: "500",
   color: colors.palette.warmIvory,
-}
-
-const $measurementGrid: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.md,
-  marginBottom: spacing.md,
-}
-
-const $measurementField: ViewStyle = {
-  width: "48%",
-}
-
-const $unitText: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.threadBlue,
-  fontWeight: "500",
-}
-
-const $measurementCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  marginBottom: spacing.md,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral200,
-}
-
-const $selectedMeasurementCard: ViewStyle = {
-  borderColor: colors.palette.tailorGold,
-  backgroundColor: colors.palette.tailorGold + "10",
-}
-
-const $measurementHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.sm,
-}
-
-const $measurementTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-}
-
-const $defaultBadge: ViewStyle = {
-  backgroundColor: colors.palette.sageGreen,
-  borderRadius: 4,
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-}
-
-const $defaultBadgeText: TextStyle = {
-  fontSize: 10,
-  fontWeight: "600",
-  color: colors.palette.warmIvory,
-  textTransform: "uppercase",
-}
-
-const $measurementDetails: ViewStyle = {
-  marginBottom: spacing.sm,
-}
-
-const $measurementDetail: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.threadBlue,
-  marginBottom: spacing.xxs,
-}
-
-const $measurementDate: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.neutral500,
-}
-
-const $measurementRadio: ViewStyle = {
-  alignItems: "flex-end",
-}
-
-const $radioButton: ViewStyle = {
-  width: 24,
-  height: 24,
-  borderRadius: 12,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral300,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $radioButtonSelected: ViewStyle = {
-  borderColor: colors.palette.tailorGold,
-}
-
-const $radioButtonInner: ViewStyle = {
-  width: 12,
-  height: 12,
-  borderRadius: 6,
-  backgroundColor: colors.palette.tailorGold,
-}
-
-const $skipInfo: ViewStyle = {
-  flexDirection: "row",
-  backgroundColor: colors.palette.threadBlue + "10",
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderLeftWidth: 4,
-  borderLeftColor: colors.palette.threadBlue,
-}
-
-const $skipTextContainer: ViewStyle = {
-  flex: 1,
-  marginLeft: spacing.md,
-}
-
-const $skipTitle: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.deepCharcoal,
-  marginBottom: spacing.xs,
-}
-
-const $skipDescription: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.threadBlue,
-  lineHeight: 18,
-}
-
-const $errorText: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.alertRed,
-  marginBottom: spacing.sm,
 }
 
 const $saveButton: ViewStyle = {
@@ -549,8 +375,4 @@ const $saveButtonText: TextStyle = {
   fontWeight: "600",
   color: colors.palette.warmIvory,
   textAlign: "center",
-}
-
-const $spacer: ViewStyle = {
-  height: spacing.xl,
 }

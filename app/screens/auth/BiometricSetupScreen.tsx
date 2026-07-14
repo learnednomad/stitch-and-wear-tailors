@@ -3,27 +3,26 @@
  * Allows users to enable Face ID, Touch ID, or fingerprint authentication
  */
 
+import { useRouter } from "expo-router"
 import React, { useState, useEffect } from "react"
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Image,
   Platform,
 } from "react-native"
-import { TextStyle } from "react-native"
-import { useNavigation } from "@react-navigation/native"
 import { Icon, IconTypes } from "@/components"
-import { colors as themeColors, spacing, typography as themeTypography } from "@/theme"
+import { colors as themeColors } from "@/theme"
 import BiometricAuthService from "@/services/auth/BiometricAuthService"
-import { useStores } from "@/models"
+import { useAuthStore } from "@/state/authStore"
 
-// Local aliases mapping this screen's legacy color/typography names onto the
-// app theme (the theme has no primary/card/warning entries or text presets).
+// Local aliases mapping this screen's legacy color names onto the app theme
+// (the theme has no primary/card/warning entries). Consumed only by the Icon /
+// ActivityIndicator `color` props; every style is now a NativeWind className.
+// This screen is light-only, so color utilities carry no `dark:` twin.
 const colors = {
   ...themeColors,
   primary: themeColors.tint,
@@ -33,16 +32,9 @@ const colors = {
   warningLight: themeColors.palette.warning100,
 }
 
-const typography = {
-  body: { fontSize: 16, fontFamily: themeTypography.primary.normal } as TextStyle,
-  caption: { fontSize: 13, fontFamily: themeTypography.primary.normal } as TextStyle,
-  heading: { fontSize: 22, fontFamily: themeTypography.primary.bold } as TextStyle,
-  subheading: { fontSize: 16, fontFamily: themeTypography.primary.medium } as TextStyle,
-}
-
 export function BiometricSetupScreen() {
-  const navigation = useNavigation()
-  const { authStore } = useStores()
+  const router = useRouter()
+  const authStore = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
   const [biometricAvailable, setBiometricAvailable] = useState(false)
@@ -231,24 +223,26 @@ export function BiometricSetupScreen() {
 
   if (checking) {
     return (
-      <View style={styles.loadingContainer}>
+      <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Checking biometric status...</Text>
+        <Text className="mt-md text-[16px] font-spaceRegular text-textDim">
+          Checking biometric status...
+        </Text>
       </View>
     )
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+    <ScrollView className="flex-1 bg-background">
+      <View className="flex-row items-center border-b border-b-border p-lg">
+        <TouchableOpacity onPress={() =>router.back()}>
           <Icon icon="back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Biometric Authentication</Text>
+        <Text className="ml-md flex-1 text-[22px] font-spaceBold">Biometric Authentication</Text>
       </View>
 
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
+      <View className="p-lg">
+        <View className="my-xl items-center">
           <Icon
             icon={getBiometricIcon()}
             size={80}
@@ -256,38 +250,50 @@ export function BiometricSetupScreen() {
           />
         </View>
 
-        <Text style={styles.biometricName}>{getBiometricName()}</Text>
-        <Text style={styles.description}>{getBiometricDescription()}</Text>
+        <Text className="mb-sm text-center text-[22px] font-spaceBold">{getBiometricName()}</Text>
+        <Text className="mb-xl text-center text-[16px] font-spaceRegular text-textDim">
+          {getBiometricDescription()}
+        </Text>
 
         {biometricAvailable && biometricEnrolled && (
           <>
             {!biometricEnabled ? (
-              <TouchableOpacity style={styles.button} onPress={enableBiometric} disabled={loading}>
+              <TouchableOpacity
+                className="mb-md items-center rounded-lg bg-tint p-md"
+                onPress={enableBiometric}
+                disabled={loading}
+              >
                 {loading ? (
                   <ActivityIndicator color={colors.card} />
                 ) : (
-                  <Text style={styles.buttonText}>Enable {getBiometricName()}</Text>
+                  <Text className="text-[16px] font-spaceRegular font-semibold text-neutral100">
+                    Enable {getBiometricName()}
+                  </Text>
                 )}
               </TouchableOpacity>
             ) : (
               <>
                 <TouchableOpacity
-                  style={[styles.button, styles.testButton]}
+                  className="mb-md items-center rounded-lg bg-success500 p-md"
                   onPress={testBiometric}
                   disabled={loading}
                 >
-                  <Text style={styles.buttonText}>Test {getBiometricName()}</Text>
+                  <Text className="text-[16px] font-spaceRegular font-semibold text-neutral100">
+                    Test {getBiometricName()}
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.button, styles.disableButton]}
+                  className="mb-md items-center rounded-lg bg-error p-md"
                   onPress={disableBiometric}
                   disabled={loading}
                 >
                   {loading ? (
                     <ActivityIndicator color={colors.card} />
                   ) : (
-                    <Text style={styles.buttonText}>Disable {getBiometricName()}</Text>
+                    <Text className="text-[16px] font-spaceRegular font-semibold text-neutral100">
+                      Disable {getBiometricName()}
+                    </Text>
                   )}
                 </TouchableOpacity>
               </>
@@ -296,22 +302,22 @@ export function BiometricSetupScreen() {
         )}
 
         {!biometricAvailable && (
-          <View style={styles.infoBox}>
+          <View className="my-md rounded-lg bg-warning100 p-md">
             <Icon icon="feedback" size={20} color={colors.warning} />
-            <Text style={styles.infoText}>
+            <Text className="mt-sm text-[16px] font-spaceRegular text-warning500">
               Biometric authentication is not available on this device.
             </Text>
           </View>
         )}
 
         {biometricAvailable && !biometricEnrolled && (
-          <View style={styles.infoBox}>
+          <View className="my-md rounded-lg bg-warning100 p-md">
             <Icon icon="feedback" size={20} color={colors.warning} />
-            <Text style={styles.infoText}>
+            <Text className="mt-sm text-[16px] font-spaceRegular text-warning500">
               Please set up {getBiometricName()} in your device settings to use this feature.
             </Text>
             <TouchableOpacity
-              style={styles.settingsButton}
+              className="mt-md self-start rounded bg-warning500 p-sm"
               onPress={() => {
                 // Open device settings
                 if (Platform.OS === "ios") {
@@ -321,30 +327,38 @@ export function BiometricSetupScreen() {
                 }
               }}
             >
-              <Text style={styles.settingsButtonText}>Open Settings</Text>
+              <Text className="text-[13px] font-spaceRegular font-semibold text-neutral100">
+                Open Settings
+              </Text>
             </TouchableOpacity>
           </View>
         )}
 
-        <View style={styles.benefits}>
-          <Text style={styles.benefitsTitle}>Benefits of Biometric Login</Text>
-          <View style={styles.benefit}>
+        <View className="mt-xl rounded-lg bg-neutral100 p-md">
+          <Text className="mb-md text-[16px] font-spaceMedium">Benefits of Biometric Login</Text>
+          <View className="mb-sm flex-row items-center">
             <Icon icon="check" size={20} color={colors.primary} />
-            <Text style={styles.benefitText}>Quick access without typing passwords</Text>
+            <Text className="ml-sm flex-1 text-[16px] font-spaceRegular">
+              Quick access without typing passwords
+            </Text>
           </View>
-          <View style={styles.benefit}>
+          <View className="mb-sm flex-row items-center">
             <Icon icon="lock" size={20} color={colors.primary} />
-            <Text style={styles.benefitText}>Enhanced security with unique biometric data</Text>
+            <Text className="ml-sm flex-1 text-[16px] font-spaceRegular">
+              Enhanced security with unique biometric data
+            </Text>
           </View>
-          <View style={styles.benefit}>
+          <View className="mb-sm flex-row items-center">
             <Icon icon="lock" size={20} color={colors.primary} />
-            <Text style={styles.benefitText}>Your biometric data never leaves your device</Text>
+            <Text className="ml-sm flex-1 text-[16px] font-spaceRegular">
+              Your biometric data never leaves your device
+            </Text>
           </View>
         </View>
 
-        <View style={styles.privacy}>
-          <Text style={styles.privacyTitle}>Privacy & Security</Text>
-          <Text style={styles.privacyText}>
+        <View className="mt-lg rounded-lg bg-neutral100 p-md">
+          <Text className="mb-sm text-[16px] font-spaceMedium">Privacy & Security</Text>
+          <Text className="text-[13px] font-spaceRegular leading-5 text-textDim">
             Your biometric data is stored securely on your device and is never sent to our servers.
             We only store an encrypted token that allows you to authenticate using your biometric.
           </Text>
@@ -353,127 +367,3 @@ export function BiometricSetupScreen() {
     </ScrollView>
   )
 }
-
-const styles = StyleSheet.create({
-  benefit: {
-    alignItems: "center",
-    flexDirection: "row",
-    marginBottom: spacing.sm,
-  },
-  benefitText: {
-    ...typography.body,
-    flex: 1,
-    marginLeft: spacing.sm,
-  },
-  benefits: {
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    marginTop: spacing.xl,
-    padding: spacing.md,
-  },
-  benefitsTitle: {
-    ...typography.subheading,
-    marginBottom: spacing.md,
-  },
-  biometricName: {
-    ...typography.heading,
-    marginBottom: spacing.sm,
-    textAlign: "center",
-  },
-  button: {
-    alignItems: "center",
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    marginBottom: spacing.md,
-    padding: spacing.md,
-  },
-  buttonText: {
-    ...typography.body,
-    color: colors.card,
-    fontWeight: "600",
-  },
-  container: {
-    backgroundColor: colors.background,
-    flex: 1,
-  },
-  content: {
-    padding: spacing.lg,
-  },
-  description: {
-    ...typography.body,
-    color: colors.textDim,
-    marginBottom: spacing.xl,
-    textAlign: "center",
-  },
-  disableButton: {
-    backgroundColor: colors.error,
-  },
-  header: {
-    alignItems: "center",
-    borderBottomColor: colors.border,
-    borderBottomWidth: 1,
-    flexDirection: "row",
-    padding: spacing.lg,
-  },
-  iconContainer: {
-    alignItems: "center",
-    marginVertical: spacing.xl,
-  },
-  infoBox: {
-    backgroundColor: colors.warningLight,
-    borderRadius: 8,
-    marginVertical: spacing.md,
-    padding: spacing.md,
-  },
-  infoText: {
-    ...typography.body,
-    color: colors.warning,
-    marginTop: spacing.sm,
-  },
-  loadingContainer: {
-    alignItems: "center",
-    backgroundColor: colors.background,
-    flex: 1,
-    justifyContent: "center",
-  },
-  loadingText: {
-    ...typography.body,
-    color: colors.textDim,
-    marginTop: spacing.md,
-  },
-  privacy: {
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    marginTop: spacing.lg,
-    padding: spacing.md,
-  },
-  privacyText: {
-    ...typography.caption,
-    color: colors.textDim,
-    lineHeight: 20,
-  },
-  privacyTitle: {
-    ...typography.subheading,
-    marginBottom: spacing.sm,
-  },
-  settingsButton: {
-    alignSelf: "flex-start",
-    backgroundColor: colors.warning,
-    borderRadius: 4,
-    marginTop: spacing.md,
-    padding: spacing.sm,
-  },
-  settingsButtonText: {
-    ...typography.caption,
-    color: colors.card,
-    fontWeight: "600",
-  },
-  testButton: {
-    backgroundColor: colors.success,
-  },
-  title: {
-    ...typography.heading,
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-})

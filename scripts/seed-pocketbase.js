@@ -13,13 +13,21 @@
  * Idempotent-ish: skips users/styles/fabrics that already exist by
  * email/name; orders and downstream records are only created when the
  * demo client has no orders yet.
+ *
+ * Optional storefront photography is loaded from web/public/storefront/seed.
+ * Missing files are skipped so the content seed remains useful in CI.
  */
+
+const fs = require("node:fs")
+const path = require("node:path")
 
 const PB_URL = process.env.PB_URL || "http://127.0.0.1:8090"
 const ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL || "admin@stitchandwear.local"
 const ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD || "Admin12345!"
 
 const DEMO_PASSWORD = process.env.SEED_DEMO_PASSWORD || "Demo12345!"
+const STOREFRONT_ASSET_DIR =
+  process.env.STOREFRONT_ASSET_DIR || path.resolve(__dirname, "../web/public/storefront/seed")
 
 let adminToken = ""
 
@@ -35,6 +43,33 @@ async function api(method, path, body) {
   const json = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(`${method} ${path} -> ${res.status}: ${JSON.stringify(json)}`)
+  }
+  return json
+}
+
+async function apiForm(method, requestPath, fields, files = {}) {
+  const form = new FormData()
+  for (const [key, value] of Object.entries(fields)) {
+    if (value === undefined || value === null) continue
+    form.append(key, typeof value === "string" ? value : JSON.stringify(value))
+  }
+  for (const [field, filenames] of Object.entries(files)) {
+    for (const filename of Array.isArray(filenames) ? filenames : [filenames]) {
+      const fullPath = path.join(STOREFRONT_ASSET_DIR, filename)
+      if (!fs.existsSync(fullPath)) continue
+      const extension = path.extname(filename).toLowerCase()
+      const type = extension === ".png" ? "image/png" : extension === ".jpg" || extension === ".jpeg" ? "image/jpeg" : "image/webp"
+      form.append(field, new Blob([fs.readFileSync(fullPath)], { type }), path.basename(filename))
+    }
+  }
+  const res = await fetch(`${PB_URL}${requestPath}`, {
+    method,
+    headers: adminToken ? { Authorization: adminToken } : {},
+    body: form,
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(`${method} ${requestPath} -> ${res.status}: ${JSON.stringify(json)}`)
   }
   return json
 }
@@ -59,6 +94,22 @@ async function ensureUser(data) {
   return api("PATCH", `/api/collections/users/records/${user.id}`, { verified: true })
 }
 
+function slugify(value) {
+  return value
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+}
+
+async function upsertBySlug(collection, slug, fields, files) {
+  const existing = await first(collection, `slug = '${slug}'`)
+  const requestPath = existing
+    ? `/api/collections/${collection}/records/${existing.id}`
+    : `/api/collections/${collection}/records`
+  return apiForm(existing ? "PATCH" : "POST", requestPath, { ...fields, slug }, files)
+}
+
 const CATALOG_STYLES = [
   ["Classic Agbada", "agbada", "male", 85000, "Three-piece flowing agbada with embroidered neckline"],
   ["Royal Agbada", "agbada", "male", 120000, "Premium agbada with hand-stitched gold embroidery"],
@@ -75,6 +126,110 @@ const CATALOG_STYLES = [
   ["Business Suit", "suit", "male", 95000, "Two-piece tailored suit in wool blend"],
   ["Corporate Shirt", "shirt", "male", 18000, "Fitted dress shirt with French cuffs"],
   ["Tailored Trousers", "trouser", "unisex", 22000, "Straight-cut tailored trousers"],
+]
+
+// [name, category, price, stock, description]
+const PRODUCTS = [
+  ["Ready-made Agbada (Navy)", "menswear", 78000, 6, "Pre-tailored three-piece agbada, navy with silver embroidery. Ships in 2–3 days."],
+  ["Senator Wear (Black)", "menswear", 42000, 12, "Classic slim-fit senator, ready to wear. Mandarin collar, covered buttons."],
+  ["Embroidered Kaftan (White)", "menswear", 36000, 9, "Off-the-rack white kaftan with tonal embroidery panel."],
+  ["Ankara Flare Gown", "womenswear", 49000, 5, "Floor-length ankara gown, flared skirt. Vibrant Angelina print."],
+  ["Ankara Two-Piece Set", "womenswear", 45000, 7, "Crop top and maxi skirt ankara set, ready to wear."],
+  ["Iro & Buba Set (Aso-Oke)", "womenswear", 62000, 4, "Traditional iro and buba in premium aso-oke, with matching gele."],
+  ["Kids Dashiki (Ages 4–8)", "childrenswear", 14000, 15, "Colourful dashiki for children, soft cotton, machine washable."],
+  ["Beaded Gele Headwrap", "accessories", 9500, 20, "Pre-tied beaded gele, adjustable. Gold and burgundy."],
+  ["Leather Babouche Slippers", "footwear", 18000, 10, "Handmade leather slippers, tan. Sizes 40–46."],
+  ["Ankara Fabric (6 yards)", "fabric", 12000, 25, "Premium wax ankara, 6-yard bundle. Assorted prints."],
+  ["Aso-Oke Bundle (Gold)", "fabric", 34000, 8, "Handwoven aso-oke, gold. Enough for a full iro & buba."],
+  ["Kente Stole", "accessories", 15000, 14, "Authentic kente stole, graduation-ready."],
+]
+
+const STOREFRONT_TAILORS = [
+  {
+    email: "amina@stitchandwear.ng",
+    firstName: "Amina",
+    lastName: "Yusuf",
+    businessName: "Amina Yusuf Atelier",
+    headline: "Contemporary occasionwear, shaped by Northern craft",
+    location: "Abuja, Nigeria",
+    specialties: ["Kaftan", "Bridal", "Embroidery"],
+    yearsExperience: 14,
+  },
+  {
+    email: "dapo@stitchandwear.ng",
+    firstName: "Dapo",
+    lastName: "Adeyemi",
+    businessName: "Dapo Adeyemi",
+    headline: "Modern suiting with an unmistakably Nigerian point of view",
+    location: "Lagos, Nigeria",
+    specialties: ["Suits", "Senator", "Menswear"],
+    yearsExperience: 18,
+  },
+  {
+    email: "mai@stitchandwear.ng",
+    firstName: "Mai",
+    lastName: "Couture",
+    businessName: "Mai Couture",
+    headline: "Sculptural womenswear for life’s landmark moments",
+    location: "Lagos, Nigeria",
+    specialties: ["Bridal", "Ankara", "Eveningwear"],
+    yearsExperience: 12,
+  },
+  {
+    email: "nkiru@stitchandwear.ng",
+    firstName: "Nkiru",
+    lastName: "Okoye",
+    businessName: "The Native Atelier",
+    headline: "Heritage textiles finished with a quiet, modern hand",
+    location: "Enugu, Nigeria",
+    specialties: ["Iro & Buba", "Aso Oke", "Adire"],
+    yearsExperience: 16,
+  },
+  {
+    email: "hassan@stitchandwear.ng",
+    firstName: "Hassan",
+    lastName: "Bello",
+    businessName: "House of Reign",
+    headline: "Ceremonial agbada and hand-finished embroidery",
+    location: "Kano, Nigeria",
+    specialties: ["Agbada", "Kaftan", "Embroidery"],
+    yearsExperience: 22,
+  },
+]
+
+const JOURNAL_POSTS = [
+  {
+    slug: "story-behind-agbada",
+    title: "The Story Behind Agbada",
+    excerpt: "A garment of presence, lineage and meticulous proportion.",
+    category: "craftsmanship",
+    readingMinutes: 6,
+    body: "<p>Agbada is more than a silhouette. Its volume, embroidery and movement communicate occasion and identity. We trace how master cutters balance heritage with a distinctly modern ease.</p><h2>The language of the neckline</h2><p>Every motif starts as a conversation between wearer and maker, then becomes a map for the embroiderer’s hand.</p>",
+  },
+  {
+    slug: "choosing-the-perfect-fabric",
+    title: "How to Choose the Perfect Fabric",
+    excerpt: "A practical guide to drape, climate, colour and occasion.",
+    category: "style_guide",
+    readingMinutes: 5,
+    body: "<p>The right cloth supports the shape of the garment and the rhythm of the day. Begin with climate and movement, then consider finish, weight and how the colour behaves in natural light.</p>",
+  },
+  {
+    slug: "wedding-style-inspiration",
+    title: "Wedding Style Inspiration",
+    excerpt: "Thoughtful looks for the couple, family and wedding party.",
+    category: "weddings",
+    readingMinutes: 4,
+    body: "<p>Start with a shared colour story, then let every look carry its own texture and proportion. Cohesion need not mean uniformity.</p>",
+  },
+  {
+    slug: "bespoke-versus-ready-to-wear",
+    title: "Bespoke vs Ready-to-Wear",
+    excerpt: "When to commission a piece and when an atelier finish is enough.",
+    category: "behind_the_seams",
+    readingMinutes: 7,
+    body: "<p>Ready-to-wear offers immediacy. Bespoke offers a garment drawn around your measurements, preferences and purpose. Both belong in a considered wardrobe.</p>",
+  },
 ]
 
 const FABRICS = [
@@ -99,6 +254,190 @@ const FABRICS = [
   ["Suiting Polyester", "polyester", "Black", "Plain", 5500, 130],
   ["TR Blend", "mixed", "Brown", "Check", 6000, 90],
 ]
+
+async function seedStorefront({ tailor, additionalTailors, productIds }) {
+  const profileInputs = [
+    {
+      user: tailor,
+      businessName: "Adeyemi Bespoke",
+      headline: "Master tailoring for modern Nigerian ceremony",
+      specialties: ["Agbada", "Senator", "Suits", "Wedding"],
+      yearsExperience: 20,
+    },
+    ...additionalTailors.map((user, index) => ({
+      user,
+      businessName: STOREFRONT_TAILORS[index].businessName,
+      headline: STOREFRONT_TAILORS[index].headline,
+      specialties: STOREFRONT_TAILORS[index].specialties,
+      yearsExperience: STOREFRONT_TAILORS[index].yearsExperience,
+    })),
+  ]
+
+  const profileIds = []
+  for (const [index, input] of profileInputs.entries()) {
+    const displayName = `${input.user.firstName} ${input.user.lastName}`
+    const slug = slugify(input.businessName)
+    const profile = await upsertBySlug(
+      "tailor_profiles",
+      slug,
+      {
+        tailor: input.user.id,
+        displayName,
+        businessName: input.businessName,
+        headline: input.headline,
+        bio: input.user.bio || input.headline,
+        location: input.user.location,
+        specialties: input.specialties,
+        yearsExperience: input.yearsExperience,
+        rating: Number((4.7 + (index % 3) * 0.1).toFixed(1)),
+        reviewCount: 18 + index * 7,
+        completedOrders: 80 + index * 43,
+        isVerified: true,
+        isFeatured: index < 4,
+        isActive: true,
+      },
+      {
+        avatar: [`tailor-${String(index + 1).padStart(2, "0")}.webp`],
+        coverImage: [`tailor-${String(index + 1).padStart(2, "0")}-cover.webp`],
+      },
+    )
+    profileIds.push(profile.id)
+
+    for (const weekday of [1, 2, 3, 4, 5, 6]) {
+      const existing = await first(
+        "tailor_availability",
+        `tailor = '${input.user.id}' && weekday = ${weekday}`,
+      )
+      const availability = {
+        tailor: input.user.id,
+        weekday,
+        startTime: weekday === 6 ? "10:00" : "09:00",
+        endTime: weekday === 6 ? "15:00" : "17:00",
+        slotDurationMinutes: 60,
+        location: input.user.location,
+        appointmentTypes: ["consultation", "measurement", "fitting"],
+        timezone: "Africa/Lagos",
+        isActive: true,
+      }
+      if (existing) {
+        await api(
+          "PATCH",
+          `/api/collections/tailor_availability/records/${existing.id}`,
+          availability,
+        )
+      } else {
+        await api("POST", "/api/collections/tailor_availability/records", availability)
+      }
+    }
+  }
+
+  const collectionInputs = [
+    {
+      slug: "agbada-heritage",
+      name: "Agbada Heritage",
+      eyebrow: "Men · Ceremony",
+      description: "Commanding silhouettes, deliberate volume and hand-finished embroidery.",
+      audience: "male",
+      products: productIds.slice(0, 3),
+    },
+    {
+      slug: "modern-womenswear",
+      name: "Modern Womenswear",
+      eyebrow: "Women · Occasion",
+      description: "Ankara, aso-oke and lace cut for movement and memorable entrances.",
+      audience: "female",
+      products: productIds.slice(3, 6),
+    },
+    {
+      slug: "finishing-touches",
+      name: "Finishing Touches",
+      eyebrow: "Accessories",
+      description: "Small-batch accessories and footwear made to complete the story.",
+      audience: "all",
+      products: [productIds[7], productIds[8], productIds[11]],
+    },
+    {
+      slug: "textiles-of-west-africa",
+      name: "Textiles of West Africa",
+      eyebrow: "Cloth · Craft",
+      description: "Colour-rich wax, handwoven aso-oke and ceremonial cloth.",
+      audience: "unisex",
+      products: [productIds[9], productIds[10]],
+    },
+  ]
+  for (const [index, collection] of collectionInputs.entries()) {
+    await upsertBySlug(
+      "storefront_collections",
+      collection.slug,
+      {
+        ...collection,
+        sortOrder: index + 1,
+        isFeatured: index < 3,
+        isActive: true,
+      },
+      { coverImage: [`collection-${collection.slug}.webp`] },
+    )
+  }
+
+  for (const [index, post] of JOURNAL_POSTS.entries()) {
+    await upsertBySlug(
+      "journal_posts",
+      post.slug,
+      {
+        ...post,
+        author: profileIds[index % profileIds.length],
+        publishedAt: new Date(Date.now() - index * 7 * 86400000).toISOString(),
+        isFeatured: index === 0,
+        isPublished: true,
+      },
+      { coverImage: [`journal-${post.slug}.webp`] },
+    )
+  }
+
+  await upsertBySlug(
+    "storefront_pages",
+    "home",
+    {
+      title: "Bespoke, crafted for your legacy",
+      eyebrow: "Made in Nigeria · Worn everywhere",
+      summary: "Commission exceptional tailoring or discover ready-to-wear pieces from verified Nigerian ateliers.",
+      content: {
+        craftTitle: "The art of African tailoring",
+        craftBody: "Measured with care, cut with confidence and finished by makers who understand the weight of every occasion.",
+        statistics: [
+          { value: "10+", label: "Years in craft" },
+          { value: "5K+", label: "Happy clients" },
+          { value: "50+", label: "Expert tailors" },
+        ],
+      },
+      seoTitle: "Stitch & Wear — Bespoke Nigerian Tailoring",
+      seoDescription: "Bespoke tailoring and ready-to-wear fashion from verified Nigerian designers.",
+      isPublished: true,
+    },
+    { heroImage: ["hero-home.webp"] },
+  )
+  await upsertBySlug(
+    "storefront_pages",
+    "about",
+    {
+      title: "About Stitch & Wear",
+      eyebrow: "Our story",
+      summary: "A marketplace built to carry Nigerian tailoring heritage forward.",
+      content: {
+        body: "We connect discerning clients with independent makers, protecting the intimacy of bespoke service while making every step easier to follow.",
+        values: ["Heritage", "Quality", "Craftsmanship", "Sustainability"],
+      },
+      seoTitle: "About Stitch & Wear",
+      seoDescription: "Meet the makers and principles behind Stitch & Wear.",
+      isPublished: true,
+    },
+    { heroImage: ["hero-about.webp"] },
+  )
+
+  console.log(
+    `Storefront: ${profileIds.length} tailor profiles, ${collectionInputs.length} collections, ${JOURNAL_POSTS.length} journal posts`,
+  )
+}
 
 async function main() {
   const auth = await api("POST", "/api/collections/_superusers/auth-with-password", {
@@ -129,6 +468,22 @@ async function main() {
     phone: "+2348098765432",
     location: "Lagos, Nigeria",
   })
+  const additionalTailors = []
+  for (const profile of STOREFRONT_TAILORS) {
+    additionalTailors.push(
+      await ensureUser({
+        email: profile.email,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        userType: "tailor",
+        status: "active",
+        phone: "+2348000000000",
+        businessName: profile.businessName,
+        bio: profile.headline,
+        location: profile.location,
+      }),
+    )
+  }
   console.log(`Users: tailor=${tailor.id} client=${client.id}`)
 
   // --- catalog styles ---
@@ -147,6 +502,34 @@ async function main() {
         tags: [category, gender],
       })
     }
+    rec = await api("PATCH", `/api/collections/catalog_styles/records/${rec.id}`, {
+      slug: slugify(name),
+      fabricRequirements: { unit: "metres", amount: category === "agbada" ? 8 : 4 },
+      customizationOptions: [
+        {
+          id: "fit",
+          label: "Fit",
+          type: "single",
+          required: true,
+          values: [
+            { id: "classic", label: "Classic" },
+            { id: "relaxed", label: "Relaxed" },
+            { id: "tailored", label: "Tailored", priceDelta: 5000 },
+          ],
+        },
+        {
+          id: "embroidery",
+          label: "Embroidery",
+          type: "single",
+          values: [
+            { id: "none", label: "None" },
+            { id: "tonal", label: "Tonal", priceDelta: 10000 },
+            { id: "heritage", label: "Heritage", priceDelta: 18000 },
+          ],
+        },
+      ],
+      estimatedProductionDays: category === "agbada" ? 21 : 14,
+    })
     styleIds.push(rec.id)
   }
   console.log(`Catalog styles: ${styleIds.length}`)
@@ -171,6 +554,53 @@ async function main() {
     fabricIds.push(rec.id)
   }
   console.log(`Fabrics: ${fabricIds.length}`)
+
+  // --- marketplace products (sold by the demo tailor) ---
+  let productIds = []
+  for (const [productIndex, product] of PRODUCTS.entries()) {
+    const [name, category, price, stock, description] = product
+    let rec = await first("products", `name = '${name.replace(/'/g, "''")}'`)
+    if (!rec) {
+      rec = await api("POST", "/api/collections/products/records", {
+        seller: tailor.id,
+        name,
+        category,
+        price,
+        stock,
+        currency: "NGN",
+        description,
+        isActive: true,
+        tags: [category],
+      })
+    }
+    const sizeValues = category === "accessories" || category === "fabric" ? ["One size"] : ["S", "M", "L", "XL"]
+    const variants = sizeValues.map((size, index) => ({
+      id: `${slugify(name)}-${slugify(size)}`,
+      label: size,
+      size,
+      sku: `SW-${String(productIndex + 1).padStart(3, "0")}-${index + 1}`,
+      stock: Math.max(1, Math.floor(stock / sizeValues.length)),
+      price,
+    }))
+    rec = await apiForm(
+      "PATCH",
+      `/api/collections/products/records/${rec.id}`,
+      {
+        slug: slugify(name),
+        compareAtPrice: productIndex % 4 === 1 ? Math.round(price * 1.15) : 0,
+        variants,
+        options: [{ name: "Size", values: sizeValues }],
+        isFeatured: productIndex < 6,
+        rating: Number((4.6 + (productIndex % 4) * 0.1).toFixed(1)),
+        reviewCount: 12 + productIndex * 3,
+      },
+      { images: [`product-${String(productIndex + 1).padStart(2, "0")}.webp`] },
+    )
+    productIds.push(rec.id)
+  }
+  console.log(`Products: ${productIds.length}`)
+
+  await seedStorefront({ tailor, additionalTailors, productIds })
 
   // --- everything below only when the demo client has no orders yet ---
   const existingOrder = await first("orders", `customer = '${client.id}'`)

@@ -7,7 +7,6 @@ import {
   View,
   ViewStyle,
 } from "react-native"
-import { $styles } from "../theme"
 import { Icon, IconTypes } from "./Icon"
 import { Text, TextProps } from "./Text"
 import type { ThemedStyle } from "@/theme"
@@ -136,21 +135,23 @@ export const ListItem = forwardRef<View, ListItemProps>(function ListItem(
     TouchableOpacityProps.onPressOut !== undefined ||
     TouchableOpacityProps.onLongPress !== undefined
 
-  const $textStyles = [$textStyle, $textStyleOverride, TextProps?.style]
+  const $textStyles = [$textStyleOverride, TextProps?.style]
 
-  const $containerStyles = [
-    topSeparator && $separatorTop,
-    bottomSeparator && $separatorBottom,
-    $containerStyleOverride,
-  ]
-
-  const $touchableStyles = [$styles.row, $touchableStyle, { minHeight: height }, style]
+  // Separators are solid-token borders keyed off boolean props -> conditional
+  // className with `dark:` twins; caller override stays inline.
+  const $separatorClass = `${
+    topSeparator ? "border-t border-separator dark:border-separator-dark" : ""
+  } ${bottomSeparator ? "border-b border-separator dark:border-separator-dark" : ""}`
 
   const Wrapper: ComponentType<TouchableOpacityProps> = isTouchable ? TouchableOpacity : View
 
   return (
-    <View ref={ref} style={themed($containerStyles)}>
-      <Wrapper {...TouchableOpacityProps} style={$touchableStyles}>
+    <View ref={ref} className={$separatorClass} style={$containerStyleOverride}>
+      <Wrapper
+        {...TouchableOpacityProps}
+        className="flex-row items-start"
+        style={[{ minHeight: height }, style]}
+      >
         <ListItemAction
           side="left"
           size={height}
@@ -159,7 +160,14 @@ export const ListItem = forwardRef<View, ListItemProps>(function ListItem(
           Component={LeftComponent}
         />
 
-        <Text {...TextProps} tx={tx} text={text} txOptions={txOptions} style={themed($textStyles)}>
+        <Text
+          {...TextProps}
+          tx={tx}
+          text={text}
+          txOptions={txOptions}
+          className="shrink grow self-center py-2"
+          style={$textStyles}
+        >
           {children}
         </Text>
 
@@ -206,27 +214,8 @@ function ListItemAction(props: ListItemActionProps) {
   return null
 }
 
-const $separatorTop: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  borderTopWidth: 1,
-  borderTopColor: colors.separator,
-})
-
-const $separatorBottom: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  borderBottomWidth: 1,
-  borderBottomColor: colors.separator,
-})
-
-const $textStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  paddingVertical: spacing.xs,
-  alignSelf: "center",
-  flexGrow: 1,
-  flexShrink: 1,
-})
-
-const $touchableStyle: ViewStyle = {
-  alignItems: "flex-start",
-}
-
+// Icon `containerStyle` is a component style prop (with a dynamic height), so the
+// icon-container styles stay as themed inline styles.
 const $iconContainer: ViewStyle = {
   justifyContent: "center",
   alignItems: "center",

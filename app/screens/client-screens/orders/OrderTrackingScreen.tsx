@@ -7,21 +7,11 @@
  * is unavailable.
  */
 
+import { useRouter, useLocalSearchParams } from "expo-router"
 import { FC, useCallback, useEffect, useState } from "react"
-import {
-  View,
-  Image,
-  RefreshControl,
-  TouchableOpacity,
-  ViewStyle,
-  TextStyle,
-  ImageStyle,
-} from "react-native"
-import { observer } from "mobx-react-lite"
-import { useNavigation } from "@react-navigation/native"
-import { AppStackScreenProps } from "@/navigators"
+import { View, Image, RefreshControl, TouchableOpacity, ViewStyle, TextStyle } from "react-native"
 import { Screen, Text, Icon } from "@/components"
-import { colors, spacing } from "@/theme"
+import { colors } from "@/theme"
 import { orderApi, PBOrderStageRecord } from "@/services/api/order-api"
 import { COLLECTIONS } from "@/services/pocketbase/pocketbase-client"
 import { fileUrl } from "@/services/pocketbase/pocketbase-client"
@@ -47,12 +37,12 @@ const TERMINAL_STATUSES: Record<string, string> = {
   rejected: "Order Rejected",
 }
 
-interface OrderTrackingScreenProps extends AppStackScreenProps<"OrderTracking"> {}
 
-export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
-  function OrderTrackingScreen({ route }) {
-    const navigation = useNavigation()
-    const { orderId } = route.params
+export const OrderTrackingScreen: FC = 
+  function OrderTrackingScreen() {
+    const router = useRouter()
+    const { id } = useLocalSearchParams<{ id: string }>()
+    const orderId = id ?? ""
 
     const [order, setOrder] = useState<Record<string, any> | null>(null)
     const [stages, setStages] = useState<PBOrderStageRecord[]>([])
@@ -125,10 +115,13 @@ export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
       const photoUri = record?.photo ? fileUrl(record as any, record.photo, "200x200") : ""
 
       return (
-        <View key={stageDef.status} style={$stageRow}>
+        <View key={stageDef.status} className="flex-row">
           {/* timeline rail: dot + connector */}
-          <View style={$railColumn}>
-            <View style={[$stageDot, { backgroundColor: dotColor + "20", borderColor: dotColor }]}>
+          <View className="items-center w-[40px]">
+            <View
+              className="w-[32px] h-[32px] rounded-[16px] border-[1.5px] justify-center items-center"
+              style={{ backgroundColor: dotColor + "20", borderColor: dotColor }}
+            >
               <Icon
                 icon={state === "completed" ? "check" : state === "current" ? "settings" : "more"}
                 size={16}
@@ -137,29 +130,41 @@ export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
             </View>
             {index < PIPELINE_STAGES.length - 1 && (
               <View
-                style={[
-                  $railLine,
-                  {
-                    backgroundColor:
-                      state === "completed" ? colors.palette.success500 : colors.palette.neutral300,
-                  },
-                ]}
+                className="w-[2px] flex-1 min-h-[24px]"
+                style={{
+                  backgroundColor:
+                    state === "completed" ? colors.palette.success500 : colors.palette.neutral300,
+                }}
               />
             )}
           </View>
 
           {/* stage content */}
-          <View style={[$stageContent, state === "future" && $stageContentFuture]}>
-            <View style={$stageTitleRow}>
-              <Text style={[$stageTitle, state === "current" && $stageTitleCurrent]}>
+          <View className={`flex-1 pl-md pb-lg ${state === "future" ? "opacity-50" : ""}`}>
+            <View className="flex-row justify-between items-center">
+              <Text
+                className="text-[15px] font-semibold"
+                style={{
+                  color: state === "current" ? colors.accent : colors.palette.neutral900,
+                }}
+              >
                 {stageDef.title}
               </Text>
-              {record && <Text style={$stageTime}>{formatRelativeTime(record.created)}</Text>}
+              {record && (
+                <Text className="text-[11px]" style={$stageTimeColor}>
+                  {formatRelativeTime(record.created)}
+                </Text>
+              )}
             </View>
-            <Text style={$stageDescription}>
+            <Text className="text-[13px] mt-xxs" style={$stageDescriptionColor}>
               {record?.note ? record.note : stageDef.description}
             </Text>
-            {photoUri !== "" && <Image source={{ uri: photoUri }} style={$stagePhoto} />}
+            {photoUri !== "" && (
+              <Image
+                source={{ uri: photoUri }}
+                className="w-[96px] h-[96px] rounded-[8px] mt-sm bg-neutral200"
+              />
+            )}
           </View>
         </View>
       )
@@ -182,51 +187,62 @@ export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
         }}
       >
         {/* Header */}
-        <View style={$header}>
+        <View className="flex-row items-center px-lg py-md border-b border-b-border">
           <TouchableOpacity
-            style={$backButton}
-            onPress={() => navigation.goBack()}
+            className="w-[40px] h-[40px] justify-center items-center"
+            onPress={() =>router.back()}
             accessible
             accessibilityLabel="Go back"
             accessibilityRole="button"
           >
             <Icon icon="back" size={24} color={colors.palette.neutral900} />
           </TouchableOpacity>
-          <Text style={$headerTitle}>Track Order</Text>
+          <Text className="flex-1 text-[18px] font-semibold text-center" style={$headerTitleColor}>
+            Track Order
+          </Text>
           {/* realtime connection indicator */}
-          <View style={$connectionIndicator}>
+          <View className="flex-row items-center w-[40px] justify-end gap-xxs">
             <View
-              style={[
-                $connectionDot,
-                {
-                  backgroundColor:
-                    realtimeStatus === "live"
-                      ? colors.palette.success500
-                      : colors.palette.warning500,
-                },
-              ]}
+              className="w-[8px] h-[8px] rounded-[4px]"
+              style={{
+                backgroundColor:
+                  realtimeStatus === "live"
+                    ? colors.palette.success500
+                    : colors.palette.warning500,
+              }}
             />
-            <Text style={$connectionText}>{realtimeStatus === "live" ? "Live" : "Auto"}</Text>
+            <Text className="text-[10px]" style={$connectionTextColor}>
+              {realtimeStatus === "live" ? "Live" : "Auto"}
+            </Text>
           </View>
         </View>
 
         {isLoading || !order ? (
-          <View style={$loadingContainer}>
-            <Text style={$loadingText}>{isLoading ? "Loading order..." : "Order not found"}</Text>
+          <View className="p-xl items-center">
+            <Text className="text-[16px]" style={$loadingTextColor}>
+              {isLoading ? "Loading order..." : "Order not found"}
+            </Text>
           </View>
         ) : (
           <>
             {/* Order summary */}
-            <View style={$summaryCard}>
-              <View style={$summaryHeader}>
-                <Text style={$orderNumber}>#{order.orderNumber}</Text>
-                <Text style={$orderAmount}>₦{(order.pricing?.totalPrice ?? 0).toLocaleString()}</Text>
+            <View
+              className="m-lg bg-neutral100 rounded-[12px] p-lg border border-border"
+              style={$summaryCardShadow}
+            >
+              <View className="flex-row justify-between items-center mb-xs">
+                <Text className="text-[14px] font-semibold" style={$orderNumberColor}>
+                  #{order.orderNumber}
+                </Text>
+                <Text className="text-[16px] font-bold" style={$orderAmountColor}>
+                  ₦{(order.pricing?.totalPrice ?? 0).toLocaleString()}
+                </Text>
               </View>
-              <Text style={$orderGarment}>
+              <Text className="text-[20px] font-bold mb-xs" style={$orderGarmentColor}>
                 {String(order.garmentType ?? "").replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
               </Text>
               {order.estimatedDeliveryDate && (
-                <Text style={$orderDelivery}>
+                <Text className="text-[13px]" style={$orderDeliveryColor}>
                   Est. delivery:{" "}
                   {new Date(order.estimatedDeliveryDate).toLocaleDateString("en-NG", {
                     day: "numeric",
@@ -238,14 +254,18 @@ export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
             </View>
 
             {/* Timeline */}
-            <View style={$timelineContainer}>
+            <View className="px-lg pb-xl">
               {terminalTitle ? (
-                <View style={$terminalCard}>
+                <View className="flex-row items-start bg-error100 rounded-[8px] p-md mb-lg gap-sm">
                   <Icon icon="x" size={20} color={colors.palette.error500} />
-                  <View style={$terminalTextContainer}>
-                    <Text style={$terminalTitle}>{terminalTitle}</Text>
+                  <View className="flex-1">
+                    <Text className="text-[15px] font-bold" style={$terminalTitleColor}>
+                      {terminalTitle}
+                    </Text>
                     {latestByStatus[pbStatus]?.note ? (
-                      <Text style={$terminalNote}>{latestByStatus[pbStatus].note}</Text>
+                      <Text className="text-[13px] mt-xxs" style={$terminalNoteColor}>
+                        {latestByStatus[pbStatus].note}
+                      </Text>
                     ) : null}
                   </View>
                 </View>
@@ -267,70 +287,13 @@ export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = observer(
         )}
       </Screen>
     )
-  },
-)
+  }
 
 // Styles
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.border,
-}
-
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $headerTitle: TextStyle = {
-  flex: 1,
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  textAlign: "center",
-}
-
-const $connectionIndicator: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  width: 40,
-  justifyContent: "flex-end",
-  gap: spacing.xxs,
-}
-
-const $connectionDot: ViewStyle = {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-}
-
-const $connectionText: TextStyle = {
-  fontSize: 10,
-  color: colors.palette.neutral600,
-}
-
-const $loadingContainer: ViewStyle = {
-  padding: spacing.xl,
-  alignItems: "center",
-}
-
-const $loadingText: TextStyle = {
-  fontSize: 16,
-  color: colors.palette.neutral600,
-}
-
-const $summaryCard: ViewStyle = {
-  margin: spacing.lg,
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  borderWidth: 1,
-  borderColor: colors.border,
+// This screen reads the STATIC (light-only) `colors` import, so text colors and
+// data-driven stage/dot colors stay inline (no `dark:` twins). Layout, spacing,
+// and solid container backgrounds/borders are className token utilities.
+const $summaryCardShadow: ViewStyle = {
   shadowColor: colors.palette.neutral900,
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.05,
@@ -338,133 +301,15 @@ const $summaryCard: ViewStyle = {
   elevation: 3,
 }
 
-const $summaryHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-}
-
-const $orderNumber: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.neutral600,
-}
-
-const $orderAmount: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-}
-
-const $orderGarment: TextStyle = {
-  fontSize: 20,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xs,
-}
-
-const $orderDelivery: TextStyle = {
-  fontSize: 13,
-  color: colors.textDim,
-}
-
-const $timelineContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingBottom: spacing.xl,
-}
-
-const $terminalCard: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "flex-start",
-  backgroundColor: colors.palette.error100,
-  borderRadius: 8,
-  padding: spacing.md,
-  marginBottom: spacing.lg,
-  gap: spacing.sm,
-}
-
-const $terminalTextContainer: ViewStyle = {
-  flex: 1,
-}
-
-const $terminalTitle: TextStyle = {
-  fontSize: 15,
-  fontWeight: "700",
-  color: colors.palette.error500,
-}
-
-const $terminalNote: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral700,
-  marginTop: spacing.xxs,
-}
-
-const $stageRow: ViewStyle = {
-  flexDirection: "row",
-}
-
-const $railColumn: ViewStyle = {
-  alignItems: "center",
-  width: 40,
-}
-
-const $stageDot: ViewStyle = {
-  width: 32,
-  height: 32,
-  borderRadius: 16,
-  borderWidth: 1.5,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $railLine: ViewStyle = {
-  width: 2,
-  flex: 1,
-  minHeight: 24,
-}
-
-const $stageContent: ViewStyle = {
-  flex: 1,
-  paddingLeft: spacing.md,
-  paddingBottom: spacing.lg,
-}
-
-const $stageContentFuture: ViewStyle = {
-  opacity: 0.5,
-}
-
-const $stageTitleRow: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $stageTitle: TextStyle = {
-  fontSize: 15,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-}
-
-const $stageTitleCurrent: TextStyle = {
-  color: colors.accent,
-}
-
-const $stageTime: TextStyle = {
-  fontSize: 11,
-  color: colors.palette.neutral500,
-}
-
-const $stageDescription: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral600,
-  marginTop: spacing.xxs,
-}
-
-const $stagePhoto: ImageStyle = {
-  width: 96,
-  height: 96,
-  borderRadius: 8,
-  marginTop: spacing.sm,
-  backgroundColor: colors.palette.neutral200,
-}
+// Text color overrides (static, light-only).
+const $headerTitleColor: TextStyle = { color: colors.palette.neutral900 }
+const $connectionTextColor: TextStyle = { color: colors.palette.neutral600 }
+const $loadingTextColor: TextStyle = { color: colors.palette.neutral600 }
+const $orderNumberColor: TextStyle = { color: colors.palette.neutral600 }
+const $orderAmountColor: TextStyle = { color: colors.palette.neutral900 }
+const $orderGarmentColor: TextStyle = { color: colors.palette.neutral900 }
+const $orderDeliveryColor: TextStyle = { color: colors.textDim }
+const $terminalTitleColor: TextStyle = { color: colors.palette.error500 }
+const $terminalNoteColor: TextStyle = { color: colors.palette.neutral700 }
+const $stageTimeColor: TextStyle = { color: colors.palette.neutral500 }
+const $stageDescriptionColor: TextStyle = { color: colors.palette.neutral600 }

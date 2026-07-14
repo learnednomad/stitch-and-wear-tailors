@@ -1,0 +1,40 @@
+# Type checking (Obytes starter CI, adapted: yarn v1 + corepack disabled).
+# Gate: zero TypeScript errors in app code. The web/ Next.js app has known
+# pre-existing errors and is excluded from the gate until it is fixed.
+name: Type Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  type-check:
+    name: Type Check (tsc)
+    runs-on: ubuntu-latest
+    env:
+      COREPACK_ENABLE_STRICT: "0"
+      COREPACK_ENABLE_PROJECT_SPEC: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Type check app code
+        run: |
+          # the compile script passes --pretty, which colorizes even in CI —
+          # strip ANSI codes so the error grep below is reliable
+          yarn compile 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | tee tsc-output.txt || true
+          APP_ERRORS=$(grep -E "error TS" tsc-output.txt | grep -v "^web/" | wc -l | tr -d " ")
+          echo "App-code TypeScript errors: $APP_ERRORS"
+          if [ "$APP_ERRORS" != "0" ]; then
+            grep -E "error TS" tsc-output.txt | grep -v "^web/"
+            exit 1
+          fi

@@ -11,7 +11,7 @@ import {
 } from "react-native"
 import { Button } from "./Button"
 import { Text } from "./Text"
-import { colors, spacing } from "app/theme"
+import { colors, spacing } from "@/theme"
 import { paymentApi, PaymentMethod, PaymentType } from "@/services/api/payment-api"
 import { formatMoney } from "@/services/api/invoice-api"
 
@@ -127,25 +127,35 @@ export const RecordPaymentModal: FC<RecordPaymentModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={$backdrop}>
-        <View style={$sheet}>
+        <View className="max-h-[85%] rounded-t-[20px] bg-neutral100 px-6 pb-8 pt-4">
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            <View style={$sheetHeader}>
-              <Text style={$sheetTitle}>Record Payment</Text>
+            <View className="mb-2 flex-row items-center justify-between">
+              <Text
+                className="text-[18px]"
+                weight="bold"
+                style={{ color: colors.palette.neutral900 }}
+              >
+                Record Payment
+              </Text>
               <TouchableOpacity onPress={onClose} accessibilityLabel="Close">
-                <Text style={$closeText}>✕</Text>
+                <Text className="p-2 text-[18px]" style={{ color: colors.palette.neutral600 }}>
+                  ✕
+                </Text>
               </TouchableOpacity>
             </View>
 
             {order?.orderNumber && (
-              <Text style={$orderInfo}>
+              <Text className="mb-3 text-[13px]" style={{ color: colors.palette.neutral600 }}>
                 Order {order.orderNumber}
                 {balance > 0 ? ` · balance ${formatMoney(balance, currency)}` : ""}
               </Text>
             )}
 
             {/* Amount */}
-            <Text style={$fieldLabel}>Amount ({currency})</Text>
-            <View style={$inputContainer}>
+            <Text className={$fieldLabelClass} weight="medium" style={$fieldLabelColor}>
+              Amount ({currency})
+            </Text>
+            <View className="rounded-lg border border-neutral300 bg-neutral100">
               <TextInput
                 style={$textInput}
                 placeholder="0"
@@ -157,15 +167,28 @@ export const RecordPaymentModal: FC<RecordPaymentModalProps> = ({
             </View>
 
             {/* Method */}
-            <Text style={$fieldLabel}>Method</Text>
-            <View style={$chipRow}>
+            <Text className={$fieldLabelClass} weight="medium" style={$fieldLabelColor}>
+              Method
+            </Text>
+            <View className="flex-row flex-wrap gap-3">
               {METHODS.map((m) => (
                 <TouchableOpacity
                   key={m.value}
-                  style={[$chip, method === m.value && $selectedChip]}
+                  className="rounded-2xl border border-neutral300 px-4 py-2"
+                  style={
+                    method === m.value
+                      ? { backgroundColor: colors.palette.primary500, borderColor: colors.palette.primary500 }
+                      : undefined
+                  }
                   onPress={() => setMethod(m.value)}
                 >
-                  <Text style={[$chipText, method === m.value && $selectedChipText]}>
+                  <Text
+                    className="text-[14px]"
+                    weight="medium"
+                    style={{
+                      color: method === m.value ? colors.palette.neutral100 : colors.palette.neutral700,
+                    }}
+                  >
                     {m.label}
                   </Text>
                 </TouchableOpacity>
@@ -173,18 +196,32 @@ export const RecordPaymentModal: FC<RecordPaymentModalProps> = ({
             </View>
 
             {/* Payment type */}
-            <Text style={$fieldLabel}>Payment Type</Text>
-            <View style={$chipRow}>
+            <Text className={$fieldLabelClass} weight="medium" style={$fieldLabelColor}>
+              Payment Type
+            </Text>
+            <View className="flex-row flex-wrap gap-3">
               {PAYMENT_TYPES.map((t) => (
                 <TouchableOpacity
                   key={t.value}
-                  style={[$chip, paymentType === t.value && $selectedChip]}
+                  className="rounded-2xl border border-neutral300 px-4 py-2"
+                  style={
+                    paymentType === t.value
+                      ? { backgroundColor: colors.palette.primary500, borderColor: colors.palette.primary500 }
+                      : undefined
+                  }
                   onPress={() => {
                     setTypeTouched(true)
                     setPaymentType(t.value)
                   }}
                 >
-                  <Text style={[$chipText, paymentType === t.value && $selectedChipText]}>
+                  <Text
+                    className="text-[14px]"
+                    weight="medium"
+                    style={{
+                      color:
+                        paymentType === t.value ? colors.palette.neutral100 : colors.palette.neutral700,
+                    }}
+                  >
                     {t.label}
                   </Text>
                 </TouchableOpacity>
@@ -192,8 +229,10 @@ export const RecordPaymentModal: FC<RecordPaymentModalProps> = ({
             </View>
 
             {/* Reference */}
-            <Text style={$fieldLabel}>Reference (optional)</Text>
-            <View style={$inputContainer}>
+            <Text className={$fieldLabelClass} weight="medium" style={$fieldLabelColor}>
+              Reference (optional)
+            </Text>
+            <View className="rounded-lg border border-neutral300 bg-neutral100">
               <TextInput
                 style={$textInput}
                 placeholder="e.g. TRF/2026/07/12345"
@@ -205,8 +244,10 @@ export const RecordPaymentModal: FC<RecordPaymentModalProps> = ({
             </View>
 
             {/* Notes */}
-            <Text style={$fieldLabel}>Notes (optional)</Text>
-            <View style={$inputContainer}>
+            <Text className={$fieldLabelClass} weight="medium" style={$fieldLabelColor}>
+              Notes (optional)
+            </Text>
+            <View className="rounded-lg border border-neutral300 bg-neutral100">
               <TextInput
                 style={[$textInput, $notesInput]}
                 placeholder="Any details about this payment"
@@ -233,60 +274,17 @@ export const RecordPaymentModal: FC<RecordPaymentModalProps> = ({
 }
 
 // Styles
+// Field-label layout is a className; its static color stays inline (static
+// `colors` import, so no `dark:` twins).
+const $fieldLabelClass = "mb-2 mt-4 text-[14px]"
+const $fieldLabelColor: TextStyle = { color: colors.palette.neutral900 }
+
+// Modal backdrop overlay + raw TextInput styles + Button style/textStyle
+// overrides stay inline per the recipe.
 const $backdrop: ViewStyle = {
   flex: 1,
   backgroundColor: "rgba(0,0,0,0.45)",
   justifyContent: "flex-end",
-}
-
-const $sheet: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.md,
-  paddingBottom: spacing.xl,
-  maxHeight: "85%",
-}
-
-const $sheetHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-}
-
-const $sheetTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-}
-
-const $closeText: TextStyle = {
-  fontSize: 18,
-  color: colors.palette.neutral600,
-  padding: spacing.xs,
-}
-
-const $orderInfo: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.sm,
-}
-
-const $fieldLabel: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral900,
-  marginTop: spacing.md,
-  marginBottom: spacing.xs,
-}
-
-const $inputContainer: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
 }
 
 const $textInput: TextStyle = {
@@ -298,35 +296,6 @@ const $textInput: TextStyle = {
 
 const $notesInput: TextStyle = {
   minHeight: 70,
-}
-
-const $chipRow: ViewStyle = {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: spacing.sm,
-}
-
-const $chip: ViewStyle = {
-  paddingVertical: spacing.xs,
-  paddingHorizontal: spacing.md,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral300,
-}
-
-const $selectedChip: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
-  borderColor: colors.palette.primary500,
-}
-
-const $chipText: TextStyle = {
-  fontSize: 14,
-  fontWeight: "500",
-  color: colors.palette.neutral700,
-}
-
-const $selectedChipText: TextStyle = {
-  color: colors.palette.neutral100,
 }
 
 const $submitButton: ViewStyle = {

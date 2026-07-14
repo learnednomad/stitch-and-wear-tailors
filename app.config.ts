@@ -6,6 +6,10 @@ import { ExpoConfig, ConfigContext } from "@expo/config"
  */
 require("ts-node/register")
 
+// Validate environment variables at config-evaluation time (expo start /
+// prebuild / EAS builds) — Obytes starter env pattern, see ./env.ts
+const { Env } = require("./env") as typeof import("./env")
+
 /**
  * @param config ExpoConfig coming from the static config app.json if it exists
  *
@@ -20,14 +24,14 @@ module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
   // Org/project come from build-time env (SENTRY_AUTH_TOKEN should be an EAS
   // secret); the plugin is skipped entirely until both are configured.
   const sentryPlugin =
-    process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
+    Env.SENTRY_ORG && Env.SENTRY_PROJECT
       ? [
           [
             "@sentry/react-native/expo",
             {
               url: "https://sentry.io/",
-              organization: process.env.SENTRY_ORG,
-              project: process.env.SENTRY_PROJECT,
+              organization: Env.SENTRY_ORG,
+              project: Env.SENTRY_PROJECT,
             },
           ] as const,
         ]
@@ -87,6 +91,13 @@ module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
       ...existingPlugins,
       ...sentryPlugin,
       require("./plugins/withSplashScreen").withSplashScreen,
+      [
+        "expo-image-picker",
+        {
+          photosPermission:
+            "Allow Stitch & Wear to access your photos so you can add images to your product listings.",
+        },
+      ],
     ],
   }
 }

@@ -1,3 +1,4 @@
+import { useRouter, useLocalSearchParams } from "expo-router"
 import React, { FC, useState, useEffect } from "react"
 import {
   View,
@@ -8,13 +9,9 @@ import {
   FlatList,
   Alert,
 } from "react-native"
-import { observer } from "mobx-react-lite"
-import { AppStackScreenProps } from "app/navigators"
-import { Button, Screen, Icon, Text, AutoImage } from "app/components"
-import { useSafeAreaInsetsStyle } from "app/utils/useSafeAreaInsetsStyle"
-import { colors, spacing } from "app/theme"
-import { useNavigation } from "@react-navigation/native"
-import { useStores } from "@/models"
+import { Button, Screen, Icon, Text, AutoImage } from "@/components"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { colors, spacing } from "@/theme"
 import { useAuth } from "@/contexts/AuthContext"
 
 interface Style {
@@ -40,17 +37,18 @@ interface Fabric {
   image?: string
 }
 
-interface NewOrderScreenProps extends AppStackScreenProps<"NewOrder"> {}
 
-export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
+export const NewOrderScreen: FC = () => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation()
-  const { orderStore, fabricStore } = useStores()
+  const router = useRouter()
   const { user } = useAuth()
 
   // Reorder entry point: OrderDetail pre-selects the past order's style and
   // fabric via route params (the store's orderCreationData is hydrated too)
-  const { reorderStyleId, reorderFabricId } = route?.params || {}
+  const { reorderStyleId, reorderFabricId } = useLocalSearchParams<{
+    reorderStyleId?: string
+    reorderFabricId?: string
+  }>()
 
   const [selectedStyle, setSelectedStyle] = useState<string>(reorderStyleId ?? "")
   const [selectedFabric, setSelectedFabric] = useState<string>(reorderFabricId ?? "")
@@ -162,35 +160,52 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
 
   const renderStyleCard = ({ item }: { item: Style }) => (
     <TouchableOpacity
-      style={[$styleCard, selectedStyle === item.id && $selectedCard]}
+      className={`bg-neutral100 rounded-[12px] p-lg mb-md ${
+        selectedStyle === item.id ? "border-2 border-primary500" : "border border-neutral200"
+      }`}
       onPress={() => setSelectedStyle(item.id)}
       accessible
       accessibilityLabel={`Select ${item.name}`}
       accessibilityRole="radio"
       accessibilityState={{ selected: selectedStyle === item.id }}
     >
-      <View style={$styleCardContent}>
-        <View style={$styleInfo}>
-          <Text style={$styleName}>{item.name}</Text>
-          <Text style={$styleDescription}>{item.description}</Text>
-          <View style={$styleDetails}>
+      <View className="flex-row justify-between items-start">
+        <View className="flex-1 mr-md">
+          <Text className="text-[16px] font-semibold mb-xxs" style={$textNeutral900}>
+            {item.name}
+          </Text>
+          <Text className="text-[13px] mb-sm leading-[18px]" style={$textNeutral600}>
+            {item.description}
+          </Text>
+          <View className="flex-row items-center">
             <View
-              style={[
-                $complexityBadge,
-                { backgroundColor: getComplexityColor(item.complexity) + "20" },
-              ]}
+              className="px-xs py-[2px] rounded-[4px] mr-sm"
+              style={{ backgroundColor: getComplexityColor(item.complexity) + "20" }}
             >
-              <Text style={[$complexityText, { color: getComplexityColor(item.complexity) }]}>
+              <Text
+                className="text-[10px] font-semibold uppercase"
+                style={{ color: getComplexityColor(item.complexity) }}
+              >
                 {item.complexity}
               </Text>
             </View>
-            <Text style={$estimatedTime}>{item.estimatedHours}h</Text>
+            <Text className="text-[12px]" style={$textNeutral500}>
+              {item.estimatedHours}h
+            </Text>
           </View>
         </View>
-        <View style={$priceContainer}>
-          <Text style={$priceText}>₦{item.baseFee.toLocaleString()}</Text>
-          <View style={[$radioButton, selectedStyle === item.id && $radioButtonSelected]}>
-            {selectedStyle === item.id && <View style={$radioButtonInner} />}
+        <View className="items-end">
+          <Text className="text-[16px] font-bold mb-sm" style={$textPrimary500}>
+            ₦{item.baseFee.toLocaleString()}
+          </Text>
+          <View
+            className={`w-[24px] h-[24px] rounded-[12px] border-2 justify-center items-center ${
+              selectedStyle === item.id ? "border-primary500" : "border-neutral300"
+            }`}
+          >
+            {selectedStyle === item.id && (
+              <View className="w-[12px] h-[12px] rounded-[6px] bg-primary500" />
+            )}
           </View>
         </View>
       </View>
@@ -199,26 +214,44 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
 
   const renderFabricCard = ({ item }: { item: Fabric }) => (
     <TouchableOpacity
-      style={[$fabricCard, selectedFabric === item.id && $selectedCard]}
+      className={`bg-neutral100 rounded-[12px] p-lg mb-md ${
+        selectedFabric === item.id ? "border-2 border-primary500" : "border border-neutral200"
+      }`}
       onPress={() => setSelectedFabric(item.id)}
       accessible
       accessibilityLabel={`Select ${item.name}`}
       accessibilityRole="radio"
       accessibilityState={{ selected: selectedFabric === item.id }}
     >
-      <View style={$fabricCardContent}>
-        <View style={$fabricInfo}>
-          <Text style={$fabricName}>{item.name}</Text>
-          <Text style={$fabricDescription}>{item.description}</Text>
-          <View style={$fabricDetails}>
-            <Text style={$fabricMaterial}>{item.material}</Text>
-            <Text style={$fabricColor}>{item.color}</Text>
+      <View className="flex-row justify-between items-start">
+        <View className="flex-1 mr-md">
+          <Text className="text-[16px] font-semibold mb-xxs" style={$textNeutral900}>
+            {item.name}
+          </Text>
+          <Text className="text-[13px] mb-sm leading-[18px]" style={$textNeutral600}>
+            {item.description}
+          </Text>
+          <View className="flex-row items-center">
+            <Text className="text-[12px] mr-sm" style={$textNeutral500}>
+              {item.material}
+            </Text>
+            <Text className="text-[12px]" style={$textNeutral500}>
+              {item.color}
+            </Text>
           </View>
         </View>
-        <View style={$priceContainer}>
-          <Text style={$pricePerYard}>₦{item.pricePerYard.toLocaleString()}/yd</Text>
-          <View style={[$radioButton, selectedFabric === item.id && $radioButtonSelected]}>
-            {selectedFabric === item.id && <View style={$radioButtonInner} />}
+        <View className="items-end">
+          <Text className="text-[14px] font-semibold mb-sm" style={$textPrimary500}>
+            ₦{item.pricePerYard.toLocaleString()}/yd
+          </Text>
+          <View
+            className={`w-[24px] h-[24px] rounded-[12px] border-2 justify-center items-center ${
+              selectedFabric === item.id ? "border-primary500" : "border-neutral300"
+            }`}
+          >
+            {selectedFabric === item.id && (
+              <View className="w-[12px] h-[12px] rounded-[6px] bg-primary500" />
+            )}
           </View>
         </View>
       </View>
@@ -248,10 +281,13 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
       {
         text: "Continue",
         onPress: () => {
-          ;(navigation as any).navigate("Measurement", {
-            styleId: selectedStyle,
-            fabricId: selectedFabric,
-            amount: totalAmount,
+          router.push({
+            pathname: "/orders/measurement",
+            params: {
+              styleId: selectedStyle,
+              fabricId: selectedFabric,
+              amount: totalAmount,
+            },
           })
         },
       },
@@ -262,9 +298,11 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
     switch (currentStep) {
       case "style":
         return (
-          <View style={$stepContent}>
-            <Text style={$stepTitle}>Choose Your Style</Text>
-            <Text style={$stepDescription}>
+          <View className="px-lg">
+            <Text className="text-[24px] font-bold mb-xs" style={$textNeutral900}>
+              Choose Your Style
+            </Text>
+            <Text className="text-[14px] mb-lg leading-[20px]" style={$textNeutral600}>
               Select from our collection of traditional and modern designs
             </Text>
             <FlatList
@@ -279,9 +317,11 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
 
       case "fabric":
         return (
-          <View style={$stepContent}>
-            <Text style={$stepTitle}>Select Fabric</Text>
-            <Text style={$stepDescription}>
+          <View className="px-lg">
+            <Text className="text-[24px] font-bold mb-xs" style={$textNeutral900}>
+              Select Fabric
+            </Text>
+            <Text className="text-[14px] mb-lg leading-[20px]" style={$textNeutral600}>
               Choose the perfect fabric for your {selectedStyleData?.name}
             </Text>
             <FlatList
@@ -296,38 +336,56 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
 
       case "review":
         return (
-          <View style={$stepContent}>
-            <Text style={$stepTitle}>Review Your Order</Text>
-            <Text style={$stepDescription}>
+          <View className="px-lg">
+            <Text className="text-[24px] font-bold mb-xs" style={$textNeutral900}>
+              Review Your Order
+            </Text>
+            <Text className="text-[14px] mb-lg leading-[20px]" style={$textNeutral600}>
               Confirm your selections before proceeding to measurements
             </Text>
 
-            <View style={$reviewCard}>
-              <Text style={$reviewSectionTitle}>Style</Text>
-              <View style={$reviewItem}>
-                <Text style={$reviewItemName}>{selectedStyleData?.name}</Text>
-                <Text style={$reviewItemPrice}>₦{selectedStyleData?.baseFee.toLocaleString()}</Text>
+            <View className="bg-neutral100 rounded-[12px] p-lg mb-md border border-neutral200">
+              <Text className="text-[14px] font-semibold mb-sm" style={$textNeutral900}>
+                Style
+              </Text>
+              <View className="flex-row justify-between items-center mb-xs">
+                <Text className="text-[16px] font-medium" style={$textNeutral900}>
+                  {selectedStyleData?.name}
+                </Text>
+                <Text className="text-[16px] font-semibold" style={$textPrimary500}>
+                  ₦{selectedStyleData?.baseFee.toLocaleString()}
+                </Text>
               </View>
-              <Text style={$reviewItemDescription}>{selectedStyleData?.description}</Text>
+              <Text className="text-[13px] leading-[18px]" style={$textNeutral600}>
+                {selectedStyleData?.description}
+              </Text>
             </View>
 
-            <View style={$reviewCard}>
-              <Text style={$reviewSectionTitle}>Fabric</Text>
-              <View style={$reviewItem}>
-                <Text style={$reviewItemName}>{selectedFabricData?.name}</Text>
-                <Text style={$reviewItemPrice}>
+            <View className="bg-neutral100 rounded-[12px] p-lg mb-md border border-neutral200">
+              <Text className="text-[14px] font-semibold mb-sm" style={$textNeutral900}>
+                Fabric
+              </Text>
+              <View className="flex-row justify-between items-center mb-xs">
+                <Text className="text-[16px] font-medium" style={$textNeutral900}>
+                  {selectedFabricData?.name}
+                </Text>
+                <Text className="text-[16px] font-semibold" style={$textPrimary500}>
                   ₦{((selectedFabricData?.pricePerYard || 0) * 3).toLocaleString()}
                 </Text>
               </View>
-              <Text style={$reviewItemDescription}>
+              <Text className="text-[13px] leading-[18px]" style={$textNeutral600}>
                 {selectedFabricData?.description} • 3 yards estimated
               </Text>
             </View>
 
-            <View style={[$reviewCard, $totalCard]}>
-              <View style={$reviewItem}>
-                <Text style={$totalLabel}>Total Estimated Cost</Text>
-                <Text style={$totalAmount}>₦{totalAmount.toLocaleString()}</Text>
+            <View className="bg-primary100 rounded-[12px] p-lg mb-md border border-primary200">
+              <View className="flex-row justify-between items-center mb-xs">
+                <Text className="text-[18px] font-semibold" style={$textNeutral900}>
+                  Total Estimated Cost
+                </Text>
+                <Text className="text-[20px] font-bold" style={$textPrimary600}>
+                  ₦{totalAmount.toLocaleString()}
+                </Text>
               </View>
             </View>
           </View>
@@ -345,14 +403,13 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
       preset="scroll"
       statusBarStyle="dark"
     >
-      <ScrollView style={$container} showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={$header}>
+        <View className="flex-row items-center px-lg py-md border-b border-b-neutral200">
           <TouchableOpacity
-            style={$backButton}
+            className="w-[40px] h-[40px] justify-center items-center"
             onPress={() => {
-              if (currentStep === "style") {
-                navigation.goBack()
+              if (currentStep === "style") {router.back()
               } else if (currentStep === "fabric") {
                 setCurrentStep("style")
               } else {
@@ -365,27 +422,50 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
           >
             <Icon icon="back" size={24} color={colors.palette.neutral900} />
           </TouchableOpacity>
-          <Text style={$headerTitle}>New Order</Text>
-          <View style={$headerSpacer} />
+          <Text className="flex-1 text-[18px] font-semibold text-center" style={$textNeutral900}>
+            New Order
+          </Text>
+          <View className="w-[40px]" />
         </View>
 
         {/* Progress Indicator */}
-        <View style={$progressContainer}>
-          <View style={$progressSteps}>
-            <View style={[$progressStep, currentStep === "style" && $activeStep]}>
-              <Text style={[$progressStepText, currentStep === "style" && $activeStepText]}>
+        <View className="px-lg py-lg">
+          <View className="flex-row items-center justify-center">
+            <View
+              className={`px-md py-sm rounded-[20px] ${
+                currentStep === "style" ? "bg-primary500" : "bg-neutral200"
+              }`}
+            >
+              <Text
+                className="text-[12px] font-medium"
+                style={currentStep === "style" ? $textNeutral100 : $textNeutral600}
+              >
                 Style
               </Text>
             </View>
-            <View style={$progressConnector} />
-            <View style={[$progressStep, currentStep === "fabric" && $activeStep]}>
-              <Text style={[$progressStepText, currentStep === "fabric" && $activeStepText]}>
+            <View className="w-[30px] h-[2px] bg-neutral300 mx-xs" />
+            <View
+              className={`px-md py-sm rounded-[20px] ${
+                currentStep === "fabric" ? "bg-primary500" : "bg-neutral200"
+              }`}
+            >
+              <Text
+                className="text-[12px] font-medium"
+                style={currentStep === "fabric" ? $textNeutral100 : $textNeutral600}
+              >
                 Fabric
               </Text>
             </View>
-            <View style={$progressConnector} />
-            <View style={[$progressStep, currentStep === "review" && $activeStep]}>
-              <Text style={[$progressStepText, currentStep === "review" && $activeStepText]}>
+            <View className="w-[30px] h-[2px] bg-neutral300 mx-xs" />
+            <View
+              className={`px-md py-sm rounded-[20px] ${
+                currentStep === "review" ? "bg-primary500" : "bg-neutral200"
+              }`}
+            >
+              <Text
+                className="text-[12px] font-medium"
+                style={currentStep === "review" ? $textNeutral100 : $textNeutral600}
+              >
                 Review
               </Text>
             </View>
@@ -397,8 +477,11 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
       </ScrollView>
 
       {/* Bottom Actions */}
-      <View style={[$bottomContainer, $bottomContainerInsets]}>
-        <View style={$bottomActions}>
+      <View
+        className="px-lg pt-md pb-md bg-neutral100 border-t border-t-neutral200"
+        style={$bottomContainerInsets}
+      >
+        <View className="flex-row gap-md">
           {currentStep !== "style" && (
             <Button
               text="Back"
@@ -423,321 +506,22 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = observer(({ route }) => {
       </View>
     </Screen>
   )
-})
+}
 
 // Styles
-const $container: ViewStyle = {
-  flex: 1,
-}
+// This screen reads the STATIC (light-only) `colors` import, so text colors stay
+// inline (light in both schemes) — no `dark:` variants. Layout, spacing, and
+// container backgrounds/borders are className token utilities.
 
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: colors.palette.neutral200,
-}
+// Text color overrides (static, light-only).
+const $textNeutral900: TextStyle = { color: colors.palette.neutral900 }
+const $textNeutral600: TextStyle = { color: colors.palette.neutral600 }
+const $textNeutral500: TextStyle = { color: colors.palette.neutral500 }
+const $textNeutral100: TextStyle = { color: colors.palette.neutral100 }
+const $textPrimary500: TextStyle = { color: colors.palette.primary500 }
+const $textPrimary600: TextStyle = { color: colors.palette.primary600 }
 
-const $backButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $headerTitle: TextStyle = {
-  flex: 1,
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  textAlign: "center",
-}
-
-const $headerSpacer: ViewStyle = {
-  width: 40,
-}
-
-const $progressContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.lg,
-}
-
-const $progressSteps: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-}
-
-const $progressStep: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-  borderRadius: 20,
-  backgroundColor: colors.palette.neutral200,
-}
-
-const $activeStep: ViewStyle = {
-  backgroundColor: colors.palette.primary500,
-}
-
-const $progressStepText: TextStyle = {
-  fontSize: 12,
-  fontWeight: "500",
-  color: colors.palette.neutral600,
-}
-
-const $activeStepText: TextStyle = {
-  color: colors.palette.neutral100,
-}
-
-const $progressConnector: ViewStyle = {
-  width: 30,
-  height: 2,
-  backgroundColor: colors.palette.neutral300,
-  marginHorizontal: spacing.xs,
-}
-
-const $stepContent: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-}
-
-const $stepTitle: TextStyle = {
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xs,
-}
-
-const $stepDescription: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.lg,
-  lineHeight: 20,
-}
-
-const $styleCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  marginBottom: spacing.md,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-}
-
-const $fabricCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  marginBottom: spacing.md,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-}
-
-const $selectedCard: ViewStyle = {
-  borderColor: colors.palette.primary500,
-  borderWidth: 2,
-}
-
-const $styleCardContent: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-}
-
-const $fabricCardContent: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-}
-
-const $styleInfo: ViewStyle = {
-  flex: 1,
-  marginRight: spacing.md,
-}
-
-const $fabricInfo: ViewStyle = {
-  flex: 1,
-  marginRight: spacing.md,
-}
-
-const $styleName: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xxs,
-}
-
-const $fabricName: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.xxs,
-}
-
-const $styleDescription: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.sm,
-  lineHeight: 18,
-}
-
-const $fabricDescription: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral600,
-  marginBottom: spacing.sm,
-  lineHeight: 18,
-}
-
-const $styleDetails: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $fabricDetails: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $complexityBadge: ViewStyle = {
-  paddingHorizontal: spacing.xs,
-  paddingVertical: 2,
-  borderRadius: 4,
-  marginRight: spacing.sm,
-}
-
-const $complexityText: TextStyle = {
-  fontSize: 10,
-  fontWeight: "600",
-  textTransform: "uppercase",
-}
-
-const $estimatedTime: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral500,
-}
-
-const $fabricMaterial: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral500,
-  marginRight: spacing.sm,
-}
-
-const $fabricColor: TextStyle = {
-  fontSize: 12,
-  color: colors.palette.neutral500,
-}
-
-const $priceContainer: ViewStyle = {
-  alignItems: "flex-end",
-}
-
-const $priceText: TextStyle = {
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.palette.primary500,
-  marginBottom: spacing.sm,
-}
-
-const $pricePerYard: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.primary500,
-  marginBottom: spacing.sm,
-}
-
-const $radioButton: ViewStyle = {
-  width: 24,
-  height: 24,
-  borderRadius: 12,
-  borderWidth: 2,
-  borderColor: colors.palette.neutral300,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $radioButtonSelected: ViewStyle = {
-  borderColor: colors.palette.primary500,
-}
-
-const $radioButtonInner: ViewStyle = {
-  width: 12,
-  height: 12,
-  borderRadius: 6,
-  backgroundColor: colors.palette.primary500,
-}
-
-const $reviewCard: ViewStyle = {
-  backgroundColor: colors.palette.neutral100,
-  borderRadius: 12,
-  padding: spacing.lg,
-  marginBottom: spacing.md,
-  borderWidth: 1,
-  borderColor: colors.palette.neutral200,
-}
-
-const $totalCard: ViewStyle = {
-  backgroundColor: colors.palette.primary100,
-  borderColor: colors.palette.primary200,
-}
-
-const $reviewSectionTitle: TextStyle = {
-  fontSize: 14,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-  marginBottom: spacing.sm,
-}
-
-const $reviewItem: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xs,
-}
-
-const $reviewItemName: TextStyle = {
-  fontSize: 16,
-  fontWeight: "500",
-  color: colors.palette.neutral900,
-}
-
-const $reviewItemPrice: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.palette.primary500,
-}
-
-const $reviewItemDescription: TextStyle = {
-  fontSize: 13,
-  color: colors.palette.neutral600,
-  lineHeight: 18,
-}
-
-const $totalLabel: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
-  color: colors.palette.neutral900,
-}
-
-const $totalAmount: TextStyle = {
-  fontSize: 20,
-  fontWeight: "700",
-  color: colors.palette.primary600,
-}
-
-const $bottomContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.md,
-  paddingBottom: spacing.md,
-  backgroundColor: colors.palette.neutral100,
-  borderTopWidth: 1,
-  borderTopColor: colors.palette.neutral200,
-}
-
-const $bottomActions: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.md,
-}
-
+// Button style overrides stay inline (Button owns its className).
 const $primaryButton: ViewStyle = {
   flex: 1,
   backgroundColor: colors.palette.primary500,
