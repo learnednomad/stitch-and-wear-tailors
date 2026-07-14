@@ -1,3 +1,4 @@
+import { useRouter, useLocalSearchParams } from "expo-router"
 import React, { FC, useState } from "react"
 import {
   View,
@@ -8,11 +9,9 @@ import {
   TextInput,
   Alert,
 } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Screen, Icon, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
-import { useNavigation } from "@react-navigation/native"
 import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useCreateOrder } from "@/api/orders"
 import { useAuth } from "@/contexts/AuthContext"
@@ -45,11 +44,10 @@ interface MeasurementData {
   [key: string]: string
 }
 
-interface MeasurementScreenProps extends AppStackScreenProps<"Measurement"> {}
 
-export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
+export const MeasurementScreen: FC = () => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation()
+  const router = useRouter()
   const orderStore = useOrderDraftStore()
   const createOrderMutation = useCreateOrder()
   const { user } = useAuth()
@@ -59,8 +57,11 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
   const [unit, setUnit] = useState<"cm" | "inches">("cm")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Extract order details from route params
-  const { styleId = "kaftan-1", fabricId = "ankara-1", amount = 45000 } = route?.params || {}
+  // Extract order details from route params (all params arrive as strings)
+  const params = useLocalSearchParams<{ styleId?: string; fabricId?: string; amount?: string }>()
+  const styleId = params.styleId ?? "kaftan-1"
+  const fabricId = params.fabricId ?? "ankara-1"
+  const amount = params.amount ? Number(params.amount) : 45000
 
   // Different measurement fields based on style
   const getMeasurementFields = (styleId: string): MeasurementField[] => {
@@ -235,7 +236,7 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
         [
           {
             text: "View Orders",
-            onPress: () => navigation.navigate("Orders" as never),
+            onPress: () =>router.push("/orders"),
           },
         ],
       )
@@ -299,7 +300,7 @@ export const MeasurementScreen: FC<MeasurementScreenProps> = ({ route }) => {
         <View className="flex-row items-center px-lg py-md border-b border-b-neutral200">
           <TouchableOpacity
             className="w-[40px] h-[40px] justify-center items-center"
-            onPress={() => navigation.goBack()}
+            onPress={() =>router.back()}
             accessible
             accessibilityLabel="Go back"
             accessibilityRole="button"

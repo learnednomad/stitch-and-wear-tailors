@@ -5,9 +5,9 @@
  * tap a product for its detail page. A cart button in the header shows the
  * current item count and opens the cart.
  */
+import { useRouter } from "expo-router"
 import { FC, useMemo, useState } from "react"
 import { RefreshControl, ScrollView, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { CatalogGrid, CatalogGridItem, Icon, Screen, Text, TextField } from "@/components"
 import { useProducts } from "@/api/marketplace"
 import { errorMessage } from "@/api/common"
@@ -16,7 +16,6 @@ import { fileUrl } from "@/services/api/pocketbase-api-adapter"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface MarketplaceScreenProps extends AppStackScreenProps<"Marketplace"> {}
 
 /** "menswear" -> "Menswear", "buba_sokoto" -> "Buba Sokoto" */
 function labelize(value: string): string {
@@ -26,9 +25,8 @@ function labelize(value: string): string {
     .join(" ")
 }
 
-export const MarketplaceScreen: FC<MarketplaceScreenProps> = function MarketplaceScreen({
-  navigation,
-}) {
+export const MarketplaceScreen: FC = function MarketplaceScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
   const { count } = useCart()
   const [search, setSearch] = useState("")
@@ -72,7 +70,7 @@ export const MarketplaceScreen: FC<MarketplaceScreenProps> = function Marketplac
         <Text preset="heading" text="Shop" style={$headingText} />
         <TouchableOpacity
           style={$cartButton}
-          onPress={() => navigation.navigate("Cart")}
+          onPress={() =>router.push("/cart")}
           accessible
           accessibilityLabel={`Cart, ${count} items`}
           accessibilityRole="button"
@@ -102,7 +100,7 @@ export const MarketplaceScreen: FC<MarketplaceScreenProps> = function Marketplac
       <View style={$linksRow}>
         <TouchableOpacity
           style={[$link, { borderColor: theme.colors.border }]}
-          onPress={() => navigation.navigate("MyPurchases")}
+          onPress={() =>router.push("/purchases")}
           accessible
           accessibilityLabel="View my purchases"
           accessibilityRole="button"
@@ -144,7 +142,7 @@ export const MarketplaceScreen: FC<MarketplaceScreenProps> = function Marketplac
       ) : (
         <CatalogGrid
           items={gridItems}
-          onPressItem={(item) => navigation.navigate("ProductDetail", { productId: item.id })}
+          onPressItem={(item) =>router.push(`/products/${item.id}`)}
           emptyText={productsQuery.isLoading ? "Loading products..." : "No products found"}
         />
       )}

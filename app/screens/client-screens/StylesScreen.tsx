@@ -4,9 +4,9 @@
  * The same catalog data as CatalogScreen, presented grouped: pick a gender,
  * then browse styles grouped by category section.
  */
+import { useRouter } from "expo-router"
 import { FC, useMemo, useState } from "react"
 import { RefreshControl, TouchableOpacity, View, ViewStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { CatalogGrid, Icon, Screen, Text } from "@/components"
 import { useStyles } from "@/api/catalog"
 import { errorMessage } from "@/api/common"
@@ -14,7 +14,6 @@ import { PBCatalogStyle } from "@/services/api/catalog-api"
 import { fileUrl } from "@/services/api/pocketbase-api-adapter"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface StylesScreenProps extends AppStackScreenProps<"Styles"> {}
 
 const GENDERS = [
   { value: null, label: "All" },
@@ -31,7 +30,8 @@ function labelize(value: string): string {
     .join(" ")
 }
 
-export const StylesScreen: FC<StylesScreenProps> = function StylesScreen({ navigation }) {
+export const StylesScreen: FC = function StylesScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
   const [gender, setGender] = useState<string | null>(null)
 
@@ -69,7 +69,7 @@ export const StylesScreen: FC<StylesScreenProps> = function StylesScreen({ navig
       <View className="flex-row items-center px-4 pt-4">
         <TouchableOpacity
           className="mr-2 h-10 w-10 items-center justify-center"
-          onPress={() => navigation.goBack()}
+          onPress={() =>router.back()}
           accessible
           accessibilityLabel="Go back"
           accessibilityRole="button"
@@ -118,7 +118,7 @@ export const StylesScreen: FC<StylesScreenProps> = function StylesScreen({ navig
               price: style.basePrice,
               category: style.category,
             }))}
-            onPressItem={() => navigation.navigate("NewOrder")}
+            onPressItem={() =>router.push("/orders/new")}
           />
         </View>
       ))}

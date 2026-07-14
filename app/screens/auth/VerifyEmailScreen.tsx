@@ -1,18 +1,16 @@
+import { useRouter } from "expo-router"
 import { FC, useState, useEffect } from "react"
 import { ViewStyle, View, Alert, TouchableOpacity } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Button } from "@/components"
-import { useNavigation } from "@react-navigation/native"
 import { useAuthStore } from "@/state/authStore"
 import { getPocketBaseAuthAdapter } from "@/services/pocketbase/pocketbase-auth-adapter"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
 
-interface VerifyEmailScreenProps extends AppStackScreenProps<"VerifyEmail"> {}
 
-export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = function VerifyEmailScreen() {
+export const VerifyEmailScreen: FC = function VerifyEmailScreen() {
   const authStore = useAuthStore()
-  const navigation = useNavigation()
+  const router = useRouter()
   const { theme } = useAppTheme()
   const [isLoading, setIsLoading] = useState(false)
   const [canResend, setCanResend] = useState(false)
@@ -73,7 +71,7 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = function VerifyEmai
               onPress: () => {
                 // Clear any existing auth state and navigate to sign in
                 authStore.clearAuth()
-                navigation.navigate("SignIn" as never)
+                router.push("/sign-in")
               },
             },
           ],
@@ -97,7 +95,7 @@ export const VerifyEmailScreen: FC<VerifyEmailScreenProps> = function VerifyEmai
         {
           text: "Go Back",
           style: "destructive",
-          onPress: () => navigation.navigate("SignIn" as never),
+          onPress: () =>router.push("/sign-in"),
         },
       ],
     )

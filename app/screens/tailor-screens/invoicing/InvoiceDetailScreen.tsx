@@ -1,3 +1,4 @@
+import { useRouter, useLocalSearchParams } from "expo-router"
 import { FC, useEffect, useMemo, useState } from "react"
 import {
   View,
@@ -9,8 +10,6 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button, RecordPaymentModal } from "@/components"
 import { colors, spacing } from "@/theme"
 import { errorMessage } from "@/api/common"
@@ -34,17 +33,17 @@ import {
 // scrollable invoice body collapses to zero height.
 const $screenContent = { flex: 1 } as const
 
-interface InvoiceDetailScreenProps extends AppStackScreenProps<"InvoiceDetail"> {}
 
 /**
  * Full invoice view with payment history and tailor actions (record a
  * payment, mark a draft as sent, void). Money-state transitions
  * (partially_paid/paid) happen server-side from payments.
  */
-export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> = 
-  function InvoiceDetailScreen({ route }) {
-    const navigation = useNavigation<any>()
-    const { invoiceId } = route.params
+export const InvoiceDetailScreen: FC = 
+  function InvoiceDetailScreen() {
+    const router = useRouter()
+    const { id } = useLocalSearchParams<{ id: string }>()
+    const invoiceId = id ?? ""
 
     const [showPaymentModal, setShowPaymentModal] = useState(false)
 
@@ -135,7 +134,7 @@ export const InvoiceDetailScreen: FC<InvoiceDetailScreenProps> =
         <View className="flex-row items-center px-6 py-4 border-b border-neutral200">
           <TouchableOpacity
             className="w-10 h-10 items-center justify-center"
-            onPress={() => navigation.goBack()}
+            onPress={() =>router.back()}
             accessible
             accessibilityLabel="Go back"
             accessibilityRole="button"

@@ -8,14 +8,13 @@
  * no tailor yet the input is disabled with an explanatory empty state.
  */
 
+import { useRouter, useLocalSearchParams } from "expo-router"
 import { FC, useCallback, useEffect, useState } from "react"
 import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle, Alert } from "react-native"
 import { useQueryClient } from "@tanstack/react-query"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Screen, Icon, Text, TextField, ChatBubble } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
-import { useNavigation } from "@react-navigation/native"
 import { errorMessage } from "@/api/common"
 import {
   markMessageRead,
@@ -37,12 +36,12 @@ function userName(user?: Record<string, any> | null): string {
   return full || user.name || user.email || ""
 }
 
-interface OrderChatScreenProps extends AppStackScreenProps<"OrderChat"> {}
 
-export const OrderChatScreen: FC<OrderChatScreenProps> = ({ route }) => {
-  const navigation = useNavigation()
+export const OrderChatScreen: FC = () => {
+  const router = useRouter()
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
-  const { orderId } = route?.params || { orderId: "" }
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const orderId = id ?? ""
 
   const adapter = getPocketBaseAdapter()
   const currentUserId = adapter.currentUserId
@@ -145,7 +144,7 @@ export const OrderChatScreen: FC<OrderChatScreenProps> = ({ route }) => {
       <View className="flex-row items-center border-b border-neutral200 px-6 py-4">
         <TouchableOpacity
           className="h-10 w-10 items-center justify-center"
-          onPress={() => navigation.goBack()}
+          onPress={() =>router.back()}
           accessible
           accessibilityLabel="Go back"
           accessibilityRole="button"

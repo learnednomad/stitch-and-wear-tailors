@@ -1,8 +1,7 @@
+import { useRouter } from "expo-router"
 import { FC, useState, useEffect } from "react"
 import { ViewStyle, View, Alert } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen } from "@/components"
-import { useNavigation } from "@react-navigation/native"
 import { UserStatus } from "@/models"
 import { useAuthStore } from "@/state/authStore"
 import AuthService from "@/services/auth/AuthService"
@@ -13,11 +12,10 @@ import { RateLimiter } from "@/utils/rate-limiter"
 import { PremiumSignInForm } from "@/components/PremiumSignInForm"
 import { BiometricService } from "@/services/biometric/BiometricService"
 
-interface SignInScreenProps extends AppStackScreenProps<"SignIn"> {}
 
-export const SignInScreen: FC<SignInScreenProps> = function SignInScreen() {
+export const SignInScreen: FC = function SignInScreen() {
   const authStore = useAuthStore()
-  const navigation = useNavigation()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSignIn = async (email: string, password: string, biometric = false) => {
@@ -78,14 +76,13 @@ export const SignInScreen: FC<SignInScreenProps> = function SignInScreen() {
                   )
                   if (verifyResult.success) {
                     Alert.alert("Verification Sent", "Please check your email.")
-                  }
-                  navigation.navigate("VerifyEmail" as never)
+                  }router.push("/verify-email")
                 },
               },
               {
                 text: "OK",
                 style: "cancel",
-                onPress: () => navigation.navigate("VerifyEmail" as never),
+                onPress: () =>router.push("/verify-email"),
               },
             ],
           )
@@ -178,8 +175,7 @@ export const SignInScreen: FC<SignInScreenProps> = function SignInScreen() {
     }
   }
 
-  const handleSignUp = () => {
-    navigation.navigate("SignUp" as never)
+  const handleSignUp = () => {router.push("/sign-up")
   }
 
   const handleBiometricAuth = async () => {
@@ -214,8 +210,7 @@ export const SignInScreen: FC<SignInScreenProps> = function SignInScreen() {
     }
   }
 
-  const handleForgotPassword = () => {
-    navigation.navigate("ForgotPassword" as never)
+  const handleForgotPassword = () => {router.push("/forgot-password")
   }
 
   return (

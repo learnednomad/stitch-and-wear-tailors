@@ -16,13 +16,12 @@ import {
   Platform,
   ViewStyle,
 } from "react-native"
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native"
 import { Icon } from "@/components"
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator"
 import { colors as themeColors } from "@/theme"
 import { validatePassword } from "@/utils/passwordValidation"
 import AuthService from "@/services/auth/AuthService"
-import { AppStackParamList } from "@/navigators"
+import { useRouter, useLocalSearchParams } from "expo-router"
 
 // Local aliases mapping this screen's legacy color names onto the app theme
 // (the theme has no primary/card/success entries). Consumed only by the Icon /
@@ -35,11 +34,9 @@ const colors = {
   success: themeColors.palette.success500,
 }
 
-type ResetPasswordScreenRouteProp = RouteProp<AppStackParamList, "ResetPassword">
-
 export function ResetPasswordScreen() {
-  const navigation = useNavigation<any>()
-  const route = useRoute<ResetPasswordScreenRouteProp>()
+  const router = useRouter()
+  const params = useLocalSearchParams<{ userId?: string; secret?: string; token?: string }>()
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -49,9 +46,9 @@ export function ResetPasswordScreen() {
   const [confirmPasswordError, setConfirmPasswordError] = useState("")
 
   // Extract userId and secret from route params or deep link
-  const userId = route.params?.userId || ""
+  const userId = params.userId || ""
   // deep links may deliver the token under either name
-  const secret = route.params?.secret || (route.params as any)?.token || ""
+  const secret = params.secret || params.token || ""
 
   const authService = AuthService
 
@@ -60,7 +57,7 @@ export function ResetPasswordScreen() {
       Alert.alert("Invalid Link", "The reset link is invalid or expired.", [
         {
           text: "OK",
-          onPress: () => navigation.navigate("SignIn" as any),
+          onPress: () => router.push("/sign-in"),
         },
       ])
     }
@@ -105,7 +102,7 @@ export function ResetPasswordScreen() {
         Alert.alert("Password Reset!", "Your password has been successfully reset.", [
           {
             text: "Sign In",
-            onPress: () => navigation.navigate("SignIn" as any),
+            onPress: () => router.push("/sign-in"),
           },
         ])
       } else {
@@ -125,7 +122,7 @@ export function ResetPasswordScreen() {
     >
       <ScrollView contentContainerStyle={$scrollContent}>
         <View className="flex-row items-center border-b border-b-border p-lg">
-          <TouchableOpacity onPress={() => navigation.navigate("SignIn" as any)}>
+          <TouchableOpacity onPress={() => router.push("/sign-in")}>
             <Icon icon="back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text className="ml-md flex-1 text-[22px] font-spaceBold">Create New Password</Text>

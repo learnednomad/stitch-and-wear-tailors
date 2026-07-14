@@ -4,21 +4,21 @@
  * Thin wrapper around the shared NotificationList component (mirrors
  * ClientNotificationsScreen).
  */
+import { useRouter } from "expo-router"
 import { FC } from "react"
 import { TouchableOpacity, View, ViewStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Icon, NotificationList, Screen, Text } from "@/components"
 
-interface NotificationsScreenProps extends AppStackScreenProps<"TailorNotifications"> {}
 
-export const TailorNotificationsScreen: FC<NotificationsScreenProps> = 
-  function NotificationsScreen({ navigation }) {
+export const TailorNotificationsScreen: FC = 
+  function NotificationsScreen() {
+    const router = useRouter()
     return (
       <Screen style={$root} preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$content}>
         <View className="flex-row items-center gap-xs px-4 pt-4">
-          {navigation.canGoBack() && (
+          {router.canGoBack() && (
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={() =>router.back()}
               accessibilityRole="button"
               accessibilityLabel="Go back"
               hitSlop={8}

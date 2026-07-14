@@ -6,14 +6,14 @@
  * screen explains the current state and will grow the toggle when
  * per-user MFA ships.
  */
+import { useRouter } from "expo-router"
 import { FC } from "react"
 import { View, ViewStyle } from "react-native"
-import { useNavigation } from "@react-navigation/native"
 import { Screen, Text, Button } from "@/components"
 import { spacing, colors } from "@/theme"
 
 export const TwoFactorSetupScreen: FC = () => {
-  const navigation = useNavigation()
+  const router = useRouter()
 
   return (
     <Screen style={$root} preset="scroll" safeAreaEdges={["top"]}>
@@ -29,7 +29,7 @@ export const TwoFactorSetupScreen: FC = () => {
           className="mb-md"
           style={{ color: colors.textDim }}
         />
-        <Button text="Go Back" style={$button} onPress={() => navigation.goBack()} />
+        <Button text="Go Back" style={$button} onPress={() =>router.back()} />
       </View>
     </Screen>
   )

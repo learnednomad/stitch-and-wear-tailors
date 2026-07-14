@@ -1,3 +1,4 @@
+import { useRouter, useFocusEffect } from "expo-router"
 import React, { FC, useCallback, useEffect, useState } from "react"
 import {
   View,
@@ -8,23 +9,20 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button } from "@/components"
 import { colors, spacing } from "@/theme"
 import { tailorMeasurementApi, PBMeasurementRecord } from "./measurement-data"
 
 type Segment = "customers" | "templates"
 
-interface MeasurementScreenProps extends AppStackScreenProps<"TailorMeasurement"> {}
 
 /**
  * Tailor measurements hub: read-only customer profiles (customers with
  * orders for this tailor) and the tailor's own editable house templates.
  */
-export const TailorMeasurementScreen: FC<MeasurementScreenProps> = 
+export const TailorMeasurementScreen: FC = 
   function TailorMeasurementScreen() {
-    const navigation = useNavigation<any>()
+    const router = useRouter()
 
     const [segment, setSegment] = useState<Segment>("customers")
     const [isLoading, setIsLoading] = useState(true)
@@ -54,10 +52,11 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> =
     }, [])
 
     // Reload whenever the screen regains focus (after add/edit/delete)
-    useEffect(() => {
-      const unsubscribe = navigation.addListener("focus", load)
-      return unsubscribe
-    }, [navigation, load])
+    useFocusEffect(
+      useCallback(() => {
+        load()
+      }, [load]),
+    )
 
     const onRefresh = () => {
       setIsRefreshing(true)
@@ -78,9 +77,12 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> =
         key={record.id}
         className="flex-row items-center px-4 py-4 border-b border-neutral200"
         onPress={() =>
-          navigation.navigate("EditMeasurement", {
-            measurementId: record.id,
-            mode: readOnly ? "view" : "edit",
+          router.push({
+            pathname: "/measurements/[id]",
+            params: {
+              id: record.id,
+              mode: readOnly ? "view" : "edit",
+            },
           })
         }
       >
@@ -187,7 +189,7 @@ export const TailorMeasurementScreen: FC<MeasurementScreenProps> =
                   text="+ New Template"
                   style={$addButton}
                   textStyle={$addButtonText}
-                  onPress={() => navigation.navigate("AddMeasurement")}
+                  onPress={() =>router.push("/measurements/add")}
                 />
                 {templates.length === 0 ? (
                   <View className="items-center py-8 px-6">

@@ -3,9 +3,9 @@
  * Main orders listing and management screen with Nigerian business context
  */
 
+import { useRouter } from "expo-router"
 import { FC, useState, useMemo } from "react"
 import { View, RefreshControl, ViewStyle, TextStyle, TouchableOpacity, FlatList } from "react-native"
-import { TabScreenProps } from "@/navigators/ClientTabsNavigator"
 import { Screen, Text, Button, Icon, Chip, statusTone } from "@/components"
 import {
   OrderFilterBar,
@@ -15,17 +15,15 @@ import {
   countActiveOrderFilters,
 } from "@/components/OrderFilterBar"
 import { colors, spacing } from "@/theme"
-import { useNavigation } from "@react-navigation/native"
 import { useClientOrders, useOrderRealtime } from "@/api/orders"
 import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useAuthStore } from "@/state/authStore"
 import { NigerianGarmentType, OrderStatus } from "@/types/orders"
 
-interface OrdersScreenProps extends TabScreenProps<"Orders"> {}
 
-export const OrdersScreen: FC<OrdersScreenProps> = function OrdersScreen() {
+export const OrdersScreen: FC = function OrdersScreen() {
   const authStore = useAuthStore()
-  const navigation = useNavigation()
+  const router = useRouter()
   const getTranslation = useOrderDraftStore((s) => s.getTranslation)
 
   // Server list via React Query; realtime keeps it fresh (customer filter + poll)
@@ -83,7 +81,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = function OrdersScreen() {
         activeOpacity={0.7}
         onPress={() => {
           // Navigate to order detail screen
-          ;(navigation as any).navigate("OrderDetail", { orderId: order.id })
+          ;router.push(`/orders/${order.id}`)
         }}
       >
         <View className="flex-1">
@@ -146,7 +144,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = function OrdersScreen() {
           text="Create New Order"
           style={$createOrderButton}
           textStyle={$createOrderButtonText}
-          onPress={() => navigation.navigate("NewOrder" as never)}
+          onPress={() =>router.push("/orders/new")}
         />
       </View>
     )
@@ -160,7 +158,7 @@ export const OrdersScreen: FC<OrdersScreenProps> = function OrdersScreen() {
         </Text>
         <TouchableOpacity
           className="h-[42px] w-[42px] items-center justify-center rounded-full bg-accent"
-          onPress={() => navigation.navigate("NewOrder" as never)}
+          onPress={() =>router.push("/orders/new")}
         >
           <Icon icon="sew" size={22} color={colors.palette.neutral100} />
         </TouchableOpacity>

@@ -1,6 +1,6 @@
+import { useRouter } from "expo-router"
 import React, { FC, useEffect, useState, useCallback } from "react"
 import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle, RefreshControl } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import {
   Button,
   Screen,
@@ -21,19 +21,17 @@ import { useNotifications, unreadCountOf } from "@/api/notifications"
 import { useClientMeasurements } from "@/api/measurements"
 import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useAuthStore } from "@/state/authStore"
-import { useNavigation } from "@react-navigation/native"
 import { appointmentApi, PBAppointment } from "@/services/api/appointment-api"
 
-interface ClientPortalScreenProps extends AppStackScreenProps<"Home"> {}
 
 const getGreeting = () => {
   const currentHour = new Date().getHours()
   return currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening"
 }
 
-export const HomeScreen: FC<ClientPortalScreenProps> = () => {
+export const HomeScreen: FC = () => {
   const { theme } = useAppTheme()
-  const navigation = useNavigation()
+  const router = useRouter()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const [greeting] = React.useState(getGreeting())
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -133,7 +131,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
   const renderOrder = ({ item }: { item: any }) => (
     <TouchableOpacity
       className="w-60 rounded-2xl border border-border bg-surface p-4 dark:border-border-dark dark:bg-surface-dark"
-      onPress={() => (navigation as any).navigate("OrderDetail", { orderId: item.id })}
+      onPress={() => router.push(`/orders/${item.id}`)}
       accessible
       accessibilityLabel={`Order: ${item.orderNumber}`}
       accessibilityRole="button"
@@ -174,31 +172,31 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
       title: "Add Measurement",
       subtitle: "Submit new sizes",
       icon: "profile" as const,
-      onPress: () => navigation.navigate("Measurement" as never),
+      onPress: () =>router.push("/orders/measurement"),
     },
     {
       title: "Browse Fabrics",
       subtitle: "Choose materials",
       icon: "view" as const,
-      onPress: () => navigation.navigate("FabricSearch" as never),
+      onPress: () =>router.push("/fabrics/search"),
     },
     {
       title: "Track Orders",
       subtitle: "View progress",
       icon: "sew" as const,
-      onPress: () => navigation.navigate("Orders" as never),
+      onPress: () =>router.push("/orders"),
     },
     {
       title: "Book Fitting",
       subtitle: "Schedule a visit",
       icon: "appointment" as const,
-      onPress: () => navigation.navigate("BookFitting" as never),
+      onPress: () =>router.push("/book-fitting"),
     },
     {
       title: "Style Catalog",
       subtitle: "Browse designs",
       icon: "menu" as const,
-      onPress: () => navigation.navigate("Catalog" as never),
+      onPress: () =>router.push("/catalog"),
     },
   ]
 
@@ -279,7 +277,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
             </View>
             <TouchableOpacity
               className="h-[42px] w-[42px] items-center justify-center rounded-full border border-border bg-surface dark:border-border-dark dark:bg-surface-dark"
-              onPress={() => navigation.navigate("ClientNotifications" as never)}
+              onPress={() =>router.push("/notifications")}
               accessible
               accessibilityLabel="Notifications"
             >
@@ -318,7 +316,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
           <SectionHeader
             title="Recent Orders"
             actionText="View All"
-            onActionPress={() => navigation.navigate("Orders" as never)}
+            onActionPress={() =>router.push("/orders")}
             style={$sectionHeader}
           />
           <FlatList
@@ -339,7 +337,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
           <SectionHeader
             title="Recent Measurements"
             actionText="View All"
-            onActionPress={() => navigation.navigate("Measurement" as never)}
+            onActionPress={() =>router.push("/orders/measurement")}
             style={$sectionHeader}
           />
           {recentMeasurements.map((item) => (
@@ -399,7 +397,7 @@ export const HomeScreen: FC<ClientPortalScreenProps> = () => {
             style={$primaryButton}
             pressedStyle={$primaryButtonPressed}
             textStyle={$primaryButtonText}
-            onPress={() => navigation.navigate("Measurement" as never)}
+            onPress={() =>router.push("/orders/measurement")}
             accessible
             accessibilityLabel="Add new measurement"
           />

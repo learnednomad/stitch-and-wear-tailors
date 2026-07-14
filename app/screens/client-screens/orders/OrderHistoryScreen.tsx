@@ -5,6 +5,7 @@
  * order-card look from OrdersScreen in a lighter form.
  */
 
+import { useRouter } from "expo-router"
 import { FC, useCallback, useEffect, useState } from "react"
 import {
   View,
@@ -14,8 +15,6 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon } from "@/components"
 import { colors, spacing } from "@/theme"
 import { useAuthStore } from "@/state/authStore"
@@ -24,11 +23,10 @@ import { formatRelativeTime } from "@/utils/formatRelativeTime"
 
 type HistoryFilter = "all" | "delivered" | "cancelled"
 
-interface OrderHistoryScreenProps extends AppStackScreenProps<"OrderHistory"> {}
 
-export const OrderHistoryScreen: FC<OrderHistoryScreenProps> = 
+export const OrderHistoryScreen: FC = 
   function OrderHistoryScreen() {
-    const navigation = useNavigation()
+    const router = useRouter()
     const authStore = useAuthStore()
 
     const [orders, setOrders] = useState<Record<string, any>[]>([])
@@ -87,7 +85,7 @@ export const OrderHistoryScreen: FC<OrderHistoryScreenProps> =
         <TouchableOpacity
           className="rounded-[12px] border border-neutral200 bg-warmIvory p-lg"
           style={$orderCardShadow}
-          onPress={() => (navigation as any).navigate("OrderDetail", { orderId: order.id })}
+          onPress={() => router.push(`/orders/${order.id}`)}
         >
           <View className="mb-sm flex-row items-start justify-between">
             <View className="flex-row items-center gap-sm">
@@ -147,7 +145,7 @@ export const OrderHistoryScreen: FC<OrderHistoryScreenProps> =
         <View className="flex-row items-center border-b border-neutral200 px-lg py-md">
           <TouchableOpacity
             className="h-[40px] w-[40px] items-center justify-center"
-            onPress={() => navigation.goBack()}
+            onPress={() =>router.back()}
             accessible
             accessibilityLabel="Go back"
             accessibilityRole="button"

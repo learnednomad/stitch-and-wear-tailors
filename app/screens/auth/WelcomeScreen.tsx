@@ -2,7 +2,6 @@ import { FC } from "react"
 import { Image, ImageStyle, View } from "react-native"
 import { Text, Screen } from "@/components"
 import { isRTL } from "@/i18n"
-import { AppStackScreenProps } from "@/navigators"
 import { $styles } from "@/theme"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -10,9 +9,8 @@ import { useAppTheme } from "@/utils/useAppTheme"
 const welcomeLogo = require("../../../assets/images/logo.png")
 const welcomeFace = require("../../../assets/images/welcome-face.png")
 
-interface WelcomeScreenProps extends AppStackScreenProps<"Welcome"> {}
 
-export const WelcomeScreen: FC<WelcomeScreenProps> = function WelcomeScreen() {
+export const WelcomeScreen: FC = function WelcomeScreen() {
   const { theme } = useAppTheme()
 
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])

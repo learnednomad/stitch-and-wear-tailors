@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router"
 import React, { FC, useCallback, useEffect, useState } from "react"
 import {
   View,
@@ -9,7 +10,6 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
 import { Button, Screen, Icon, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
@@ -34,7 +34,7 @@ interface MeasurementFormProps {
  * add and edit (the tailor's own templates) via props.
  */
 export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId }) => {
-  const navigation = useNavigation<any>()
+  const router = useRouter()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
 
   const [isLoading, setIsLoading] = useState(!!measurementId)
@@ -128,7 +128,7 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
       Alert.alert(
         "Saved",
         `"${name.trim()}" has been ${mode === "edit" ? "updated" : "created"}.`,
-        [{ text: "OK", onPress: () => navigation.goBack() }],
+        [{ text: "OK", onPress: () =>router.back() }],
       )
     } else {
       Alert.alert("Save Failed", result.message ?? "Could not save the measurement.")
@@ -147,8 +147,7 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
           style: "destructive",
           onPress: async () => {
             const result = await tailorMeasurementApi.remove(measurementId)
-            if (result.success) {
-              navigation.goBack()
+            if (result.success) {router.back()
             } else {
               Alert.alert("Delete Failed", result.message ?? "Could not delete the measurement.")
             }
@@ -172,7 +171,7 @@ export const MeasurementForm: FC<MeasurementFormProps> = ({ mode, measurementId 
       <View className="flex-row items-center px-6 py-4 border-b border-neutral200">
         <TouchableOpacity
           className="w-10 h-10 items-center justify-center"
-          onPress={() => navigation.goBack()}
+          onPress={() =>router.back()}
           accessible
           accessibilityLabel="Go back"
           accessibilityRole="button"

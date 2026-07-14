@@ -6,11 +6,11 @@
  * reset email, biometric setup), Notifications (local switches persisted
  * to storage) and About, plus Sign Out.
  */
+import { useRouter } from "expo-router"
 import { FC, useState } from "react"
 import { Alert, Image, Platform, TouchableOpacity, View, ViewStyle } from "react-native"
 import i18next from "i18next"
 import Constants from "expo-constants"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Screen, Switch, Text, TextField } from "@/components"
 import { useAuthStore } from "@/state/authStore"
 import { useAuth } from "@/contexts/AuthContext"
@@ -21,7 +21,6 @@ import * as storage from "@/utils/storage"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface SettingsScreenProps extends AppStackScreenProps<"Settings"> {}
 
 const LANGUAGES: Array<{ tag: string; label: string }> = [
   { tag: "en", label: "English" },
@@ -53,9 +52,8 @@ const DEFAULT_PREFS: LocalNotificationPrefs = {
 const $sectionClass = "mx-4 mb-4 rounded-xl bg-neutral100 p-4 dark:bg-neutral100-dark"
 const $sectionTitleClass = "mb-2 mt-3 px-4"
 
-export const SettingsScreen: FC<SettingsScreenProps> = function SettingsScreen({
-  navigation,
-}) {
+export const SettingsScreen: FC = function SettingsScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
   const authStore = useAuthStore()
   const { signOut } = useAuth()
@@ -219,7 +217,7 @@ export const SettingsScreen: FC<SettingsScreenProps> = function SettingsScreen({
         {Platform.OS !== "web" && (
           <TouchableOpacity
             className="flex-row items-center justify-between py-3"
-            onPress={() => navigation.navigate("BiometricSetup")}
+            onPress={() =>router.push("/biometric-setup")}
           >
             <Text className="text-text dark:text-text-dark" text="Biometric login" />
             <Text className="text-textDim dark:text-textDim-dark" text="Set up" />

@@ -4,18 +4,18 @@
  * Review cart lines, adjust quantities, remove items and proceed to checkout.
  * The cart is client-side (CartContext); checkout turns it into an order.
  */
+import { useRouter } from "expo-router"
 import { FC } from "react"
 import { Image, ImageStyle, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Icon, Screen, Text } from "@/components"
 import { useCart } from "@/contexts/CartContext"
 import { formatNaira } from "@/utils/formatCurrency"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface CartScreenProps extends AppStackScreenProps<"Cart"> {}
 
-export const CartScreen: FC<CartScreenProps> = function CartScreen({ navigation }) {
+export const CartScreen: FC = function CartScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
   const { lines, subtotal, setQuantity, removeProduct } = useCart()
 
@@ -24,7 +24,7 @@ export const CartScreen: FC<CartScreenProps> = function CartScreen({ navigation 
       <View style={$headerRow}>
         <TouchableOpacity
           style={$backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() =>router.back()}
           accessible
           accessibilityLabel="Go back"
           accessibilityRole="button"
@@ -40,7 +40,7 @@ export const CartScreen: FC<CartScreenProps> = function CartScreen({ navigation 
           <Button
             text="Browse products"
             preset="default"
-            onPress={() => navigation.navigate("Marketplace")}
+            onPress={() =>router.push("/marketplace")}
             style={$browseButton}
           />
         </View>
@@ -95,7 +95,7 @@ export const CartScreen: FC<CartScreenProps> = function CartScreen({ navigation 
             </View>
             <Button
               text="Proceed to Checkout"
-              onPress={() => navigation.navigate("Checkout")}
+              onPress={() =>router.push("/checkout")}
               style={$checkoutButton}
             />
           </View>

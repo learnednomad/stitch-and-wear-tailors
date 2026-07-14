@@ -18,7 +18,6 @@ import {
   View,
   ViewStyle,
 } from "react-native"
-import { TabScreenProps } from "@/navigators/ClientTabsNavigator"
 import { Button, Screen, Text, TextField, Chip, ChipTone } from "@/components"
 import { orderApi } from "@/services/api/order-api"
 import {
@@ -31,7 +30,6 @@ import { formatNaira } from "@/utils/formatCurrency"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface PaymentScreenProps extends TabScreenProps<"Pay"> {}
 
 interface OutstandingOrder {
   id: string
@@ -62,7 +60,7 @@ const STATUS_LABELS: Record<string, string> = {
   rejected: "Rejected",
 }
 
-export const PaymentScreen: FC<PaymentScreenProps> = function PaymentScreen() {
+export const PaymentScreen: FC = function PaymentScreen() {
   const { theme } = useAppTheme()
   const [outstanding, setOutstanding] = useState<OutstandingOrder[]>([])
   const [payments, setPayments] = useState<PBPayment[]>([])

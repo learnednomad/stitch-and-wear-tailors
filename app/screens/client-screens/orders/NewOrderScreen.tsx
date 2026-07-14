@@ -1,3 +1,4 @@
+import { useRouter, useLocalSearchParams } from "expo-router"
 import React, { FC, useState, useEffect } from "react"
 import {
   View,
@@ -8,11 +9,9 @@ import {
   FlatList,
   Alert,
 } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Screen, Icon, Text, AutoImage } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
-import { useNavigation } from "@react-navigation/native"
 import { useAuth } from "@/contexts/AuthContext"
 
 interface Style {
@@ -38,16 +37,18 @@ interface Fabric {
   image?: string
 }
 
-interface NewOrderScreenProps extends AppStackScreenProps<"NewOrder"> {}
 
-export const NewOrderScreen: FC<NewOrderScreenProps> = ({ route }) => {
+export const NewOrderScreen: FC = () => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation()
+  const router = useRouter()
   const { user } = useAuth()
 
   // Reorder entry point: OrderDetail pre-selects the past order's style and
   // fabric via route params (the store's orderCreationData is hydrated too)
-  const { reorderStyleId, reorderFabricId } = route?.params || {}
+  const { reorderStyleId, reorderFabricId } = useLocalSearchParams<{
+    reorderStyleId?: string
+    reorderFabricId?: string
+  }>()
 
   const [selectedStyle, setSelectedStyle] = useState<string>(reorderStyleId ?? "")
   const [selectedFabric, setSelectedFabric] = useState<string>(reorderFabricId ?? "")
@@ -280,10 +281,13 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = ({ route }) => {
       {
         text: "Continue",
         onPress: () => {
-          ;(navigation as any).navigate("Measurement", {
-            styleId: selectedStyle,
-            fabricId: selectedFabric,
-            amount: totalAmount,
+          router.push({
+            pathname: "/orders/measurement",
+            params: {
+              styleId: selectedStyle,
+              fabricId: selectedFabric,
+              amount: totalAmount,
+            },
           })
         },
       },
@@ -405,8 +409,7 @@ export const NewOrderScreen: FC<NewOrderScreenProps> = ({ route }) => {
           <TouchableOpacity
             className="w-[40px] h-[40px] justify-center items-center"
             onPress={() => {
-              if (currentStep === "style") {
-                navigation.goBack()
+              if (currentStep === "style") {router.back()
               } else if (currentStep === "fabric") {
                 setCurrentStep("style")
               } else {

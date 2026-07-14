@@ -7,9 +7,9 @@
  * `pending_payment` with the buyer's payment reference for the seller to
  * confirm. On success the cart is cleared and the buyer lands on My Purchases.
  */
+import { useRouter } from "expo-router"
 import { FC, useMemo, useState } from "react"
 import { Alert, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Icon, Screen, Text, TextField } from "@/components"
 import { usePlaceOrder } from "@/api/marketplace"
 import { MarketplacePaymentMethod } from "@/services/api/marketplace-api"
@@ -19,7 +19,6 @@ import { formatNaira } from "@/utils/formatCurrency"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface CheckoutScreenProps extends AppStackScreenProps<"Checkout"> {}
 
 const PAYMENT_METHODS: Array<{ value: MarketplacePaymentMethod; label: string }> = [
   { value: "bank_transfer", label: "Bank Transfer" },
@@ -28,9 +27,8 @@ const PAYMENT_METHODS: Array<{ value: MarketplacePaymentMethod; label: string }>
   { value: "other", label: "Other" },
 ]
 
-export const CheckoutScreen: FC<CheckoutScreenProps> = function CheckoutScreen({
-  navigation,
-}) {
+export const CheckoutScreen: FC = function CheckoutScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
   const { user } = useAuth()
   const { lines, subtotal, clear } = useCart()
@@ -83,7 +81,7 @@ export const CheckoutScreen: FC<CheckoutScreenProps> = function CheckoutScreen({
       Alert.alert(
         "Order placed",
         "Your order has been placed. The seller will confirm your payment shortly.",
-        [{ text: "OK", onPress: () => navigation.navigate("MyPurchases") }],
+        [{ text: "OK", onPress: () =>router.push("/purchases") }],
       )
     } catch (e: any) {
       Alert.alert("Checkout failed", e?.message ?? "Could not place your order. Please try again.")
@@ -95,7 +93,7 @@ export const CheckoutScreen: FC<CheckoutScreenProps> = function CheckoutScreen({
       <View style={$headerRow}>
         <TouchableOpacity
           style={$backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() =>router.back()}
           accessible
           accessibilityLabel="Go back"
           accessibilityRole="button"

@@ -1,7 +1,7 @@
+import { useRouter, useLocalSearchParams } from "expo-router"
 import React, { FC, useCallback, useState } from "react"
 import { View, ScrollView, TouchableOpacity, ViewStyle, TextStyle, Alert, Modal } from "react-native"
 import { useQueryClient } from "@tanstack/react-query"
-import { AppStackScreenProps } from "@/navigators"
 import {
   Button,
   Screen,
@@ -14,7 +14,7 @@ import {
 } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors, spacing } from "@/theme"
-import { useFocusEffect, useNavigation } from "@react-navigation/native"
+import { useFocusEffect } from "@react-navigation/native"
 import { useOrder, orderKeys } from "@/api/orders"
 import { useOrderDraftStore } from "@/state/orderDraftStore"
 import { useAuthStore } from "@/state/authStore"
@@ -88,11 +88,10 @@ const STAGE_STEPS: { id: string; title: string; description: string }[] = [
   { id: "completed", title: "Completed", description: "Ready for pickup/delivery" },
 ]
 
-interface OrderDetailScreenProps extends AppStackScreenProps<"OrderDetail"> {}
 
-export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
+export const OrderDetailScreen: FC = () => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation()
+  const router = useRouter()
   const authStore = useAuthStore()
   const queryClient = useQueryClient()
 
@@ -104,7 +103,8 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
   const [cancelDetail, setCancelDetail] = useState("")
 
   // Extract order ID from route params
-  const { orderId } = route?.params || { orderId: "" }
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const orderId = id ?? ""
 
   // Order detail (items + stages) via React Query
   const { data: order, isLoading } = useOrder(orderId)
@@ -194,7 +194,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
 
   const handleOpenChat = () => {
     if (!order) return
-    ;(navigation as any).navigate("OrderChat", { orderId: order.id })
+    ;router.push(`/orders/${order.id}/chat`)
   }
 
   const closeCancelModal = () => {
@@ -229,9 +229,12 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
     // Hydrate the creation workflow from this order, then jump into the
     // routed creation path with the matching catalog selections pre-picked
     useOrderDraftStore.getState().startReorderFrom(order)
-    ;(navigation as any).navigate("NewOrder", {
-      reorderStyleId: GARMENT_TO_STYLE_ID[order.garmentType],
-      reorderFabricId: FABRIC_TYPE_TO_ID[order.fabricSelection.type],
+    router.push({
+      pathname: "/orders/new",
+      params: {
+        reorderStyleId: GARMENT_TO_STYLE_ID[order.garmentType],
+        reorderFabricId: FABRIC_TYPE_TO_ID[order.fabricSelection.type],
+      },
     })
   }
 
@@ -294,7 +297,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
         <View className="flex-row items-center px-lg py-md border-b border-b-border">
           <TouchableOpacity
             className="w-[40px] h-[40px] justify-center items-center"
-            onPress={() => navigation.goBack()}
+            onPress={() =>router.back()}
             accessible
             accessibilityLabel="Go back"
             accessibilityRole="button"
@@ -373,13 +376,11 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
   )
 
   const handlePayNow = () => {
-    ;(navigation as any).navigate("Payment", {
-      orderId: orderDetail.id,
-      amount: orderDetail.amount,
-      orderDetails: {
-        measurementName: orderDetail.measurementName,
-        status: orderDetail.status,
-        dueDate: orderDetail.dueDate,
+    router.push({
+      pathname: "/pay",
+      params: {
+        orderId: orderDetail.id,
+        amount: orderDetail.amount,
       },
     })
   }
@@ -396,7 +397,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
         <View className="flex-row items-center px-lg py-md border-b border-b-border">
           <TouchableOpacity
             className="w-[40px] h-[40px] justify-center items-center"
-            onPress={() => navigation.goBack()}
+            onPress={() =>router.back()}
             accessible
             accessibilityLabel="Go back"
             accessibilityRole="button"
@@ -598,7 +599,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
             text="Track Order"
             style={$secondaryButton}
             textStyle={$secondaryButtonText}
-            onPress={() => (navigation as any).navigate("OrderTracking", { orderId: order.id })}
+            onPress={() => router.push(`/orders/${order.id}/track`)}
           />
         )}
         {!isTailorViewer && orderDetail.paymentStatus === "Pending" && (
@@ -614,7 +615,7 @@ export const OrderDetailScreen: FC<OrderDetailScreenProps> = ({ route }) => {
             text="Schedule Pickup"
             style={$secondaryButton}
             textStyle={$secondaryButtonText}
-            onPress={() => (navigation as any).navigate("BookFitting")}
+            onPress={() => router.push("/book-fitting")}
           />
         )}
         {/* Client action: cancel a pending/confirmed order (ORD-011) */}

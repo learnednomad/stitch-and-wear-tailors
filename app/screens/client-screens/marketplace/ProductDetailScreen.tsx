@@ -4,9 +4,9 @@
  * Full product view: image gallery, description, seller, price and stock.
  * Buyers pick a quantity and add it to the cart, then jump to the cart.
  */
+import { useRouter, useLocalSearchParams } from "expo-router"
 import { FC, useState } from "react"
 import { Image, ImageStyle, ScrollView, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Chip, Icon, Screen, Text } from "@/components"
 import { useProduct } from "@/api/marketplace"
 import { errorMessage } from "@/api/common"
@@ -16,7 +16,6 @@ import { formatNaira } from "@/utils/formatCurrency"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface ProductDetailScreenProps extends AppStackScreenProps<"ProductDetail"> {}
 
 function labelize(value: string): string {
   return value
@@ -25,9 +24,10 @@ function labelize(value: string): string {
     .join(" ")
 }
 
-export const ProductDetailScreen: FC<ProductDetailScreenProps> = 
-  function ProductDetailScreen({ route, navigation }) {
-    const { productId } = route.params
+export const ProductDetailScreen: FC = 
+  function ProductDetailScreen() {
+    const router = useRouter()
+    const { id: productId } = useLocalSearchParams<{ id: string }>()
     const { theme } = useAppTheme()
     const { addProduct } = useCart()
     const [quantity, setQuantity] = useState(1)
@@ -42,7 +42,7 @@ export const ProductDetailScreen: FC<ProductDetailScreenProps> =
     const handleAddToCart = () => {
       if (!product) return
       addProduct(product, quantity)
-      navigation.navigate("Cart")
+      router.push("/cart")
     }
 
     return (
@@ -50,7 +50,7 @@ export const ProductDetailScreen: FC<ProductDetailScreenProps> =
         <View style={$headerRow}>
           <TouchableOpacity
             style={$backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() =>router.back()}
             accessible
             accessibilityLabel="Go back"
             accessibilityRole="button"

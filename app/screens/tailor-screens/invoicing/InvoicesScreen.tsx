@@ -1,4 +1,5 @@
-import { FC, useEffect, useMemo, useState } from "react"
+import { useRouter, useFocusEffect } from "expo-router"
+import { FC, useCallback, useMemo, useState } from "react"
 import {
   View,
   ScrollView,
@@ -9,8 +10,6 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button } from "@/components"
 import { colors, spacing } from "@/theme"
 import { errorMessage } from "@/api/common"
@@ -32,14 +31,13 @@ import {
   nameMapFromOrderItems,
 } from "./invoicing-shared"
 
-interface InvoicesScreenProps extends AppStackScreenProps<"Invoices"> {}
 
 /**
  * Tailor invoice list: pending customer payment claims up top, status
  * filter chips, and the invoice list (newest first).
  */
-export const InvoicesScreen: FC<InvoicesScreenProps> = function InvoicesScreen() {
-  const navigation = useNavigation<any>()
+export const InvoicesScreen: FC = function InvoicesScreen() {
+  const router = useRouter()
 
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all")
 
@@ -73,14 +71,13 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = function InvoicesScreen()
   }, [orderItemsQuery.data, unnamed])
 
   // Refetch whenever the screen regains focus (after create/detail actions)
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
+  useFocusEffect(
+    useCallback(() => {
       invoicesQuery.refetch()
       claimsQuery.refetch()
-    })
-    return unsubscribe
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigation])
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  )
 
   const isRefreshing = invoicesQuery.isRefetching || claimsQuery.isRefetching
   const onRefresh = () => {
@@ -132,7 +129,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = function InvoicesScreen()
       <View className="flex-row items-center px-6 py-4 border-b border-neutral200">
         <TouchableOpacity
           className="w-10 h-10 items-center justify-center"
-          onPress={() => navigation.goBack()}
+          onPress={() =>router.back()}
           accessible
           accessibilityLabel="Go back"
           accessibilityRole="button"
@@ -144,7 +141,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = function InvoicesScreen()
         </Text>
         <TouchableOpacity
           className="w-10 h-10 items-center justify-center"
-          onPress={() => navigation.navigate("CreateInvoice")}
+          onPress={() =>router.push("/invoices/new")}
           accessibilityLabel="New invoice"
           accessibilityRole="button"
         >
@@ -271,7 +268,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = function InvoicesScreen()
                 <TouchableOpacity
                   key={invoice.id}
                   className="rounded-2xl border border-border bg-surface p-4 mb-3"
-                  onPress={() => navigation.navigate("InvoiceDetail", { invoiceId: invoice.id })}
+                  onPress={() =>router.push(`/invoices/${invoice.id}`)}
                 >
                   <View className="flex-row items-center justify-between">
                     <Text className="text-[15px]" weight="bold" style={$invoiceNumberColor}>
@@ -300,7 +297,7 @@ export const InvoicesScreen: FC<InvoicesScreenProps> = function InvoicesScreen()
             text="+ New Invoice"
             style={$newInvoiceButton}
             textStyle={$newInvoiceButtonText}
-            onPress={() => navigation.navigate("CreateInvoice")}
+            onPress={() =>router.push("/invoices/new")}
           />
           <View className="h-12" />
         </ScrollView>

@@ -4,9 +4,9 @@
  * Browse the tailor's style catalog: search by name, filter by category,
  * tap a style for details and start an order from it.
  */
+import { useRouter } from "expo-router"
 import { FC, useMemo, useState } from "react"
 import { Modal, RefreshControl, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, CatalogGrid, CatalogGridItem, Icon, Screen, Text, TextField } from "@/components"
 import { useStyles } from "@/api/catalog"
 import { errorMessage } from "@/api/common"
@@ -16,7 +16,6 @@ import { formatNaira } from "@/utils/formatCurrency"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface CatalogScreenProps extends AppStackScreenProps<"Catalog"> {}
 
 /** "buba_sokoto" -> "Buba Sokoto" */
 function labelize(value: string): string {
@@ -26,9 +25,8 @@ function labelize(value: string): string {
     .join(" ")
 }
 
-export const CatalogScreen: FC<CatalogScreenProps> = function CatalogScreen({
-  navigation,
-}) {
+export const CatalogScreen: FC = function CatalogScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState<string | null>(null)
@@ -58,8 +56,7 @@ export const CatalogScreen: FC<CatalogScreenProps> = function CatalogScreen({
 
   const handleStartOrder = () => {
     setSelected(null)
-    // NewOrder does not accept route params — style selection happens inside
-    navigation.navigate("NewOrder")
+    // NewOrder does not accept route params — style selection happens insiderouter.push("/orders/new")
   }
 
   return (
@@ -77,11 +74,12 @@ export const CatalogScreen: FC<CatalogScreenProps> = function CatalogScreen({
       }}
     >
       <View className="flex-row items-center px-4 pt-4">
-        {/* No back affordance when mounted as the Browse tab root */}
-        {(navigation as any).getState()?.type !== "tab" && navigation.canGoBack() && (
+        {/* No back affordance when mounted as the Browse tab root (canGoBack is
+            false there and true when pushed as /catalog) */}
+        {router.canGoBack() && (
           <TouchableOpacity
             className="mr-2 h-10 w-10 items-center justify-center"
-            onPress={() => navigation.goBack()}
+            onPress={() =>router.back()}
             accessible
             accessibilityLabel="Go back"
             accessibilityRole="button"
@@ -96,7 +94,7 @@ export const CatalogScreen: FC<CatalogScreenProps> = function CatalogScreen({
       <View className="flex-row gap-2 px-4 pt-3">
         <TouchableOpacity
           className="rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
-          onPress={() => (navigation as any).navigate("Styles")}
+          onPress={() => router.push("/styles")}
           accessible
           accessibilityLabel="Browse styles by group"
           accessibilityRole="button"
@@ -108,7 +106,7 @@ export const CatalogScreen: FC<CatalogScreenProps> = function CatalogScreen({
         </TouchableOpacity>
         <TouchableOpacity
           className="rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
-          onPress={() => (navigation as any).navigate("FabricSearch")}
+          onPress={() => router.push("/fabrics/search")}
           accessible
           accessibilityLabel="Browse fabrics"
           accessibilityRole="button"

@@ -3,6 +3,7 @@
  * Allows users to request password reset via email
  */
 
+import { useRouter } from "expo-router"
 import React, { useState } from "react"
 import {
   View,
@@ -16,7 +17,6 @@ import {
   Platform,
   ViewStyle,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
 import { Icon } from "@/components"
 import { colors as themeColors } from "@/theme"
 import { validateEmail } from "@/utils/emailValidation"
@@ -35,7 +35,7 @@ const colors = {
 }
 
 export function ForgotPasswordScreen() {
-  const navigation = useNavigation()
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [emailError, setEmailError] = useState("")
@@ -71,7 +71,7 @@ export function ForgotPasswordScreen() {
         Alert.alert("Email Sent!", "Check your email for password reset instructions.", [
           {
             text: "OK",
-            onPress: () => navigation.goBack(),
+            onPress: () =>router.back(),
           },
         ])
       } else {
@@ -88,7 +88,7 @@ export function ForgotPasswordScreen() {
     return (
       <View className="flex-1 bg-background">
         <View className="flex-row items-center border-b border-b-border p-lg">
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() =>router.back()}>
             <Icon icon="back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text className="ml-md flex-1 text-[22px] font-spaceBold">Password Reset</Text>
@@ -114,7 +114,7 @@ export function ForgotPasswordScreen() {
 
           <TouchableOpacity
             className="mb-md items-center rounded-lg bg-tint p-md"
-            onPress={() => navigation.goBack()}
+            onPress={() =>router.back()}
           >
             <Text className="text-[16px] font-spaceRegular font-semibold text-neutral100">
               Back to Sign In
@@ -132,7 +132,7 @@ export function ForgotPasswordScreen() {
     >
       <ScrollView contentContainerStyle={$scrollContent}>
         <View className="flex-row items-center border-b border-b-border p-lg">
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() =>router.back()}>
             <Icon icon="back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text className="ml-md flex-1 text-[22px] font-spaceBold">Reset Password</Text>
@@ -183,7 +183,7 @@ export function ForgotPasswordScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity className="items-center p-sm" onPress={() => navigation.goBack()}>
+          <TouchableOpacity className="items-center p-sm" onPress={() =>router.back()}>
             <Text className="text-[16px] font-spaceRegular text-tint underline">Back to Sign In</Text>
           </TouchableOpacity>
 

@@ -1,19 +1,17 @@
+import { useRouter } from "expo-router"
 import { FC, useState, useMemo } from "react"
 import { ViewStyle, View, Alert, TouchableOpacity, TextStyle, ImageStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, TextField, Button, PasswordStrengthIndicator, Icon } from "@/components"
-import { useNavigation } from "@react-navigation/native"
 import { useAuthStore } from "@/state/authStore"
 import AuthService from "@/services/auth/AuthService"
 import { validateEmail } from "@/utils/emailValidation"
 import { validatePassword, validatePasswordConfirmation } from "@/utils/passwordValidation"
 import { spacing, colors } from "@/theme"
 
-interface SignUpScreenProps extends AppStackScreenProps<"SignUp"> {}
 
-export const SignUpScreen: FC<SignUpScreenProps> = function SignUpScreen() {
+export const SignUpScreen: FC = function SignUpScreen() {
   const authStore = useAuthStore()
-  const navigation = useNavigation()
+  const router = useRouter()
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
@@ -71,7 +69,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = function SignUpScreen() {
           [
             {
               text: "OK",
-              onPress: () => navigation.navigate("VerifyEmail" as never),
+              onPress: () =>router.push("/verify-email"),
             },
           ],
         )
@@ -101,8 +99,7 @@ export const SignUpScreen: FC<SignUpScreenProps> = function SignUpScreen() {
     }
   }
 
-  const handleSignIn = () => {
-    navigation.navigate("SignIn" as never)
+  const handleSignIn = () => {router.push("/sign-in")
   }
 
   const handleFacebookSignup = () => {

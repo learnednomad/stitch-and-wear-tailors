@@ -6,6 +6,7 @@
  * wired yet (no picker dependency) — listings show a placeholder until images
  * are added from the PocketBase admin.
  */
+import { useRouter } from "expo-router"
 import { FC, useState } from "react"
 import {
   Alert,
@@ -20,7 +21,6 @@ import {
   ViewStyle,
 } from "react-native"
 import * as ImagePicker from "expo-image-picker"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Chip, Icon, Screen, Switch, Text, TextField } from "@/components"
 import { fileUrl } from "@/services/api/pocketbase-api-adapter"
 import {
@@ -35,7 +35,6 @@ import { formatNaira } from "@/utils/formatCurrency"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface ManageProductsScreenProps extends AppStackScreenProps<"ManageProducts"> {}
 
 const CATEGORIES: ProductCategory[] = [
   "menswear",
@@ -75,8 +74,9 @@ const EMPTY_FORM: FormState = {
   imageUris: [],
 }
 
-export const ManageProductsScreen: FC<ManageProductsScreenProps> = 
-  function ManageProductsScreen({ navigation }) {
+export const ManageProductsScreen: FC = 
+  function ManageProductsScreen() {
+    const router = useRouter()
     const { theme } = useAppTheme()
     const productsQuery = useMyProducts()
     const createProduct = useCreateProduct()
@@ -195,10 +195,10 @@ export const ManageProductsScreen: FC<ManageProductsScreenProps> =
         }}
       >
         <View style={$headerRow}>
-          {navigation.canGoBack() && (
+          {router.canGoBack() && (
             <TouchableOpacity
               style={$backButton}
-              onPress={() => navigation.goBack()}
+              onPress={() =>router.back()}
               accessible
               accessibilityLabel="Go back"
               accessibilityRole="button"

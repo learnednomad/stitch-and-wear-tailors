@@ -7,9 +7,9 @@
  * (orderId -> OrderDetail, appointment -> BookFitting). Subscribes to
  * PocketBase realtime while mounted.
  */
+import { useRouter } from "expo-router"
 import { useCallback, useState } from "react"
 import { RefreshControl, ScrollView, TouchableOpacity, View, ViewStyle } from "react-native"
-import { useNavigation } from "@react-navigation/native"
 import { Text } from "./Text"
 import { PBNotification } from "@/services/api/notification-api"
 import {
@@ -39,7 +39,7 @@ function formatTime(iso: string): string {
 }
 
 export function NotificationList() {
-  const navigation = useNavigation<any>()
+  const router = useRouter()
   const { data: items = [], isLoading, refetch } = useNotifications()
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
@@ -62,13 +62,11 @@ export function NotificationList() {
         markRead.mutate(notification.id)
       }
       const data = notification.data ?? {}
-      if (data.orderId) {
-        navigation.navigate("OrderDetail", { orderId: data.orderId })
-      } else if (notification.type === "appointment" || data.appointmentId) {
-        navigation.navigate("BookFitting")
+      if (data.orderId) {router.push(`/orders/${data.orderId}`)
+      } else if (notification.type === "appointment" || data.appointmentId) {router.push("/book-fitting")
       }
     },
-    [navigation, markRead],
+    [router, markRead],
   )
 
   const todayItems = items.filter((n) => isToday(n.created))

@@ -10,6 +10,7 @@
  * AppointmentStoreEnhanced are unwired mock machinery targeting /api
  * endpoints that don't exist.
  */
+import { useRouter } from "expo-router"
 import { FC, useEffect, useMemo, useState } from "react"
 import {
   Alert,
@@ -20,7 +21,6 @@ import {
   View,
   ViewStyle,
 } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Icon, Screen, Text, TextField } from "@/components"
 import {
   useCancelAppointment,
@@ -33,7 +33,6 @@ import { PBAppointment } from "@/services/api/appointment-api"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface BookFittingScreenProps extends AppStackScreenProps<"BookFitting"> {}
 
 const APPOINTMENT_TYPES: Array<{ value: PBAppointment["type"]; label: string }> = [
   { value: "fitting", label: "Fitting" },
@@ -76,9 +75,8 @@ const STATUS_COLORS: Record<string, string> = {
 const CHIP_CLASS = "rounded-2xl border border-border px-3 py-2 dark:border-border-dark"
 const CHIP_TEXT_CLASS = "text-center text-[13px] font-semibold"
 
-export const BookFittingScreen: FC<BookFittingScreenProps> = function BookFittingScreen({
-  navigation,
-}) {
+export const BookFittingScreen: FC = function BookFittingScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
   const [selectedTailor, setSelectedTailor] = useState<string | null>(null)
   const [type, setType] = useState<PBAppointment["type"]>("fitting")
@@ -183,7 +181,7 @@ export const BookFittingScreen: FC<BookFittingScreenProps> = function BookFittin
       <View className="flex-row items-center px-4 pt-4">
         <TouchableOpacity
           className="mr-2 h-10 w-10 items-center justify-center"
-          onPress={() => navigation.goBack()}
+          onPress={() =>router.back()}
           accessible
           accessibilityLabel="Go back"
           accessibilityRole="button"

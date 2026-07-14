@@ -4,9 +4,9 @@
  * The buyer's marketplace orders with status, item summary and totals.
  * Orders still awaiting payment confirmation can be cancelled.
  */
+import { useRouter } from "expo-router"
 import { FC } from "react"
 import { Alert, RefreshControl, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Chip, ChipTone, Icon, Screen, Text } from "@/components"
 import { useCancelMarketplaceOrder, useMyPurchases } from "@/api/marketplace"
 import { errorMessage } from "@/api/common"
@@ -15,7 +15,6 @@ import { formatNaira } from "@/utils/formatCurrency"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-interface MyPurchasesScreenProps extends AppStackScreenProps<"MyPurchases"> {}
 
 const STATUS_TONES: Record<MarketplaceOrderStatus, ChipTone> = {
   pending_payment: "warning",
@@ -35,9 +34,8 @@ const STATUS_LABELS: Record<MarketplaceOrderStatus, string> = {
   cancelled: "Cancelled",
 }
 
-export const MyPurchasesScreen: FC<MyPurchasesScreenProps> = function MyPurchasesScreen({
-  navigation,
-}) {
+export const MyPurchasesScreen: FC = function MyPurchasesScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
   const purchasesQuery = useMyPurchases()
   const cancelOrder = useCancelMarketplaceOrder()
@@ -79,7 +77,7 @@ export const MyPurchasesScreen: FC<MyPurchasesScreenProps> = function MyPurchase
       <View style={$headerRow}>
         <TouchableOpacity
           style={$backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() =>router.back()}
           accessible
           accessibilityLabel="Go back"
           accessibilityRole="button"

@@ -5,6 +5,7 @@
  * Seen-state persists to storage under `onboarding.seen` so it only shows
  * once (AppNavigator checks the flag when picking the initial route).
  */
+import { useRouter } from "expo-router"
 import { FC, useRef, useState } from "react"
 import {
   NativeScrollEvent,
@@ -15,13 +16,11 @@ import {
   View,
   ViewStyle,
 } from "react-native"
-import { AppStackScreenProps } from "@/navigators"
 import { Button, Screen, Text } from "@/components"
 import { spacing } from "@/theme"
 import { useAppTheme } from "@/utils/useAppTheme"
 import * as storage from "@/utils/storage"
 
-interface OnboardingScreenProps extends AppStackScreenProps<"Onboarding"> {}
 
 export const ONBOARDING_SEEN_KEY = "onboarding.seen"
 
@@ -43,9 +42,8 @@ const SLIDES = [
   },
 ]
 
-export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingScreen({
-  navigation,
-}) {
+export const OnboardingScreen: FC = function OnboardingScreen() {
+  const router = useRouter()
   const { theme } = useAppTheme()
   const { width } = useWindowDimensions()
   const scrollRef = useRef<ScrollView>(null)
@@ -53,7 +51,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
 
   const finish = () => {
     storage.saveString(ONBOARDING_SEEN_KEY, "true")
-    navigation.navigate("SignUp")
+    router.push("/sign-up")
   }
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {

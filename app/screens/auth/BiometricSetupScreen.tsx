@@ -3,6 +3,7 @@
  * Allows users to enable Face ID, Touch ID, or fingerprint authentication
  */
 
+import { useRouter } from "expo-router"
 import React, { useState, useEffect } from "react"
 import {
   View,
@@ -13,7 +14,6 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
 import { Icon, IconTypes } from "@/components"
 import { colors as themeColors } from "@/theme"
 import BiometricAuthService from "@/services/auth/BiometricAuthService"
@@ -33,7 +33,7 @@ const colors = {
 }
 
 export function BiometricSetupScreen() {
-  const navigation = useNavigation()
+  const router = useRouter()
   const authStore = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
@@ -235,7 +235,7 @@ export function BiometricSetupScreen() {
   return (
     <ScrollView className="flex-1 bg-background">
       <View className="flex-row items-center border-b border-b-border p-lg">
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() =>router.back()}>
           <Icon icon="back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text className="ml-md flex-1 text-[22px] font-spaceBold">Biometric Authentication</Text>

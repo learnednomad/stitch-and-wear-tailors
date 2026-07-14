@@ -7,10 +7,9 @@
  * is unavailable.
  */
 
+import { useRouter, useLocalSearchParams } from "expo-router"
 import { FC, useCallback, useEffect, useState } from "react"
 import { View, Image, RefreshControl, TouchableOpacity, ViewStyle, TextStyle } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon } from "@/components"
 import { colors } from "@/theme"
 import { orderApi, PBOrderStageRecord } from "@/services/api/order-api"
@@ -38,12 +37,12 @@ const TERMINAL_STATUSES: Record<string, string> = {
   rejected: "Order Rejected",
 }
 
-interface OrderTrackingScreenProps extends AppStackScreenProps<"OrderTracking"> {}
 
-export const OrderTrackingScreen: FC<OrderTrackingScreenProps> = 
-  function OrderTrackingScreen({ route }) {
-    const navigation = useNavigation()
-    const { orderId } = route.params
+export const OrderTrackingScreen: FC = 
+  function OrderTrackingScreen() {
+    const router = useRouter()
+    const { id } = useLocalSearchParams<{ id: string }>()
+    const orderId = id ?? ""
 
     const [order, setOrder] = useState<Record<string, any> | null>(null)
     const [stages, setStages] = useState<PBOrderStageRecord[]>([])
@@ -191,7 +190,7 @@ export const OrderTrackingScreen: FC<OrderTrackingScreenProps> =
         <View className="flex-row items-center px-lg py-md border-b border-b-border">
           <TouchableOpacity
             className="w-[40px] h-[40px] justify-center items-center"
-            onPress={() => navigation.goBack()}
+            onPress={() =>router.back()}
             accessible
             accessibilityLabel="Go back"
             accessibilityRole="button"

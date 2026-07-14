@@ -1,11 +1,8 @@
 import React, { FC } from "react"
 import { View, ScrollView, TouchableOpacity, ViewStyle } from "react-native"
-import { NativeStackScreenProps } from "@react-navigation/native-stack"
-import { AppStackParamList } from "@/navigators"
 import { Button, Screen, Icon, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { colors } from "@/theme"
-import { useNavigation } from "@react-navigation/native"
 
 interface PaymentMethod {
   id: string
@@ -24,11 +21,9 @@ interface Transaction {
   description: string
 }
 
-interface WalletScreenProps extends NativeStackScreenProps<AppStackParamList> {}
 
-export const WalletScreen: FC<WalletScreenProps> = () => {
+export const WalletScreen: FC = () => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation()
 
   // Mock data
   const balance = 250000

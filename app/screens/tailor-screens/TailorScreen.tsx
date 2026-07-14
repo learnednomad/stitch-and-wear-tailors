@@ -6,9 +6,10 @@
  * orders — all backed by orderApi data for the logged-in tailor.
  */
 
+import { useRouter } from "expo-router"
 import { FC, useCallback, useState } from "react"
 import { View, FlatList, TouchableOpacity, ViewStyle, TextStyle } from "react-native"
-import { useNavigation, useFocusEffect } from "@react-navigation/native"
+import { useFocusEffect } from "@react-navigation/native"
 import {
   Screen,
   Icon,
@@ -30,7 +31,7 @@ type DomainOrder = Record<string, any>
 
 export const TailorScreen: FC = function TailorScreen() {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation()
+  const router = useRouter()
   const authStore = useAuthStore()
 
   const [activeTab, setActiveTab] = useState<"all" | "urgent">("all")
@@ -117,7 +118,7 @@ export const TailorScreen: FC = function TailorScreen() {
     return (
       <TouchableOpacity
         className="w-[260px] rounded-2xl border border-border bg-surface p-4 mr-3"
-        onPress={() => (navigation as any).navigate("OrderDetail", { orderId: item.id })}
+        onPress={() => router.push(`/orders/${item.id}`)}
         accessible
         accessibilityLabel={`Order: ${item.orderNumber}`}
       >
@@ -172,27 +173,27 @@ export const TailorScreen: FC = function TailorScreen() {
     {
       title: "Orders",
       icon: "sew",
-      onPress: () => (navigation as any).navigate("TailorOrders", {}),
+      onPress: () => router.push("/tailor-orders"),
     },
     {
       title: "Measurements",
       icon: "profile",
-      onPress: () => (navigation as any).navigate("Measurements"),
+      onPress: () => router.push("/measurements"),
     },
     {
       title: "Invoices",
       icon: "money",
-      onPress: () => (navigation as any).navigate("Invoices"),
+      onPress: () => router.push("/invoices"),
     },
     {
       title: "Analytics",
       icon: "view",
-      onPress: () => (navigation as any).navigate("Analytics"),
+      onPress: () => router.push("/analytics"),
     },
     {
       title: "Settings",
       icon: "settings",
-      onPress: () => (navigation as any).navigate("Settings"),
+      onPress: () => router.push("/settings"),
     },
   ]
 
@@ -256,7 +257,7 @@ export const TailorScreen: FC = function TailorScreen() {
         </View>
         <TouchableOpacity
           className="h-[42px] w-[42px] rounded-full border border-border bg-surface items-center justify-center"
-          onPress={() => (navigation as any).navigate("TailorNotifications")}
+          onPress={() => router.push("/tailor-notifications")}
           accessible
           accessibilityLabel="Notifications"
         >
@@ -345,7 +346,7 @@ export const TailorScreen: FC = function TailorScreen() {
         )}
         <TouchableOpacity
           className="flex-row items-center justify-center gap-1 py-3"
-          onPress={() => (navigation as any).navigate("TailorOrders", {})}
+          onPress={() => router.push("/tailor-orders")}
         >
           <Text className="text-[14px]" weight="semiBold" style={$viewAllColor}>
             View All Orders

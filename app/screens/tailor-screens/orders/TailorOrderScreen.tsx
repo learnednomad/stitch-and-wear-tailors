@@ -8,6 +8,7 @@
  * order changes through the RealtimeManager.
  */
 
+import { useRouter } from "expo-router"
 import { FC, useCallback, useEffect, useState } from "react"
 import {
   View,
@@ -19,7 +20,7 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native"
-import { useNavigation, useFocusEffect } from "@react-navigation/native"
+import { useFocusEffect } from "@react-navigation/native"
 import { Screen, Text, Icon } from "@/components"
 import {
   OrderFilterBar,
@@ -62,7 +63,7 @@ function columnForOrder(order: Record<string, any>): ColumnKey | null {
 }
 
 export const TailorOrderScreen: FC = function TailorOrderScreen() {
-  const navigation = useNavigation()
+  const router = useRouter()
   const authStore = useAuthStore()
   const { width } = useWindowDimensions()
   const isWide = width >= 768
@@ -135,7 +136,7 @@ export const TailorOrderScreen: FC = function TailorOrderScreen() {
       <TouchableOpacity
         key={order.id}
         className="rounded-2xl border border-border bg-surface p-4 mb-3"
-        onPress={() => (navigation as any).navigate("OrderDetail", { orderId: order.id })}
+        onPress={() => router.push(`/orders/${order.id}`)}
         accessible
         accessibilityLabel={`Order ${order.orderNumber}`}
       >

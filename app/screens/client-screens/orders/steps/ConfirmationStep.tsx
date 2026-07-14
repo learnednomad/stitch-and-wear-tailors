@@ -3,6 +3,7 @@
  * Final step in Nigerian order creation workflow
  */
 
+import { useRouter } from "expo-router"
 import React, { FC, useState, useEffect } from "react"
 import { View, ScrollView, ViewStyle, TextStyle, Alert } from "react-native"
 import { Text, Button, Icon } from "@/components"
@@ -15,12 +16,11 @@ import {
 } from "@/state/orderDraftStore"
 import { useCreateOrder } from "@/api/orders"
 import { useAuthStore } from "@/state/authStore"
-import { useNavigation } from "@react-navigation/native"
 
 export const ConfirmationStep: FC = () => {
   const orderStore = useOrderDraftStore()
   const authStore = useAuthStore()
-  const navigation = useNavigation()
+  const router = useRouter()
   const createOrder = useCreateOrder()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -68,7 +68,7 @@ export const ConfirmationStep: FC = () => {
           {
             text: "View Order",
             onPress: () => {
-              ;(navigation as any).navigate("OrderDetail", { orderId: createdOrder?.id })
+              ;router.push(`/orders/${createdOrder?.id}`)
             },
           },
           {

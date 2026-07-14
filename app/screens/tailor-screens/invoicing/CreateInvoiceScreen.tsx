@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router"
 import { FC, useEffect, useMemo, useState } from "react"
 import {
   View,
@@ -13,8 +14,6 @@ import {
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useNavigation } from "@react-navigation/native"
-import { AppStackScreenProps } from "@/navigators"
 import { Screen, Text, Icon, Button } from "@/components"
 import { colors, spacing } from "@/theme"
 import { errorMessage } from "@/api/common"
@@ -42,7 +41,6 @@ type LineItemsFormValues = z.infer<typeof lineItemsFormSchema>
 
 const EMPTY_LINE_ITEM = { description: "", quantity: "1", amount: "" }
 
-interface CreateInvoiceScreenProps extends AppStackScreenProps<"CreateInvoice"> {}
 
 const DUE_DATE_OPTIONS = [7, 14, 30]
 
@@ -50,9 +48,9 @@ const DUE_DATE_OPTIONS = [7, 14, 30]
  * Create an invoice for one of the tailor's orders that doesn't already
  * carry a non-void invoice.
  */
-export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> = 
+export const CreateInvoiceScreen: FC = 
   function CreateInvoiceScreen() {
-    const navigation = useNavigation<any>()
+    const router = useRouter()
 
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
     const [depositRequired, setDepositRequired] = useState("")
@@ -171,7 +169,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> =
             Alert.alert(
               "Invoice Created",
               `${created.invoiceNumber} has been ${sendNow ? "sent" : "saved as a draft"}.`,
-              [{ text: "OK", onPress: () => navigation.goBack() }],
+              [{ text: "OK", onPress: () =>router.back() }],
             )
           },
           onError: (error) => {
@@ -193,7 +191,7 @@ export const CreateInvoiceScreen: FC<CreateInvoiceScreenProps> =
         <View className="flex-row items-center px-6 py-4 border-b border-neutral200">
           <TouchableOpacity
             className="w-10 h-10 items-center justify-center"
-            onPress={() => navigation.goBack()}
+            onPress={() =>router.back()}
             accessible
             accessibilityLabel="Go back"
             accessibilityRole="button"
