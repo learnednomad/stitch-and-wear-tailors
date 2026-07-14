@@ -11,18 +11,6 @@ export * from "./schemas"
 // Export all utility functions
 export * from "./utils"
 
-// Re-export MST models and helpers
-export * from "./RootStore"
-export * from "./stores"
-// Export MST utilities - note: generateId is also exported from utils
-export {
-  createAsyncAction,
-  createCollectionModel,
-  createSearchModel,
-  createBaseModel,
-  withZodValidation,
-  createTimestamp,
-} from "./mst"
-export * from "./helpers/getRootStore"
-export * from "./helpers/useStores"
-export * from "./helpers/setupRootStore"
+// MST is fully removed (Phase 4b): server state lives in React Query
+// (`app/api/*`), client/session state in Zustand (`app/state/*`). This module
+// now only re-exports the shared domain types, Zod schemas, and utilities.

@@ -22,7 +22,8 @@ export const measurementKeys = {
 
 /**
  * A client's own measurement records, newest first. Enabled only when a user id
- * is known (the `enabled: !!user` gating that replaces the RootStore bootstrap).
+ * is known (`enabled: !!userId` — the per-hook gating that replaced the former
+ * cross-store bootstrap).
  */
 export function useClientMeasurements(userId: string | undefined, limit: number = 10) {
   return useQuery({

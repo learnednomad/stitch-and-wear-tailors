@@ -1,9 +1,14 @@
 /**
  * Order mapper tests — PB→domain and domain→PB round trip.
  *
- * The PB→domain mapper must always produce a snapshot that
- * NigerianOrderModel.create accepts, even for sparse seeded records.
+ * The PB→domain mapper must always produce a valid Nigerian-order domain
+ * snapshot, even for sparse seeded records. The `domainOrderSnapshotSchema`
+ * below is the validation oracle (formerly `NigerianOrderModel.create`, now MST
+ * is gone): every enum in `mapPBOrderToDomain` must stay within these
+ * vocabularies or a mapped server record would be invalid downstream.
  */
+
+import { z } from "zod"
 
 import {
   mapPBOrderToDomain,
@@ -14,7 +19,150 @@ import {
   PBOrderItemRecord,
   PBOrderStageRecord,
 } from "../order-api"
-import { NigerianOrderModel } from "../../../models/stores/OrderStore"
+
+// --- Domain-snapshot oracle (mirrors the former NigerianOrder MST vocab) -----
+
+const nigerianGarmentType = z.enum([
+  "agbada",
+  "kaftan",
+  "isi_agu",
+  "babban_riga",
+  "ankara_dress",
+  "senator",
+  "traditional",
+  "modern",
+  "custom",
+])
+const fabricType = z.enum([
+  "aso_oke",
+  "adire",
+  "ankara",
+  "lace",
+  "cotton",
+  "silk",
+  "linen",
+  "brocade",
+  "george",
+  "custom",
+])
+const orderStage = z.enum([
+  "received",
+  "measured",
+  "cutting",
+  "sewing",
+  "finishing",
+  "quality_check",
+  "completed",
+])
+const orderStatus = z.enum([
+  "pending",
+  "confirmed",
+  "in_progress",
+  "ready",
+  "delivered",
+  "cancelled",
+])
+const fitPreference = z.enum(["slim", "regular", "loose"])
+
+const domainOrderItemSchema = z.object({
+  id: z.string(),
+  garmentType: nigerianGarmentType,
+  fabricType,
+  fabricColor: z.string(),
+  fabricQuantity: z.number(),
+  unitPrice: z.number(),
+  totalPrice: z.number(),
+  measurements: z.record(z.string(), z.number()),
+  customizations: z.record(z.string(), z.string()),
+  culturalSpecifications: z.string().nullable(),
+  notes: z.string().nullable(),
+  status: orderStage,
+  estimatedDays: z.number(),
+  actualDays: z.number().nullable(),
+  tailorId: z.string().nullable(),
+  qualityScore: z.number().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+const domainOrderSnapshotSchema = z.object({
+  id: z.string(),
+  orderNumber: z.string(),
+  userId: z.string(),
+  tailorId: z.string().nullable(),
+  locationId: z.string(),
+  type: z.enum(["custom", "alteration", "repair"]),
+  garmentType: nigerianGarmentType,
+  city: z.enum(["lagos", "abuja", "kano"]),
+  customerLanguage: z.enum(["en", "yo", "ha", "ig"]),
+  items: z.array(domainOrderItemSchema),
+  status: orderStatus,
+  priority: z.enum(["low", "normal", "high", "urgent"]),
+  customerInfo: z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string(),
+    phone: z.string(),
+    address: z.string(),
+  }),
+  measurementId: z.string().nullable(),
+  fabricSelection: z.object({
+    type: fabricType,
+    color: z.string(),
+    pattern: z.string().nullable(),
+    quantity: z.number(),
+    unitPrice: z.number(),
+    totalPrice: z.number(),
+    supplier: z.string().nullable(),
+    inStock: z.boolean(),
+  }),
+  styleConfig: z.object({
+    designNotes: z.string().nullable(),
+    embellishments: z.array(z.string()),
+    fitPreference,
+    necklineStyle: z.string().nullable(),
+    sleeveStyle: z.string().nullable(),
+    hemStyle: z.string().nullable(),
+    culturalSpecifications: z.string().nullable(),
+  }),
+  pricing: z.object({
+    basePrice: z.number(),
+    fabricCost: z.number(),
+    complexityMultiplier: z.number(),
+    urgencyFee: z.number(),
+    totalPrice: z.number(),
+    depositRequired: z.number(),
+    balanceAmount: z.number(),
+    currency: z.literal("NGN"),
+  }),
+  paymentMethod: z.enum(["bank_transfer", "mobile_money", "cash", "card", "pos"]),
+  orderDate: z.string(),
+  estimatedDeliveryDate: z.string(),
+  actualDeliveryDate: z.string().nullable(),
+  progress: z.object({
+    currentStage: orderStage,
+    status: orderStatus,
+    percentage: z.number(),
+    estimatedCompletion: z.string().nullable(),
+    actualCompletion: z.string().nullable(),
+    stageProgress: z.array(
+      z.object({
+        stage: orderStage,
+        status: z.enum(["pending", "in_progress", "completed"]),
+        startedAt: z.string().nullable(),
+        completedAt: z.string().nullable(),
+        tailorId: z.string().nullable(),
+        qualityScore: z.number().nullable(),
+        notes: z.string().nullable(),
+      }),
+    ),
+    lastUpdated: z.string(),
+  }),
+  notes: z.string().nullable(),
+  internalNotes: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
 
 const baseOrder: PBOrderRecord = {
   id: "ord123456789012",
@@ -148,7 +296,7 @@ describe("mapPBOrderToDomain", () => {
     expect(domain.items[0].status).toBe("sewing")
 
     // and the MST model accepts it
-    expect(() => NigerianOrderModel.create(domain as any)).not.toThrow()
+    expect(() => domainOrderSnapshotSchema.parse(domain)).not.toThrow()
   })
 
   it("applies safe defaults for sparse seeded records (no items, no specs)", () => {
@@ -183,7 +331,7 @@ describe("mapPBOrderToDomain", () => {
     expect(domain.progress.currentStage).toBe("received")
     expect(domain.progress.percentage).toBe(0)
 
-    expect(() => NigerianOrderModel.create(domain as any)).not.toThrow()
+    expect(() => domainOrderSnapshotSchema.parse(domain)).not.toThrow()
   })
 
   it("validates unknown enum values against the model vocabularies", () => {
@@ -210,7 +358,7 @@ describe("mapPBOrderToDomain", () => {
     expect(domain.paymentMethod).toBe("bank_transfer")
     expect(domain.items[0].status).toBe("received")
 
-    expect(() => NigerianOrderModel.create(domain as any)).not.toThrow()
+    expect(() => domainOrderSnapshotSchema.parse(domain)).not.toThrow()
   })
 })
 
@@ -347,7 +495,7 @@ describe("mapDomainOrderToPB", () => {
     expect(domain.paymentMethod).toBe("mobile_money")
     expect(domain.notes).toBe("Needed before wedding")
 
-    expect(() => NigerianOrderModel.create(domain as any)).not.toThrow()
+    expect(() => domainOrderSnapshotSchema.parse(domain)).not.toThrow()
   })
 })
 
