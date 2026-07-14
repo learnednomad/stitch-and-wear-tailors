@@ -4,7 +4,7 @@
   "expo": {
     "name": "Stitch & Wear Tailors",
     "slug": "stitch-and-wear-tailors",
-    "scheme": "stitchandweartailors",
+    "scheme": "stitchandwear",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -46,10 +46,17 @@
           "resizeMode": "contain",
           "backgroundColor": "#191015"
         }
+      ],
+      [
+        "expo-router",
+        {
+          "root": "./src/app"
+        }
       ]
     ],
     "experiments": {
-      "tsconfigPaths": true
+      "tsconfigPaths": true,
+      "typedRoutes": true
     }
   },
   "ignite": {
