@@ -11,6 +11,7 @@ const NAV: NavItem[] = [
   { href: "/app/catalog", label: "Catalog", icon: "catalog" },
   { href: "/app/payments", label: "Payments", icon: "payments" },
   { href: "/app/appointments", label: "Appointments", icon: "appointments" },
+  { href: "/app/purchases", label: "Purchases", icon: "payments" },
   { href: "/app/notifications", label: "Notifications", icon: "notifications" },
   { href: "/app/settings", label: "Settings", icon: "settings" },
 ];

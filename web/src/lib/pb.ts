@@ -18,6 +18,14 @@ export const COLLECTIONS = {
   appointments: "appointments",
   notifications: "notifications",
   reviews: "reviews",
+  products: "products",
+  marketplaceOrders: "marketplace_orders",
+  tailorProfiles: "tailor_profiles",
+  storefrontCollections: "storefront_collections",
+  journalPosts: "journal_posts",
+  storefrontPages: "storefront_pages",
+  wishlistItems: "wishlist_items",
+  tailorAvailability: "tailor_availability",
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];

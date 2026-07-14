@@ -5,8 +5,10 @@ import type {
   Fabric,
   FabricType,
   StyleCategory,
+  TailorProfile,
   User,
 } from "@/lib/types";
+import { listTailorProfiles } from "@/lib/api/storefront";
 
 export interface StyleListFilters {
   category?: StyleCategory;
@@ -78,23 +80,11 @@ export interface TailorListFilters {
 export async function listTailors(
   filters: TailorListFilters = {}
 ): Promise<ListResult<User>> {
-  const pb = getPb();
-  const { search, page = 1, perPage = 24 } = filters;
-
-  const parts: string[] = ['userType = "tailor"'];
-  if (search) {
-    parts.push(
-      pb.filter(
-        "(firstName ~ {:q} || lastName ~ {:q} || businessName ~ {:q} || location ~ {:q})",
-        { q: search }
-      )
-    );
-  }
-
-  return pb.collection(COLLECTIONS.users).getList<User>(page, perPage, {
-    filter: parts.join(" && "),
-    sort: "businessName,firstName",
-  });
+  const result = await listTailorProfiles(filters);
+  return {
+    ...result,
+    items: result.items.map(publicProfileAsLegacyUser),
+  };
 }
 
 export async function getStyle(id: string): Promise<CatalogStyle> {
@@ -103,4 +93,32 @@ export async function getStyle(id: string): Promise<CatalogStyle> {
 
 export async function getFabric(id: string): Promise<Fabric> {
   return getPb().collection(COLLECTIONS.fabrics).getOne<Fabric>(id);
+}
+
+/**
+ * Keep the dashboard's established `listTailors(): User[]` contract while
+ * sourcing only public-safe fields. `id` deliberately remains the underlying
+ * user id because order and appointment relations target the auth collection.
+ */
+function publicProfileAsLegacyUser(profile: TailorProfile): User {
+  const [firstName = profile.displayName, ...lastName] =
+    profile.displayName.trim().split(/\s+/);
+  return {
+    id: profile.tailor,
+    collectionId: profile.collectionId,
+    collectionName: profile.collectionName,
+    created: profile.created,
+    updated: profile.updated,
+    email: "",
+    verified: profile.isVerified,
+    firstName,
+    lastName: lastName.join(" "),
+    userType: "tailor",
+    phone: "",
+    status: profile.isActive ? "active" : "inactive",
+    avatar: "",
+    businessName: profile.businessName,
+    bio: profile.bio,
+    location: profile.location,
+  };
 }

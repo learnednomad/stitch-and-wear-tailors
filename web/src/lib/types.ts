@@ -190,6 +190,7 @@ export type StyleCategory =
 
 export interface CatalogStyle extends BaseRecord {
   name: string;
+  slug: string;
   category: StyleCategory;
   gender: string;
   description: string;
@@ -197,6 +198,209 @@ export interface CatalogStyle extends BaseRecord {
   currency: string;
   images: string[];
   tags: string[] | null;
+  fabricRequirements: FabricRequirement | null;
+  customizationOptions: StyleCustomizationOption[] | null;
+  estimatedProductionDays: number;
+  isActive: boolean;
+}
+
+export interface FabricRequirement {
+  unit: "metres" | "yards";
+  amount: number;
+}
+
+export interface StyleCustomizationValue {
+  id: string;
+  label: string;
+  priceDelta?: number;
+}
+
+export interface StyleCustomizationOption {
+  id: string;
+  label: string;
+  type: "single" | "multiple" | "text";
+  required?: boolean;
+  values?: StyleCustomizationValue[];
+}
+
+// ---------------------------------------------------------------------------
+// Marketplace
+// ---------------------------------------------------------------------------
+
+export type ProductCategory =
+  | "menswear"
+  | "womenswear"
+  | "childrenswear"
+  | "accessories"
+  | "footwear"
+  | "fabric"
+  | "other";
+
+export interface ProductVariant {
+  id: string;
+  label: string;
+  sku?: string;
+  size?: string;
+  color?: string;
+  price?: number;
+  compareAtPrice?: number;
+  stock: number;
+  image?: string;
+}
+
+export interface ProductOption {
+  name: string;
+  values: string[];
+}
+
+export interface Product extends BaseRecord {
+  seller: string;
+  name: string;
+  slug: string;
+  description: string;
+  category: ProductCategory;
+  price: number;
+  compareAtPrice: number;
+  currency: string;
+  stock: number;
+  images: string[];
+  tags: string[] | null;
+  variants: ProductVariant[] | null;
+  options: ProductOption[] | null;
+  isFeatured: boolean;
+  rating: number;
+  reviewCount: number;
+  isActive: boolean;
+  expand?: { seller?: User; sellerProfile?: TailorProfile };
+}
+
+export interface MarketplaceOrderItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+  variantId?: string;
+  variantLabel?: string;
+  size?: string;
+  color?: string;
+}
+
+export type MarketplaceOrderStatus =
+  | "pending_payment"
+  | "paid"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
+
+export interface MarketplaceOrder extends BaseRecord {
+  buyer: string;
+  seller: string;
+  orderNumber: string;
+  items: MarketplaceOrderItem[];
+  subtotal: number;
+  currency: string;
+  contactName: string;
+  contactPhone: string;
+  shippingAddress: string;
+  status: MarketplaceOrderStatus;
+  paymentMethod: PaymentMethod;
+  paymentReference: string;
+  notes: string;
+  expand?: { buyer?: User; seller?: User };
+}
+
+// ---------------------------------------------------------------------------
+// Public storefront and shopping state
+// ---------------------------------------------------------------------------
+
+export interface TailorProfile extends BaseRecord {
+  tailor: string;
+  slug: string;
+  displayName: string;
+  businessName: string;
+  headline: string;
+  bio: string;
+  location: string;
+  specialties: string[] | null;
+  yearsExperience: number;
+  avatar: string;
+  coverImage: string;
+  rating: number;
+  reviewCount: number;
+  completedOrders: number;
+  isVerified: boolean;
+  isFeatured: boolean;
+  isActive: boolean;
+}
+
+export type StorefrontAudience = "all" | "male" | "female" | "unisex" | "kids";
+
+export interface StorefrontCollection extends BaseRecord {
+  slug: string;
+  name: string;
+  description: string;
+  eyebrow: string;
+  audience: StorefrontAudience;
+  coverImage: string;
+  products: string[];
+  sortOrder: number;
+  isFeatured: boolean;
+  isActive: boolean;
+  expand?: { products?: Product[] };
+}
+
+export type JournalCategory =
+  | "style_guide"
+  | "behind_the_seams"
+  | "news"
+  | "weddings"
+  | "craftsmanship";
+
+export interface JournalPost extends BaseRecord {
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  coverImage: string;
+  category: JournalCategory;
+  author: string;
+  publishedAt: string;
+  readingMinutes: number;
+  isFeatured: boolean;
+  isPublished: boolean;
+  expand?: { author?: TailorProfile };
+}
+
+export interface StorefrontPage extends BaseRecord {
+  slug: string;
+  title: string;
+  eyebrow: string;
+  summary: string;
+  heroImage: string;
+  content: Record<string, unknown> | null;
+  seoTitle: string;
+  seoDescription: string;
+  isPublished: boolean;
+}
+
+export interface WishlistItem extends BaseRecord {
+  user: string;
+  product: string;
+  variantId: string;
+  expand?: { product?: Product };
+}
+
+export interface TailorAvailability extends BaseRecord {
+  tailor: string;
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  slotDurationMinutes: number;
+  location: string;
+  appointmentTypes: AppointmentType[] | null;
+  timezone: string;
   isActive: boolean;
 }
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { homePathFor, useAuth } from "@/lib/auth";
 import { pbErrorMessage } from "@/lib/pb";
 import { Button } from "@/components/ui/Button";
@@ -10,9 +10,15 @@ import { Input } from "@/components/ui/Input";
 
 type Role = "client" | "tailor";
 
-export default function RegisterPage() {
+function safeReturnTo(value: string | null): string | null {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : null;
+}
+
+function RegisterForm() {
   const { signUp } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = safeReturnTo(searchParams.get("returnTo"));
   const [role, setRole] = useState<Role>("client");
   const [form, setForm] = useState({
     firstName: "",
@@ -38,7 +44,7 @@ export default function RegisterPage() {
         email: form.email.trim(),
         userType: role,
       });
-      router.replace(homePathFor(user));
+      router.replace(returnTo ?? homePathFor(user));
     } catch (err) {
       setError(pbErrorMessage(err));
       setSubmitting(false);
@@ -140,12 +146,20 @@ export default function RegisterPage() {
       <p className="mt-6 text-sm text-neutral-500">
         Already have an account?{" "}
         <Link
-          href="/login"
+          href={returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login"}
           className="font-medium text-brand-700 hover:text-brand-800"
         >
           Sign in
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-neutral-500">Loading registration…</p>}>
+      <RegisterForm />
+    </Suspense>
   );
 }
