@@ -11,6 +11,7 @@ const NAV: NavItem[] = [
   { href: "/tailor/invoices", label: "Invoices", icon: "invoices" },
   { href: "/tailor/measurements", label: "Measurements", icon: "measurements" },
   { href: "/tailor/analytics", label: "Analytics", icon: "analytics" },
+  { href: "/tailor/marketplace-orders", label: "Shop orders", icon: "payments" },
   {
     href: "/tailor/notifications",
     label: "Notifications",
